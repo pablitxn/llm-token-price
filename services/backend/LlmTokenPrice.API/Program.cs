@@ -1,12 +1,37 @@
+using LlmTokenPrice.Domain.Repositories;
+using LlmTokenPrice.Infrastructure.Caching;
 using LlmTokenPrice.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+    options.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
+    options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+});
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+    {
+        Title = "LLM Token Price Comparison API",
+        Version = "v1",
+        Description = "REST API for LLM model pricing and benchmark data comparison"
+    });
+});
+
+// CORS configuration
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+        policy.WithOrigins("http://localhost:5173")
+              .AllowAnyHeader()
+              .AllowAnyMethod());
+});
 
 // Database configuration
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -23,6 +48,50 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     )
 );
 
+// Redis cache configuration (singleton connection multiplexer)
+// Note: Redis is optional - app will function without it (graceful degradation)
+builder.Services.AddSingleton<IConnectionMultiplexer?>(sp =>
+{
+    var logger = sp.GetRequiredService<ILogger<Program>>();
+    var connectionString = builder.Configuration.GetConnectionString("Redis");
+
+    if (string.IsNullOrWhiteSpace(connectionString))
+    {
+        logger.LogWarning("Redis connection string not configured. Application will run without caching.");
+        return null; // Graceful degradation: null multiplexer indicates cache unavailable
+    }
+
+    try
+    {
+        var configurationOptions = ConfigurationOptions.Parse(connectionString);
+        configurationOptions.AbortOnConnectFail = false; // Graceful degradation
+        configurationOptions.ConnectTimeout = 5000; // 5 seconds
+        configurationOptions.SyncTimeout = 5000;
+
+        var multiplexer = ConnectionMultiplexer.Connect(configurationOptions);
+
+        if (multiplexer.IsConnected)
+        {
+            logger.LogInformation("Redis connected successfully to {Endpoints}",
+                string.Join(", ", multiplexer.GetEndPoints().Select(e => e.ToString())));
+        }
+        else
+        {
+            logger.LogWarning("Redis connection established but not fully connected. Cache operations may be degraded.");
+        }
+
+        return multiplexer;
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Failed to connect to Redis. Application will continue without caching.");
+        return null; // Graceful degradation: return null on connection failure
+    }
+});
+
+// Cache repository (scoped)
+builder.Services.AddScoped<ICacheRepository, RedisCacheRepository>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline
@@ -33,6 +102,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseCors(); // Must be before UseAuthorization
 app.UseAuthorization();
 app.MapControllers();
 
