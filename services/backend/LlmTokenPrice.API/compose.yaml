@@ -1,0 +1,7 @@
+﻿services:
+  llmtokenprice.api:
+    image: llmtokenprice.api
+    build:
+      context: .
+      dockerfile: Dockerfile
+
