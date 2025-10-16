@@ -1,7 +1,6 @@
 .claude/
 bmad/
 .idea/
-docs/
 
 # Build outputs
 artifacts/
