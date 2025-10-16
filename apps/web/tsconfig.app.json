@@ -16,8 +16,19 @@
     "noEmit": true,
     "jsx": "react-jsx",
 
+    /* Path aliases matching Vite config */
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@components/*": ["./src/components/*"],
+      "@api/*": ["./src/api/*"],
+      "@store/*": ["./src/store/*"]
+    },
+
     /* Linting */
     "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
