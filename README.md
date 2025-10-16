@@ -96,41 +96,67 @@ pnpm run build
 
 **Option A: Using Docker Compose (Recommended)**
 
+From the project root directory:
+
 ```bash
-cd services/backend/LlmTokenPrice.API
-docker-compose up -d
+# Start PostgreSQL 16 + TimescaleDB and Redis 7.2
+docker compose up -d
+
+# Verify containers are running
+docker compose ps
+
+# Check PostgreSQL health
+docker exec llmpricing_postgres pg_isready -U llmpricing
+```
+
+**Services:**
+- **PostgreSQL + TimescaleDB:** `localhost:5434` (username: `llmpricing`, password: `dev_password`, database: `llmpricing_dev`)
+- **Redis:** `localhost:6379` (no authentication for local development)
+
+**Reset Database (if needed):**
+```bash
+# Stop containers and remove volumes (deletes all data)
+docker compose down -v
+
+# Restart containers
+docker compose up -d
 ```
 
 **Option B: Manual Setup**
 
-1. Start PostgreSQL server
-2. Create database:
+1. Install PostgreSQL 16 with TimescaleDB extension
+2. Create database and user:
    ```sql
-   CREATE DATABASE llm_token_price;
+   CREATE USER llmpricing WITH PASSWORD 'your_password';
+   CREATE DATABASE llmpricing_dev OWNER llmpricing;
    ```
-3. Start Redis server:
-   ```bash
-   redis-server
-   ```
+3. Install and start Redis 7.2
+4. Update connection strings in `appsettings.Development.json` accordingly
 
 ### 5. Configuration
 
-Create `appsettings.Development.json` in `services/backend/LlmTokenPrice.API/`:
+The `appsettings.Development.json` file is automatically excluded from git (.gitignore).
 
+**Location:** `services/backend/LlmTokenPrice.API/appsettings.Development.json`
+
+**Default configuration (Docker Compose):**
 ```json
 {
   "ConnectionStrings": {
-    "DefaultConnection": "Host=localhost;Database=llm_token_price;Username=your_user;Password=your_password",
-    "Redis": "localhost:6379"
+    "DefaultConnection": "Host=localhost;Port=5434;Database=llmpricing_dev;Username=llmpricing;Password=dev_password",
+    "Redis": "localhost:6379,abortConnect=false"
   },
   "Logging": {
     "LogLevel": {
-      "Default": "Information",
-      "Microsoft.AspNetCore": "Warning"
+      "Default": "Debug",
+      "Microsoft.AspNetCore": "Information",
+      "Microsoft.EntityFrameworkCore": "Information"
     }
   }
 }
 ```
+
+**⚠️ Security Note:** The `dev_password` is only for local development. Production credentials are managed via environment variables.
 
 ## 🏃 Running the Application
 
@@ -139,8 +165,9 @@ Create `appsettings.Development.json` in `services/backend/LlmTokenPrice.API/`:
 **Terminal 1 - Backend API:**
 ```bash
 cd services/backend/LlmTokenPrice.API
-dotnet run
+ASPNETCORE_ENVIRONMENT=Development dotnet run
 # API will be available at: http://localhost:5000
+# Swagger UI: http://localhost:5000/swagger
 ```
 
 **Terminal 2 - Frontend Dev Server:**
@@ -236,6 +263,75 @@ dotnet test
 cd apps/web
 pnpm run test
 ```
+
+## 🗄️ Database Management
+
+### Entity Framework Migrations
+
+**Generate a new migration:**
+```bash
+cd services/backend
+dotnet ef migrations add MigrationName --project LlmTokenPrice.Infrastructure --startup-project LlmTokenPrice.API
+```
+
+**Apply migrations:**
+```bash
+# Applied automatically on application startup in Development environment
+# Or apply manually:
+dotnet ef database update --project LlmTokenPrice.Infrastructure --startup-project LlmTokenPrice.API
+```
+
+**List migrations:**
+```bash
+dotnet ef migrations list --project LlmTokenPrice.Infrastructure --startup-project LlmTokenPrice.API
+```
+
+**Remove last migration:**
+```bash
+dotnet ef migrations remove --project LlmTokenPrice.Infrastructure --startup-project LlmTokenPrice.API
+```
+
+### Database Connection Verification
+
+**Check health endpoint:**
+```bash
+curl http://localhost:5000/api/health
+# Expected response:
+# {"status":"degraded","services":{"database":"ok","redis":"pending"},"timestamp":"..."}
+```
+
+**Connect to PostgreSQL (via Docker):**
+```bash
+docker exec -it llmpricing_postgres psql -U llmpricing -d llmpricing_dev
+```
+
+**Common PostgreSQL commands:**
+```sql
+\dt              -- List all tables
+\d table_name    -- Describe table structure
+\q               -- Quit psql
+```
+
+### Troubleshooting
+
+**Port 5434 already in use:**
+```bash
+# Check what's using the port
+docker ps --filter "publish=5434"
+# Stop conflicting container or change port in docker-compose.yml
+```
+
+**Database connection refused:**
+```bash
+# Wait for PostgreSQL health check to pass
+docker logs llmpricing_postgres
+# Verify container is healthy:
+docker compose ps
+```
+
+**Password authentication failed:**
+- Verify `POSTGRES_PASSWORD` in `docker-compose.yml` matches `Password` in connection string
+- Reset: `docker compose down -v && docker compose up -d`
 
 ## 🔨 Building for Production
 
