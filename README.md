@@ -160,6 +160,69 @@ pnpm run dev
    - Should load React application
    - Hot Module Replacement (HMR) should be active
 
+## 💻 Development Workflow
+
+### Build Commands
+
+**Backend:**
+```bash
+cd services/backend
+
+# Build all projects
+dotnet build
+
+# Build in Release mode
+dotnet build --configuration Release
+
+# Restore dependencies
+dotnet restore
+
+# Run the API
+dotnet run --project LlmTokenPrice.API
+```
+
+**Frontend:**
+```bash
+cd apps/web
+
+# Start development server (with HMR)
+pnpm run dev
+
+# Build for production
+pnpm run build
+
+# Type check (TypeScript)
+pnpm run type-check
+
+# Lint code
+pnpm run lint
+
+# Preview production build
+pnpm run preview
+```
+
+### Quality Gates
+
+- **Backend Build Time:** < 30 seconds
+- **Frontend Build Time:** < 15 seconds
+- **Frontend Bundle Size (gzipped):** < 500KB
+- **TypeScript:** Zero `any` types in strict mode
+- **Build Status:** 0 errors, 0 warnings
+
+### Concurrent Development
+
+Run both backend and frontend simultaneously:
+
+```bash
+# Terminal 1
+cd services/backend && dotnet run --project LlmTokenPrice.API
+
+# Terminal 2
+cd apps/web && pnpm run dev
+```
+
+The frontend dev server proxies `/api/*` requests to `http://localhost:5000` automatically.
+
 ## 🧪 Testing
 
 ### Backend Tests
