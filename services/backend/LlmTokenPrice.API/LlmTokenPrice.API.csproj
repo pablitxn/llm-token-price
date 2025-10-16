@@ -1,5 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+    <ItemGroup>
+      <ProjectReference Include="..\LlmTokenPrice.Application\LlmTokenPrice.Application.csproj" />
+      <ProjectReference Include="..\LlmTokenPrice.Infrastructure\LlmTokenPrice.Infrastructure.csproj" />
+    </ItemGroup>
+
     <PropertyGroup>
         <OutputType>Exe</OutputType>
         <TargetFramework>net9.0</TargetFramework>
