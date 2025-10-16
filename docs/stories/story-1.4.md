@@ -1,6 +1,6 @@
 # Story 1.4: Create Core Data Models (Models, Capabilities, Benchmarks)
 
-Status: Ready for Review
+Status: Done
 
 ## Story
 
