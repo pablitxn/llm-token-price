@@ -264,6 +264,124 @@ cd apps/web
 pnpm run test
 ```
 
+## 📦 Caching Architecture
+
+This platform uses **Redis** as a multi-layer caching strategy to optimize performance and reduce database load.
+
+### Caching Strategy
+
+```
+Client (TanStack Query, 5min)
+  → Redis (1hr TTL)
+    → PostgreSQL (source of truth)
+```
+
+### Cache Key Naming Conventions
+
+All cache keys follow the pattern: `{InstanceName}:{entity}:{id}:v1`
+
+Examples:
+- **Model list**: `llmpricing:models:list:v1`
+- **Model detail**: `llmpricing:model:{guid}:v1`
+- **QAPS scores**: `llmpricing:qaps:bestvalue:v1`
+
+The `v1` suffix enables cache invalidation on schema changes.
+
+### Time-To-Live (TTL) Strategy
+
+| Cache Type | TTL | Use Case |
+|------------|-----|----------|
+| API Responses (GET /api/models) | 1 hour | Model lists, benchmark lists |
+| Model Detail (GET /api/models/{id}) | 30 minutes | Individual model data |
+| Computed Values (QAPS scores) | 1 hour | Smart filter results |
+
+### Redis Testing Commands
+
+**Verify Redis connection:**
+```bash
+# Using Docker
+docker exec llmpricing_redis redis-cli PING
+# Expected: PONG
+
+# Check health endpoint
+curl http://localhost:5000/api/health
+# Expected: {"status":"healthy","services":{"database":{"status":"ok"},"redis":{"status":"ok"}}}
+```
+
+**Manual cache operations:**
+```bash
+# Set a test key with 60-second expiry
+docker exec llmpricing_redis redis-cli SET "llmpricing:test:manual" "test-value" EX 60
+
+# Get a key
+docker exec llmpricing_redis redis-cli GET "llmpricing:test:manual"
+
+# Check if key exists
+docker exec llmpricing_redis redis-cli EXISTS "llmpricing:test:manual"
+
+# Check TTL (time remaining)
+docker exec llmpricing_redis redis-cli TTL "llmpricing:test:manual"
+
+# Delete a key
+docker exec llmpricing_redis redis-cli DEL "llmpricing:test:manual"
+
+# List all keys (development only)
+docker exec llmpricing_redis redis-cli KEYS "llmpricing:*"
+
+# Flush all keys (development only - WARNING: deletes everything!)
+docker exec llmpricing_redis redis-cli FLUSHALL
+```
+
+### Graceful Degradation
+
+The application is designed to **function without Redis**:
+- If Redis is unavailable, cache operations return null/false
+- Application logs warnings but continues serving requests
+- Database serves as fallback (slower but functional)
+- Health endpoint returns `degraded` status (not `unhealthy`)
+
+**Test graceful degradation:**
+```bash
+# Stop Redis container
+docker stop llmpricing_redis
+
+# Verify app still runs (check health endpoint)
+curl http://localhost:5000/api/health
+# Expected: {"status":"degraded","services":{"database":{"status":"ok"},"redis":{"status":"error"}}}
+
+# Restart Redis
+docker start llmpricing_redis
+```
+
+### Redis Troubleshooting
+
+**Redis connection refused:**
+```bash
+# Verify container is running
+docker ps --filter "name=llmpricing_redis"
+
+# Check logs
+docker logs llmpricing_redis
+
+# Restart container
+docker restart llmpricing_redis
+```
+
+**Cache not working (keys not persisting):**
+- Check TTL hasn't expired: `docker exec llmpricing_redis redis-cli TTL "your-key"`
+- Verify key name matches pattern: `llmpricing:{entity}:{id}:v1`
+- Check backend logs for serialization errors
+
+**High memory usage:**
+```bash
+# Check memory stats
+docker exec llmpricing_redis redis-cli INFO memory
+
+# Set max memory limit (docker-compose.yml)
+# maxmemory: 256mb
+# maxmemory-policy: allkeys-lru (evict least recently used)
+```
+
 ## 🗄️ Database Management
 
 ### Entity Framework Migrations
@@ -296,8 +414,8 @@ dotnet ef migrations remove --project LlmTokenPrice.Infrastructure --startup-pro
 **Check health endpoint:**
 ```bash
 curl http://localhost:5000/api/health
-# Expected response:
-# {"status":"degraded","services":{"database":"ok","redis":"pending"},"timestamp":"..."}
+# Expected response (when both DB and Redis are healthy):
+# {"status":"healthy","services":{"database":{"status":"ok","latencyMs":38.07},"redis":{"status":"ok","latencyMs":3.39}},"timestamp":"..."}
 ```
 
 **Connect to PostgreSQL (via Docker):**
