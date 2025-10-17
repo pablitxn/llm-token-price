@@ -195,6 +195,8 @@ The `appsettings.Development.json` file is automatically excluded from git (.git
 
 **⚠️ Security Note:** The `dev_password` is only for local development. Production credentials are managed via environment variables.
 
+**🔒 Shared Development Environments:** If you are working in a shared development environment (e.g., cloud VM, shared container, or team workspace), you should **immediately change the default password** to prevent unauthorized access to your development database. Update both the `docker-compose.yml` file and the connection string in `appsettings.Development.json` with a unique password.
+
 ### 6. Database Seeding
 
 The application **automatically seeds** the database with sample data on first startup in development environments. This provides realistic test data for API endpoints and frontend components without manual configuration.
