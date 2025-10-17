@@ -3,7 +3,7 @@
     <epicId>2</epicId>
     <storyId>2.1</storyId>
     <title>Admin Panel Authentication</title>
-    <status>Ready</status>
+    <status>Done</status>
     <generatedAt>2025-10-17</generatedAt>
     <generator>BMAD Story Context Workflow</generator>
     <sourceStoryPath>docs/stories/epic_2/story-2.1.md</sourceStoryPath>
@@ -66,67 +66,121 @@
       </doc>
     </docs>
     <code>
+      <!-- IMPLEMENTED - Authentication Backend -->
+      <artifact>
+        <path>services/backend/LlmTokenPrice.API/Controllers/Admin/AdminAuthController.cs</path>
+        <kind>controller</kind>
+        <symbol>AdminAuthController</symbol>
+        <lines>1-106</lines>
+        <reason>✅ IMPLEMENTED: Admin authentication controller with Login and Logout endpoints. Uses IAuthService for JWT generation, sets HttpOnly cookies, includes comprehensive Swagger docs.</reason>
+      </artifact>
+      <artifact>
+        <path>services/backend/LlmTokenPrice.Infrastructure/Auth/AuthService.cs</path>
+        <kind>service</kind>
+        <symbol>AuthService : IAuthService</symbol>
+        <lines>1-115</lines>
+        <reason>✅ IMPLEMENTED: Authentication service implementing JWT generation with claims (sub, role, exp, iat), hardcoded credential validation, timing attack mitigation (500ms delay).</reason>
+      </artifact>
+      <artifact>
+        <path>services/backend/LlmTokenPrice.Application/Services/IAuthService.cs</path>
+        <kind>interface</kind>
+        <symbol>IAuthService</symbol>
+        <lines>1-20</lines>
+        <reason>✅ IMPLEMENTED: Port interface defining authentication contract (AuthenticateAsync, GenerateJwtToken) following hexagonal architecture.</reason>
+      </artifact>
+      <artifact>
+        <path>services/backend/LlmTokenPrice.Application/DTOs/LoginDto.cs</path>
+        <kind>dto</kind>
+        <symbol>LoginDto</symbol>
+        <lines>1-15</lines>
+        <reason>✅ IMPLEMENTED: Request DTO for login endpoint (Username, Password properties) with XML docs.</reason>
+      </artifact>
+      <artifact>
+        <path>services/backend/LlmTokenPrice.Application/DTOs/AuthResponseDto.cs</path>
+        <kind>dto</kind>
+        <symbol>AuthResponseDto</symbol>
+        <lines>1-15</lines>
+        <reason>✅ IMPLEMENTED: Response DTO for authentication endpoints (Success bool, Message string). JWT transmitted via cookie, not in body.</reason>
+      </artifact>
+
+      <!-- IMPLEMENTED - Authentication Frontend -->
+      <artifact>
+        <path>apps/web/src/pages/admin/AdminLoginPage.tsx</path>
+        <kind>component</kind>
+        <symbol>AdminLoginPage</symbol>
+        <lines>1-120</lines>
+        <reason>✅ IMPLEMENTED: Admin login UI with username/password fields, Zod validation, TailwindCSS styling, loading states, error display, useAuth integration.</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/hooks/useAuth.ts</path>
+        <kind>hook</kind>
+        <symbol>useAuth</symbol>
+        <lines>1-108</lines>
+        <reason>✅ IMPLEMENTED: Authentication hook providing login/logout methods, auth state access (isAuthenticated, user, isLoading, error), React Router navigation with redirect handling.</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/api/admin.ts</path>
+        <kind>api-client</kind>
+        <symbol>login, logout</symbol>
+        <lines>1-50</lines>
+        <reason>✅ IMPLEMENTED: Admin API client functions using Axios with withCredentials: true for HttpOnly cookie support.</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/store/authStore.ts</path>
+        <kind>store</kind>
+        <symbol>authStore</symbol>
+        <lines>1-60</lines>
+        <reason>✅ IMPLEMENTED: Zustand store for auth state (isAuthenticated, user, isLoading, error) with actions (setUser, clearAuth, setLoading, setError).</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/components/auth/ProtectedRoute.tsx</path>
+        <kind>component</kind>
+        <symbol>ProtectedRoute</symbol>
+        <lines>1-40</lines>
+        <reason>✅ IMPLEMENTED: Route wrapper checking authentication via useAuth hook, redirects to /admin/login with location state preservation.</reason>
+      </artifact>
+
+      <!-- Configuration Files -->
       <artifact>
         <path>services/backend/LlmTokenPrice.API/Program.cs</path>
         <kind>configuration</kind>
         <symbol>Program</symbol>
-        <lines>1-200</lines>
-        <reason>DI configuration reference for adding authentication services and middleware</reason>
+        <lines>40-85</lines>
+        <reason>✅ UPDATED: DI registration for IAuthService → AuthService, JWT authentication middleware, CORS policy with credentials allowed.</reason>
       </artifact>
       <artifact>
-        <path>apps/web/src/api/models.ts</path>
-        <kind>api-client</kind>
-        <symbol>modelsApi</symbol>
-        <lines>1-50</lines>
-        <reason>Reference for creating admin API client pattern with axios</reason>
+        <path>services/backend/LlmTokenPrice.API/appsettings.Development.json</path>
+        <kind>configuration</kind>
+        <symbol>AdminCredentials, JwtSettings</symbol>
+        <lines>20-35</lines>
+        <reason>✅ CONFIGURED: Hardcoded admin credentials (admin/admin123), JWT secret key (64-char secure random), Issuer/Audience, ExpiryHours: 24.</reason>
       </artifact>
       <artifact>
         <path>apps/web/src/App.tsx</path>
         <kind>router-config</kind>
         <symbol>App</symbol>
         <lines>1-100</lines>
-        <reason>Route configuration reference for adding admin protected routes</reason>
-      </artifact>
-      <artifact>
-        <path>apps/web/src/components/Layout.tsx</path>
-        <kind>component</kind>
-        <symbol>Layout</symbol>
-        <lines>1-50</lines>
-        <reason>Layout component pattern for creating AdminLayout with logout button</reason>
-      </artifact>
-      <artifact>
-        <path>services/backend/LlmTokenPrice.API/Controllers/ModelsController.cs</path>
-        <kind>controller</kind>
-        <symbol>ModelsController</symbol>
-        <lines>1-100</lines>
-        <reason>Reference controller pattern for creating AdminAuthController structure</reason>
-      </artifact>
-      <artifact>
-        <path>services/backend/LlmTokenPrice.Infrastructure/Data/AppDbContext.cs</path>
-        <kind>dbcontext</kind>
-        <symbol>AppDbContext</symbol>
-        <lines>1-50</lines>
-        <reason>Future reference if admin user table needs to be added post-MVP</reason>
+        <reason>✅ UPDATED: Route configuration with /admin/login (public) and /admin/* routes wrapped with ProtectedRoute component.</reason>
       </artifact>
     </code>
     <dependencies>
       <backend>
-        <package name="System.IdentityModel.Tokens.Jwt" version="latest" required="true">JWT token generation and validation</package>
-        <package name="Microsoft.AspNetCore.Authentication.JwtBearer" version="latest" required="true">JWT authentication middleware</package>
-        <package name="BCrypt.Net-Next" version="latest" required="false">Password hashing (optional for MVP with hardcoded credentials)</package>
+        <package name="System.IdentityModel.Tokens.Jwt" version="8.14.0" required="true">✅ INSTALLED: JWT token generation and validation</package>
+        <package name="Microsoft.AspNetCore.Authentication.JwtBearer" version="9.0.10" required="true">✅ INSTALLED: JWT authentication middleware</package>
+        <package name="Serilog.AspNetCore" version="9.0.0" required="true">✅ INSTALLED: Structured logging for authentication events</package>
       </backend>
       <frontend>
-        <package name="axios" version="existing" required="true">HTTP client for authentication API calls</package>
-        <package name="zustand" version="existing" required="true">Auth state management</package>
-        <package name="zod" version="existing" required="true">Login form validation</package>
-        <package name="react-router-dom" version="existing" required="true">Protected route implementation</package>
-        <package name="@tanstack/react-query" version="existing" required="false">Optional for auth state caching</package>
+        <package name="axios" version="^1.12.2" required="true">✅ INSTALLED: HTTP client for authentication API calls with withCredentials support</package>
+        <package name="zustand" version="^5.0.8" required="true">✅ INSTALLED: Auth state management</package>
+        <package name="zod" version="^4.1.12" required="true">✅ INSTALLED: Login form validation</package>
+        <package name="react-router-dom" version="^7.9.4" required="true">✅ INSTALLED: Protected route implementation and navigation</package>
+        <package name="react-hook-form" version="^7.65.0" required="false">Optional: Form state management for login</package>
       </frontend>
       <environment>
-        <variable name="JWT_SECRET_KEY" required="true">Secret key for signing JWT tokens (generate 32+ character random string)</variable>
-        <variable name="JWT_EXPIRATION_HOURS" required="false" default="24">Token expiration time in hours</variable>
-        <variable name="ADMIN_USERNAME" required="true">Hardcoded admin username for MVP</variable>
-        <variable name="ADMIN_PASSWORD" required="true">Hardcoded admin password for MVP (plaintext in dev, hashed in production)</variable>
+        <variable name="JWT_SECRET_KEY" required="true" configured="true">✅ CONFIGURED in appsettings.Development.json: 64-character secure random string</variable>
+        <variable name="JWT_EXPIRATION_HOURS" required="false" default="24" configured="true">✅ CONFIGURED: 24 hours in appsettings</variable>
+        <variable name="ADMIN_USERNAME" required="true" configured="true">✅ CONFIGURED in appsettings.Development.json: "admin"</variable>
+        <variable name="ADMIN_PASSWORD" required="true" configured="true">✅ CONFIGURED in appsettings.Development.json: "admin123" (plaintext for MVP)</variable>
       </environment>
     </dependencies>
   </artifacts>

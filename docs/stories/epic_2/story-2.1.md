@@ -1,6 +1,6 @@
 # Story 2.1: Admin Panel Authentication
 
-Status: In Progress
+Status: Done
 
 ## Story
 
@@ -19,49 +19,49 @@ so that only authorized users can manage model data.
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1: Create admin login page component** (AC: #1)
-  - [ ] 1.1: Create `AdminLoginPage.tsx` in `/frontend/src/pages/admin`
-  - [ ] 1.2: Add username and password input fields with form validation (Zod schema)
-  - [ ] 1.3: Add login button with loading state
-  - [ ] 1.4: Style with TailwindCSS for clean, professional appearance
-  - [ ] 1.5: Add error message display for failed authentication
+- [x] **Task 1: Create admin login page component** (AC: #1)
+  - [x] 1.1: Create `AdminLoginPage.tsx` in `/frontend/src/pages/admin`
+  - [x] 1.2: Add username and password input fields with form validation (Zod schema)
+  - [x] 1.3: Add login button with loading state
+  - [x] 1.4: Style with TailwindCSS for clean, professional appearance
+  - [x] 1.5: Add error message display for failed authentication
 
-- [ ] **Task 2: Implement backend authentication endpoint** (AC: #2, #3)
-  - [ ] 2.1: Create `AdminAuthController.cs` in `/backend/src/Backend.API/Controllers/Admin`
-  - [ ] 2.2: Implement `POST /api/admin/auth/login` endpoint
-  - [ ] 2.3: Add JWT token generation service using `System.IdentityModel.Tokens.Jwt`
-  - [ ] 2.4: Configure hardcoded admin credentials in appsettings (for MVP)
-  - [ ] 2.5: Set JWT secret key in appsettings (generate secure random key)
-  - [ ] 2.6: Return JWT token in HttpOnly cookie with 24-hour expiration
-  - [ ] 2.7: Add validation for username/password format
+- [x] **Task 2: Implement backend authentication endpoint** (AC: #2, #3)
+  - [x] 2.1: Create `AdminAuthController.cs` in `/backend/src/Backend.API/Controllers/Admin`
+  - [x] 2.2: Implement `POST /api/admin/auth/login` endpoint
+  - [x] 2.3: Add JWT token generation service using `System.IdentityModel.Tokens.Jwt`
+  - [x] 2.4: Configure hardcoded admin credentials in appsettings (for MVP)
+  - [x] 2.5: Set JWT secret key in appsettings (generate secure random key)
+  - [x] 2.6: Return JWT token in HttpOnly cookie with 24-hour expiration
+  - [x] 2.7: Add validation for username/password format
 
-- [ ] **Task 3: Implement authentication state management** (AC: #4)
-  - [ ] 3.1: Create `useAuth` hook in `/frontend/src/hooks`
-  - [ ] 3.2: Add auth API functions in `/frontend/src/api/admin.ts`
-  - [ ] 3.3: Store authentication state in Zustand store (`authStore.ts`)
-  - [ ] 3.4: Implement token storage in HttpOnly cookie (set by backend)
-  - [ ] 3.5: Add axios interceptor to include credentials in admin API requests
+- [x] **Task 3: Implement authentication state management** (AC: #4)
+  - [x] 3.1: Create `useAuth` hook in `/frontend/src/hooks`
+  - [x] 3.2: Add auth API functions in `/frontend/src/api/admin.ts`
+  - [x] 3.3: Store authentication state in Zustand store (`authStore.ts`)
+  - [x] 3.4: Implement token storage in HttpOnly cookie (set by backend)
+  - [x] 3.5: Add axios interceptor to include credentials in admin API requests
 
-- [ ] **Task 4: Implement protected routes** (AC: #5)
-  - [ ] 4.1: Create `ProtectedRoute` wrapper component
-  - [ ] 4.2: Check authentication status before rendering admin routes
-  - [ ] 4.3: Redirect to `/admin/login` if not authenticated
-  - [ ] 4.4: Wrap all admin panel routes with `ProtectedRoute`
-  - [ ] 4.5: Preserve intended destination URL for post-login redirect
+- [x] **Task 4: Implement protected routes** (AC: #5)
+  - [x] 4.1: Create `ProtectedRoute` wrapper component
+  - [x] 4.2: Check authentication status before rendering admin routes
+  - [x] 4.3: Redirect to `/admin/login` if not authenticated
+  - [x] 4.4: Wrap all admin panel routes with `ProtectedRoute`
+  - [x] 4.5: Preserve intended destination URL for post-login redirect
 
-- [ ] **Task 5: Implement logout functionality** (AC: #6)
-  - [ ] 5.1: Add logout button to admin layout header
-  - [ ] 5.2: Create `POST /api/admin/auth/logout` endpoint
-  - [ ] 5.3: Clear JWT cookie on backend logout
-  - [ ] 5.4: Clear auth state in frontend Zustand store
-  - [ ] 5.5: Redirect to login page after logout
+- [x] **Task 5: Implement logout functionality** (AC: #6)
+  - [x] 5.1: Add logout button to admin layout header
+  - [x] 5.2: Create `POST /api/admin/auth/logout` endpoint
+  - [x] 5.3: Clear JWT cookie on backend logout
+  - [x] 5.4: Clear auth state in frontend Zustand store
+  - [x] 5.5: Redirect to login page after logout
 
-- [ ] **Task 6: Add authentication testing**
-  - [ ] 6.1: Write unit tests for JWT generation service (xUnit)
-  - [ ] 6.2: Write integration tests for login endpoint (WebApplicationFactory)
-  - [ ] 6.3: Write frontend tests for login form (Vitest + Testing Library)
-  - [ ] 6.4: Test protected route redirection behavior
-  - [ ] 6.5: Test logout clears session correctly
+- [x] **Task 6: Add authentication testing**
+  - [x] 6.1: Write unit tests for JWT generation service (xUnit)
+  - [x] 6.2: Write integration tests for login endpoint (WebApplicationFactory)
+  - [x] 6.3: Write frontend tests for login form (Vitest + Testing Library)
+  - [x] 6.4: Test protected route redirection behavior
+  - [x] 6.5: Test logout clears session correctly
 
 ## Dev Notes
 
@@ -190,6 +190,7 @@ Cookie: {
 ### Context Reference
 
 - `docs/stories/epic_2/story-context-2.1.xml` (Generated: 2025-10-17)
+- `docs/stories/epic_2/story-context-2.1.xml` (Updated: 2025-10-17 - with implementation details and ✅ status markers)
 
 ### Agent Model Used
 
