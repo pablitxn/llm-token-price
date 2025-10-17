@@ -451,6 +451,139 @@ docker compose ps
 - Verify `POSTGRES_PASSWORD` in `docker-compose.yml` matches `Password` in connection string
 - Reset: `docker compose down -v && docker compose up -d`
 
+## 🌐 API Documentation
+
+The backend API is built with ASP.NET Core and provides RESTful endpoints for all platform functionality.
+
+### Base URL
+
+**Development:** `http://localhost:5000/api`
+
+### API Endpoints
+
+#### Health Check
+```
+GET /api/health
+```
+
+**Description:** Check the health status of the backend services (database and Redis).
+
+**Response Status Codes:**
+- `200 OK` - At least database is healthy (service is functional)
+- `503 Service Unavailable` - Database is down (service cannot function)
+
+**Response States:**
+- **healthy**: Both database and Redis are connected
+- **degraded**: Only database is connected (cache unavailable but functional)
+- **unhealthy**: Database is down (service cannot function)
+
+**Response Example (Healthy):**
+```json
+{
+  "status": "healthy",
+  "services": {
+    "database": {
+      "status": "ok",
+      "latencyMs": 38.54
+    },
+    "redis": {
+      "status": "ok",
+      "latencyMs": 3.42
+    }
+  },
+  "timestamp": "2025-10-16T23:58:22.0614556Z"
+}
+```
+
+**Response Example (Degraded - Redis Down):**
+```json
+{
+  "status": "degraded",
+  "services": {
+    "database": {
+      "status": "ok",
+      "latencyMs": 56.17
+    },
+    "redis": {
+      "status": "error",
+      "latencyMs": 0
+    }
+  },
+  "timestamp": "2025-10-16T23:59:11.0303781Z"
+}
+```
+
+**Response Example (Unhealthy - Database Down):**
+```json
+{
+  "status": "unhealthy",
+  "services": {
+    "database": {
+      "status": "error",
+      "latencyMs": 1.46
+    },
+    "redis": {
+      "status": "ok",
+      "latencyMs": 0.27
+    }
+  },
+  "timestamp": "2025-10-17T00:01:45.2909397Z"
+}
+```
+
+### Swagger/OpenAPI Documentation
+
+Interactive API documentation is available via Swagger UI (development environment only).
+
+**Swagger UI:** `http://localhost:5000/swagger`
+
+**Features:**
+- Complete API endpoint documentation
+- Request/response schema definitions
+- "Try it out" functionality for testing endpoints
+- Download OpenAPI specification: `http://localhost:5000/swagger/v1/swagger.json`
+
+### CORS Configuration
+
+The API is configured to accept requests from the frontend development server.
+
+**Allowed Origins (Development):**
+- `http://localhost:5173` (Vite dev server)
+
+**Production Note:** CORS origins should be configured via environment variables for production deployments.
+
+### JSON Response Format
+
+All API responses use **camelCase** property naming and System.Text.Json serialization.
+
+**Configuration:**
+- Property naming: camelCase (e.g., `"latencyMs"` not `"LatencyMs"`)
+- Null handling: Null values are excluded from responses
+- Enums: Serialized as strings (not integers)
+- Timestamps: ISO 8601 format in UTC
+
+### API Troubleshooting
+
+**CORS Errors in Browser Console:**
+- Verify the frontend is running on `http://localhost:5173`
+- Check that the origin matches exactly (no trailing slash)
+- Ensure `app.UseCors()` middleware is placed before `app.UseAuthorization()` in Program.cs
+
+**503 Service Unavailable on /api/health:**
+- Database connection is down
+- Check Docker Compose: `docker compose ps`
+- Verify PostgreSQL is healthy: `docker logs llmpricing_postgres`
+
+**Swagger UI Not Loading (404 Error):**
+- Swagger is only available in Development environment
+- Verify `ASPNETCORE_ENVIRONMENT=Development` is set
+- Check middleware order in Program.cs (Swagger before UseRouting)
+
+**API Not Responding:**
+- Verify API is running: `curl http://localhost:5000/api/health`
+- Check port 5000 is not in use: `lsof -i:5000`
+- Review API logs for startup errors
+
 ## 🔨 Building for Production
 
 ### Backend

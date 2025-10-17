@@ -2,15 +2,15 @@
 
 **Project:** llm-token-price
 **Created:** 2025-10-16
-**Last Updated:** 2025-10-16
+**Last Updated:** 2025-10-16 (Epic 3 stories created and approved)
 
 ---
 
 ## Current Status
 
 **Current Phase:** 4-Implementation → In Progress
-**Current Workflow:** story-ready (Epic 1 Complete - All 10 Stories Approved) - Complete
-**Overall Progress:** 78%
+**Current Workflow:** story-ready (Epic 3 - All 15 Stories Approved) - Complete
+**Overall Progress:** 82%
 
 **Project Level:** 4 (Enterprise Scale)
 **Project Type:** Web Application
@@ -131,21 +131,6 @@
 | 2    | 10    | 2.10 | Create Benchmark Score Entry Form | story-2.10.md |
 | 2    | 11    | 2.11 | Add Bulk Benchmark Import via CSV | story-2.11.md |
 | 2    | 12    | 2.12 | Add Timestamp Tracking and Display | story-2.12.md |
-| 3    | 1     | 3.1 | Create Public Homepage with Basic Layout | story-3.1.md |
-| 3    | 2     | 3.2 | Fetch and Display Models in Basic Table | story-3.2.md |
-| 3    | 3     | 3.3 | Integrate TanStack Table for Advanced Features | story-3.3.md |
-| 3    | 4     | 3.4 | Implement Column Sorting | story-3.4.md |
-| 3    | 5     | 3.5 | Add Provider Filter | story-3.5.md |
-| 3    | 6     | 3.6 | Add Capabilities Filters | story-3.6.md |
-| 3    | 7     | 3.7 | Add Price Range Filter | story-3.7.md |
-| 3    | 8     | 3.8 | Implement Search Functionality | story-3.8.md |
-| 3    | 9     | 3.9 | Display Benchmark Scores in Table | story-3.9.md |
-| 3    | 10    | 3.10 | Add Checkbox Selection for Models | story-3.10.md |
-| 3    | 11    | 3.11 | Create Comparison Basket UI | story-3.11.md |
-| 3    | 12    | 3.12 | Implement Table Pagination or Virtual Scrolling | story-3.12.md |
-| 3    | 13    | 3.13 | Style and Polish Table Interface | story-3.13.md |
-| 3    | 14    | 3.14 | Add Context Window and Capabilities Icons | story-3.14.md |
-| 3    | 15    | 3.15 | Optimize API Response and Caching | story-3.15.md |
 | 4    | 1     | 4.1 | Create Model Detail Modal Component | story-4.1.md |
 | 4    | 2     | 4.2 | Add Overview Tab with Model Specifications | story-4.2.md |
 | 4    | 3     | 4.3 | Create Backend API for Model Detail | story-4.3.md |
@@ -203,7 +188,7 @@
 | 8    | 9     | 8.9 | Optimize Performance for Mobile Networks | story-8.9.md |
 | 8    | 10    | 8.10 | Add Progressive Web App (PWA) Features | story-8.10.md |
 
-**Total in backlog:** 83 stories
+**Total in backlog:** 68 stories (Epic 3 moved to DRAFTED)
 
 ### TODO (Needs Drafting)
 
@@ -211,9 +196,27 @@
 - **Status:** Next epic to draft
 - **Action:** SM should begin drafting Epic 2 stories when ready
 
-### DRAFTED (Needs Review)
+### DRAFTED (Epic 3 - Ready for Development)
 
-(No stories currently in draft - Epic 1 fully approved)
+**Epic 3: Public Comparison Table Interface** - All 15 stories drafted and approved
+
+- **Story ID:** 3.1 | **Title:** Create Public Homepage with Basic Layout | **File:** `docs/stories/story-3.1.md` | **Status:** Ready | **Approved:** 2025-10-16
+- **Story ID:** 3.2 | **Title:** Fetch and Display Models in Basic Table | **File:** `docs/stories/story-3.2.md` | **Status:** Ready | **Approved:** 2025-10-16
+- **Story ID:** 3.3 | **Title:** Integrate TanStack Table for Advanced Features | **File:** `docs/stories/story-3.3.md` | **Status:** Ready | **Approved:** 2025-10-16
+- **Story ID:** 3.4 | **Title:** Implement Column Sorting | **File:** `docs/stories/story-3.4.md` | **Status:** Ready | **Approved:** 2025-10-16
+- **Story ID:** 3.5 | **Title:** Add Provider Filter | **File:** `docs/stories/story-3.5.md` | **Status:** Ready | **Approved:** 2025-10-16
+- **Story ID:** 3.6 | **Title:** Add Capabilities Filters | **File:** `docs/stories/story-3.6.md` | **Status:** Ready | **Approved:** 2025-10-16
+- **Story ID:** 3.7 | **Title:** Add Price Range Filter | **File:** `docs/stories/story-3.7.md` | **Status:** Ready | **Approved:** 2025-10-16
+- **Story ID:** 3.8 | **Title:** Implement Search Functionality | **File:** `docs/stories/story-3.8.md` | **Status:** Ready | **Approved:** 2025-10-16
+- **Story ID:** 3.9 | **Title:** Display Benchmark Scores in Table | **File:** `docs/stories/story-3.9.md` | **Status:** Ready | **Approved:** 2025-10-16
+- **Story ID:** 3.10 | **Title:** Add Checkbox Selection for Models | **File:** `docs/stories/story-3.10.md` | **Status:** Ready | **Approved:** 2025-10-16
+- **Story ID:** 3.11 | **Title:** Create Comparison Basket UI | **File:** `docs/stories/story-3.11.md` | **Status:** Ready | **Approved:** 2025-10-16
+- **Story ID:** 3.12 | **Title:** Implement Table Pagination or Virtual Scrolling | **File:** `docs/stories/story-3.12.md` | **Status:** Ready | **Approved:** 2025-10-16
+- **Story ID:** 3.13 | **Title:** Style and Polish Table Interface | **File:** `docs/stories/story-3.13.md` | **Status:** Ready | **Approved:** 2025-10-16
+- **Story ID:** 3.14 | **Title:** Add Context Window and Capabilities Icons | **File:** `docs/stories/story-3.14.md` | **Status:** Ready | **Approved:** 2025-10-16
+- **Story ID:** 3.15 | **Title:** Optimize API Response and Caching | **File:** `docs/stories/story-3.15.md` | **Status:** Ready | **Approved:** 2025-10-16
+
+**Total Epic 3 stories ready:** 15 stories
 
 ### IN PROGRESS (Approved for Development - Epic 1 Complete)
 
@@ -342,6 +345,7 @@ LLM Pricing Calculator - A comprehensive web application for comparing LLM model
 - **2025-10-16**: Completed story-ready workflow for Stories 1.1-1.5 (batch approval). All 5 story files updated from Status: Draft → Status: Ready. Stories moved from DRAFTED section → IN PROGRESS section in workflow status. These stories form complete backend foundation cluster: Story 1.1 (monorepo structure, Git, README), Story 1.2 (build tools, NuGet/npm packages, Vite config, TypeScript), Story 1.3 (PostgreSQL + TimescaleDB Docker, DbContext, EF migrations infrastructure), Story 1.4 (4 entity classes with EF Core configurations, InitialSchema migration), Story 1.5 (Redis cache with ICacheRepository port, graceful degradation). All stories approved for sequential development. Total: 153 subtasks across 5 stories covering complete backend foundation (infrastructure + data + caching layers). Progress: 70% → 72%. Next: Load DEV agent to begin implementing Story 1.1, or continue drafting remaining Epic 1 stories (1.6-1.10) in parallel with development.
 - **2025-10-16**: Completed create-story workflow for remaining Epic 1 stories (1.6-1.10). Epic 1 now fully drafted with all 10 stories complete. Story 1.6 (Basic API Structure): HealthController with database/Redis health checks, CORS configuration for frontend connectivity, Swagger/OpenAPI documentation, JSON serialization options (7 task groups, 28 subtasks). Story 1.7 (Frontend Application Shell): React entry point with Query Client and Router providers, App component with route configuration (HomePage, CalculatorPage, ComparisonPage), Layout component (Header/Footer/Main), global TailwindCSS styles, API client utility (7 task groups, 27 subtasks). Story 1.8 (CI/CD Pipeline): GitHub Actions workflows for backend (dotnet test with PostgreSQL/Redis services) and frontend (npm ci, type-check, lint, build), xUnit test project, ESLint configuration, build status badges, branch protection rules (6 task groups, 25 subtasks). Story 1.9 (Seed Database): SampleDataSeeder with 10 models (OpenAI, Anthropic, Google, Meta, Mistral), 5 benchmark definitions, 30+ benchmark scores, idempotency check, automatic seeding on dev startup (5 task groups, 20 subtasks). Story 1.10 (GET API for Models): ModelDto/CapabilityDto/BenchmarkScoreDto records, IModelRepository interface, ModelRepository implementation, IModelQueryService interface, ModelQueryService implementation, ModelsController with GET /api/models endpoint, full stack integration test (7 task groups, 26 subtasks). **Epic 1 Summary:** 10 stories, 279 total subtasks, covering complete project foundation (infrastructure, data models, caching, API, frontend shell, CI/CD, sample data). Stories 1.1-1.5 approved (Ready), stories 1.6-1.10 drafted (need review). Progress: 72% → 75%. Next: Review and approve stories 1.6-1.10, then begin implementation with DEV agent.
 - **2025-10-16**: Completed story-ready workflow for Stories 1.6-1.10 (batch approval). All 5 story files updated from Status: Draft → Status: Ready. Stories moved from DRAFTED section → IN PROGRESS section. **Epic 1 now 100% approved** - all 10 stories ready for sequential development. Stories 1.6-1.10 complete full stack foundation: Story 1.6 (HealthController + CORS + Swagger), Story 1.7 (React app shell + routing + API client), Story 1.8 (GitHub Actions CI/CD for backend/frontend + xUnit tests + ESLint), Story 1.9 (database seeding with 10 models across 5 providers), Story 1.10 (GET /api/models endpoint with DTOs, repository pattern, full stack integration test). Total Epic 1: 279 subtasks covering monorepo structure, build tools, database infrastructure, entity models, caching, API endpoints, frontend shell, CI/CD automation, and sample data. Progress: 75% → 78%. **Next: Load DEV agent and begin implementing Story 1.1** (Initialize Project Repository) - Epic 1 planning complete, ready for execution.
+- **2025-10-16**: Completed create-story workflow for all 15 Epic 3 stories (Public Comparison Table Interface). All stories drafted with comprehensive acceptance criteria, task breakdowns, and dev notes. Epic 3 transforms backend infrastructure into user-facing comparison tool with: Stories 3.1-3.2 (homepage layout + basic table display), Stories 3.3-3.4 (TanStack Table integration + sorting), Stories 3.5-3.8 (comprehensive filtering: provider, capabilities, price range, search), Stories 3.9-3.11 (benchmark display + model selection + comparison basket), Stories 3.12-3.15 (pagination/virtual scrolling + styling + capability icons + caching optimization). Immediately followed by story-ready workflow - all 15 stories approved (Status: Ready). Stories moved BACKLOG → DRAFTED section. Total backlog reduced: 83 → 68 stories. **Epic 3 now 100% ready for development** (pending Epic 1-2 completion). Multi-layer caching strategy (client → Redis → PostgreSQL) designed for <2s page load with 100+ models. Progress: 78% → 82%. Next: Continue with Epic 1 implementation, or draft Epic 2 stories.
 
 ---
 
