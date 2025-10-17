@@ -1,9 +1,13 @@
+using System.Text;
 using LlmTokenPrice.Application.Services;
 using LlmTokenPrice.Domain.Repositories;
+using LlmTokenPrice.Infrastructure.Auth;
 using LlmTokenPrice.Infrastructure.Caching;
 using LlmTokenPrice.Infrastructure.Data;
 using LlmTokenPrice.Infrastructure.Repositories;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -26,13 +30,14 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// CORS configuration
+// CORS configuration (must allow credentials for JWT cookies)
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
         policy.WithOrigins("http://localhost:5173")
               .AllowAnyHeader()
-              .AllowAnyMethod());
+              .AllowAnyMethod()
+              .AllowCredentials()); // Required for HttpOnly cookies
 });
 
 // Database configuration
@@ -99,6 +104,41 @@ builder.Services.AddScoped<IModelRepository, ModelRepository>();
 
 // Application services (scoped)
 builder.Services.AddScoped<IModelQueryService, ModelQueryService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+
+// JWT Authentication configuration
+var jwtSecret = builder.Configuration["Jwt:SecretKey"]
+    ?? throw new InvalidOperationException("JWT SecretKey is not configured in appsettings");
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
+        ClockSkew = TimeSpan.Zero // No tolerance for expired tokens
+    };
+
+    // Read token from cookie instead of Authorization header
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            context.Token = context.Request.Cookies["admin_token"];
+            return Task.CompletedTask;
+        }
+    };
+});
 
 var app = builder.Build();
 
@@ -110,7 +150,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseCors(); // Must be before UseAuthorization
+app.UseCors(); // Must be before UseAuthentication
+app.UseAuthentication(); // Must be before UseAuthorization
 app.UseAuthorization();
 app.MapControllers();
 

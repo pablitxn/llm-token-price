@@ -2,6 +2,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\LlmTokenPrice.Domain\LlmTokenPrice.Domain.csproj" />
+      <ProjectReference Include="..\LlmTokenPrice.Application\LlmTokenPrice.Application.csproj" />
     </ItemGroup>
 
     <ItemGroup>
@@ -10,8 +11,10 @@
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         <PrivateAssets>all</PrivateAssets>
       </PackageReference>
+      <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.10" />
       <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
       <PackageReference Include="StackExchange.Redis" Version="2.9.32" />
+      <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.14.0" />
     </ItemGroup>
 
     <PropertyGroup>
