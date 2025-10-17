@@ -585,20 +585,491 @@ performance.measure('chart-render', 'chart-start', 'chart-end');
 
 ## Dependencies and Integrations
 
-{{dependencies_integrations}}
+**Frontend Dependencies (package.json):**
+
+| Package | Version | Purpose | Epic 5 Usage |
+|---------|---------|---------|--------------|
+| **chart.js** | ^4.5.1 | Chart rendering library | Core dependency - all benchmark and pricing visualizations |
+| **react-chartjs-2** | ^5.3.0 | React wrapper for Chart.js | Provides React components: `<Bar />`, `<Line />` |
+| **@tanstack/react-query** | ^5.90.5 | Server state management | Caching comparison API responses, automatic refetching |
+| **zustand** | ^5.0.8 | Client state management | Comparison basket state, selected metrics, chart type |
+| **react-router-dom** | ^7.9.4 | Routing | `/compare` route, URL state management (`?models=...`) |
+| **axios** | ^1.12.2 | HTTP client | API calls to `/api/models/compare` |
+| **lucide-react** | ^0.546.0 | Icon library | Checkmark icons (CapabilityMatrix), UI controls |
+| **date-fns** | ^4.1.0 | Date formatting | Format timestamps in metadata |
+
+**Backend Dependencies (.csproj - Inherited from Epic 1):**
+
+```xml
+<ItemGroup>
+  <!-- Core Framework -->
+  <PackageReference Include="Microsoft.AspNetCore.App" />
+
+  <!-- Database -->
+  <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.0" />
+
+  <!-- Caching -->
+  <PackageReference Include="StackExchange.Redis" Version="2.7.10" />
+
+  <!-- Logging -->
+  <PackageReference Include="Serilog.AspNetCore" Version="8.0.0" />
+</ItemGroup>
+```
+
+**New Dependencies Required for Epic 5:**
+
+None - All required packages already installed in Epic 1/3.
+
+**Integration Points:**
+
+1. **Chart.js Configuration:**
+   ```typescript
+   // Story 5.5: Chart.js setup
+   import {
+     Chart as ChartJS,
+     CategoryScale,
+     LinearScale,
+     BarElement,
+     Title,
+     Tooltip,
+     Legend
+   } from 'chart.js';
+
+   ChartJS.register(
+     CategoryScale,
+     LinearScale,
+     BarElement,
+     Title,
+     Tooltip,
+     Legend
+   );
+   ```
+
+2. **React Query Integration:**
+   ```typescript
+   // src/hooks/useComparisonData.ts
+   import { useQuery } from '@tanstack/react-query';
+
+   export const useComparisonData = (modelIds: string[]) => {
+     return useQuery({
+       queryKey: ['comparison', modelIds.sort().join(',')],
+       queryFn: () => comparisonApi.fetchComparison(modelIds),
+       enabled: modelIds.length >= 2 && modelIds.length <= 5,
+       staleTime: 5 * 60 * 1000, // 5 minutes
+       gcTime: 10 * 60 * 1000,   // 10 minutes garbage collection
+     });
+   };
+   ```
+
+3. **Zustand Store Integration:**
+   ```typescript
+   // src/store/comparisonStore.ts
+   import { create } from 'zustand';
+   import { persist } from 'zustand/middleware';
+
+   export const useComparisonStore = create(
+     persist(
+       (set) => ({
+         selectedMetrics: ['mmlu', 'humaneval', 'gsm8k', 'hellaswag', 'math'], // Default top 5
+         chartType: 'bar' as const,
+         toggleMetric: (benchmarkId: string) =>
+           set((state) => ({
+             selectedMetrics: state.selectedMetrics.includes(benchmarkId)
+               ? state.selectedMetrics.filter(id => id !== benchmarkId)
+               : [...state.selectedMetrics, benchmarkId]
+           })),
+         setChartType: (type) => set({ chartType: type }),
+       }),
+       { name: 'comparison-preferences' }
+     )
+   );
+   ```
+
+4. **CSV Export (Client-Side, No Dependencies):**
+   ```typescript
+   // src/utils/exportCSV.ts
+   export const exportComparisonToCSV = (data: ExportData) => {
+     const csv = generateCSV(data);
+     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+     const url = URL.createObjectURL(blob);
+     const link = document.createElement('a');
+     link.href = url;
+     link.download = `comparison-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+     link.click();
+     URL.revokeObjectURL(url);
+   };
+   ```
+
+**External Service Dependencies:**
+
+- **Redis (Upstash)**: Caching layer (inherited from Epic 1, Story 1.5)
+- **PostgreSQL**: Data source (inherited from Epic 1, Story 1.3)
+- No new external services required for Epic 5
 
 ## Acceptance Criteria (Authoritative)
 
-{{acceptance_criteria}}
+**AC-5.1: Comparison Page Route and URL State**
+- `/compare` route accessible and renders without errors
+- URL accepts `?models=id1,id2,id3` query parameters (2-5 GUIDs)
+- Invalid URLs redirect to error state with clear message
+- Browser back/forward buttons update comparison state correctly
+- URL updates when models added/removed dynamically
+
+**AC-5.2: Model Cards Display**
+- 2-5 model cards render horizontally (or stacked on mobile <768px)
+- Each card displays: name, provider, input/output pricing, context window, key capabilities
+- Cards have equal width for vertical alignment
+- Remove button (X) on each card removes model from comparison and updates URL
+- Empty placeholder shown if <2 models selected with "Add Model" prompt
+
+**AC-5.3: Comparison Table Structure**
+- Table displays attributes as rows, models as columns
+- Rows include: Provider, Input Price, Output Price, Context Window, Max Output, all capability flags, key benchmarks
+- Vertical alignment maintained across all columns
+- Differences highlighted: cheapest price (green text), highest score (green text)
+- Table scrollable if >10 attribute rows
+
+**AC-5.4: Benchmark Comparison Section**
+- All available benchmarks listed with scores for each selected model
+- Benchmarks grouped by category with collapsible sections (Reasoning, Code, Math, Language, Multimodal)
+- Highest score in each row highlighted (bold + green)
+- Missing scores displayed as "N/A" (not blank or 0)
+- Test date and source URL shown if available
+
+**AC-5.5: Chart.js Integration**
+- Chart.js library loaded and initialized without console errors
+- Reusable `BenchmarkChart` component created
+- Chart responsive (adapts to container width)
+- Chart renders on mobile devices without horizontal scroll
+
+**AC-5.6: Benchmark Bar Chart**
+- Grouped bar chart displays benchmark scores (X-axis: benchmarks, Y-axis: scores)
+- One bar per model for each benchmark (color-coded by model)
+- Top 5 benchmarks shown by default
+- Legend identifies which color represents which model
+- Chart readable on all screen sizes (labels don't overlap)
+
+**AC-5.7: Metric Selector**
+- Multi-select dropdown above chart lists all available benchmarks
+- Default selection: top 5 key benchmarks (MMLU, HumanEval, GSM8K, HellaSwag, MATH)
+- Selecting/deselecting benchmark updates chart in real-time (<300ms)
+- "Select All" / "Deselect All" buttons functional
+- Selection persisted in sessionStorage
+
+**AC-5.8: Pricing Comparison Visualization**
+- Pricing chart shows input price, output price, total for each model
+- Bars color-coded (input: blue, output: green)
+- Cheapest model highlighted with border or badge
+- Cost difference vs cheapest shown as percentage label
+
+**AC-5.9: Capabilities Matrix**
+- Grid/table with capabilities as rows, models as columns
+- Checkmark icon (✓) if supported, X icon or empty if not
+- Green checkmark, gray X for visual clarity
+- Capabilities: Function Calling, Vision, Audio, Streaming, JSON Mode
+
+**AC-5.10: Chart Type Switcher**
+- Toggle buttons: "Bar Chart" (default), "Grouped Bar"
+- Clicking button re-renders chart in selected type
+- Chart type persists during session
+- Smooth transition animation (<500ms)
+
+**AC-5.11: Chart Interactivity**
+- Hovering over bar shows tooltip with exact value (model name, benchmark name, score)
+- Clicking legend item toggles model visibility in chart
+- Smooth transitions when data changes (300ms)
+- Tooltips positioned to avoid screen edges
+
+**AC-5.12: CSV Export Functionality**
+- "Export" button triggers CSV download
+- CSV format: Header row (Model1, Model2, Model3...), Data rows (Attribute, Value1, Value2, Value3...)
+- Filename: `comparison-YYYY-MM-DD.csv`
+- Success toast message confirms export
+- CSV opens correctly in Excel/Google Sheets
+
+**AC-5.13: Dynamic Model Management**
+- "Add Model" button opens searchable modal
+- Modal lists all available models (excludes already selected)
+- Search filters models by name/provider (case-insensitive)
+- Selecting model adds to comparison (max 5 enforced)
+- URL updates when model added/removed
+
+**AC-5.14: Performance Optimization**
+- Comparison page loads in <2 seconds for 5 models (Lighthouse score >90)
+- Chart renders in <1 second after data received
+- No visible jank when adding/removing models (60fps maintained)
+- API batch fetch completes in <300ms
+- Interactions feel instant (debounced updates <100ms)
 
 ## Traceability Mapping
 
-{{traceability_mapping}}
+| AC | PRD Req | Spec Section | Component/API | Test Idea |
+|----|---------|--------------|---------------|-----------|
+| **AC-5.1** | FR009 (select 2-5 models for comparison) | Workflows & Sequencing | `ComparisonPage`, React Router | E2E: Navigate from table with 3 selected models, verify URL |
+| **AC-5.2** | FR009 | Services & Modules | `ModelCard`, `useComparisonData` | Unit: Render 5 cards, verify equal widths. E2E: Click X, verify model removed |
+| **AC-5.3** | FR009 | Data Models | `ComparisonTable`, `ComparisonTableRow` | Integration: Verify vertical alignment, highlight cheapest price |
+| **AC-5.4** | FR011 (benchmark visualization) | Services & Modules | `BenchmarkChart`, benchmark grouping logic | Unit: Group benchmarks by category, verify collapsible sections |
+| **AC-5.5** | FR011 | Dependencies | Chart.js registration | Unit: Verify Chart.js initializes, no console errors |
+| **AC-5.6** | FR011 | APIs & Interfaces | `BenchmarkChart`, `ChartDataDto` | Visual regression: Verify grouped bars, legend colors |
+| **AC-5.7** | FR011 | Services & Modules | `MetricSelector`, `useComparisonStore` | Integration: Toggle metrics, verify chart updates <300ms |
+| **AC-5.8** | FR009 (pricing comparison) | Services & Modules | Pricing chart component | Unit: Verify cost calculation, cheapest model badge |
+| **AC-5.9** | FR009 (capability comparison) | Services & Modules | `CapabilityMatrix` | Visual regression: Verify checkmark grid, color coding |
+| **AC-5.10** | FR011 | Services & Modules | Chart type switcher UI | E2E: Toggle chart types, verify persistence |
+| **AC-5.11** | FR011 | Dependencies | Chart.js tooltip/legend config | E2E: Hover over bar, click legend, verify interactions |
+| **AC-5.12** | (Export enhancement) | Workflows & Sequencing | CSV export utility | Integration: Export CSV, parse file, verify structure |
+| **AC-5.13** | FR009 | Workflows & Sequencing | Add Model modal, URL state | E2E: Add model via modal, verify URL updates, max 5 enforced |
+| **AC-5.14** | FR032 (page load <2s), FR035 (chart <1s) | NFR Performance | All components, batch API | Performance: Lighthouse audit, chart render timing |
+
+**Requirements Coverage:**
+
+- **FR009 (Model Comparison)**: AC-5.1, AC-5.2, AC-5.3, AC-5.8, AC-5.9, AC-5.13
+- **FR011 (Visualization)**: AC-5.4, AC-5.5, AC-5.6, AC-5.7, AC-5.10, AC-5.11
+- **FR032 (Load Time)**: AC-5.14
+- **FR035 (Chart Rendering)**: AC-5.14
+- **Export (Enhancement)**: AC-5.12
+
+**Story-to-AC Mapping:**
+
+| Story | Acceptance Criteria Covered |
+|-------|----------------------------|
+| Story 5.1 | AC-5.1 (route, URL state) |
+| Story 5.2 | AC-5.2 (model cards) |
+| Story 5.3 | AC-5.3 (comparison table) |
+| Story 5.4 | AC-5.4 (benchmark section) |
+| Story 5.5 | AC-5.5 (Chart.js setup) |
+| Story 5.6 | AC-5.6 (bar chart) |
+| Story 5.7 | AC-5.7 (metric selector) |
+| Story 5.8 | AC-5.8 (pricing visualization) |
+| Story 5.9 | AC-5.9 (capability matrix) |
+| Story 5.10 | AC-5.10 (chart type switcher) |
+| Story 5.11 | AC-5.11 (chart interactions) |
+| Story 5.12 | AC-5.12 (CSV export) |
+| Story 5.13 | AC-5.13 (add/remove models) |
+| Story 5.14 | AC-5.14 (performance) |
 
 ## Risks, Assumptions, Open Questions
 
-{{risks_assumptions_questions}}
+**Risks:**
+
+| ID | Risk | Likelihood | Impact | Mitigation |
+|----|------|------------|--------|------------|
+| **R-5.1** | Chart.js bundle size increases page load time | Medium | Medium | Tree-shake to include only bar chart module (~30KB vs 180KB). Lazy load chart component below fold. |
+| **R-5.2** | Chart rendering slow with many benchmarks (>20) | Low | High | Default to top 5 benchmarks. Implement debounced updates (300ms). Add "Show More" progressive disclosure. |
+| **R-5.3** | Mobile chart readability poor with >3 models | Medium | Medium | Horizontal scroll for >3 models on mobile. Reduce font sizes on small screens. Consider card-based layout for mobile. |
+| **R-5.4** | CSV export fails in Safari due to Blob API quirks | Low | Low | Test across browsers (Chrome, Firefox, Safari). Use polyfill if needed. Fallback to data URI method. |
+| **R-5.5** | URL length exceeds browser limit with 5 model GUIDs | Very Low | Medium | Use short IDs if possible. Base64 encode model IDs. Test with max-length URLs (2048 chars). |
+| **R-5.6** | Missing benchmark data creates confusing empty charts | Medium | Medium | Hide benchmarks with >50% missing data. Display "N/A" tooltip. Show data completeness indicator. |
+
+**Assumptions:**
+
+| ID | Assumption | Validation Method |
+|----|------------|-------------------|
+| **A-5.1** | Users primarily compare 2-3 models (not 5) | Analytics tracking: 80% of comparisons use 2-3 models |
+| **A-5.2** | Chart.js performance adequate for 5 models × 5 benchmarks | Performance testing: Chart renders in <1s on mid-tier devices |
+| **A-5.3** | All models have at least 3 benchmark scores | Data quality check: 95% of models have ≥3 scores in production data |
+| **A-5.4** | Users understand grouped bar charts without tutorial | User testing: 80% of users correctly interpret chart without help |
+| **A-5.5** | CSV export sufficient (PNG/PDF not needed for MVP) | User feedback: <20% request image export in first 3 months |
+| **A-5.6** | Comparison basket state syncs correctly between table and comparison page | Integration testing: State consistency verified across navigation |
+
+**Open Questions:**
+
+| ID | Question | Owner | Deadline | Resolution |
+|----|----------|-------|----------|------------|
+| **Q-5.1** | Should comparison page show historical price changes for selected models? | PM | Before Story 5.8 | **Deferred to Phase 2** - Requires TimescaleDB price history (not in Epic 1) |
+| **Q-5.2** | Do we need radar charts for capability visualization? | UX Designer | Before Story 5.10 | **No for MVP** - Bar charts sufficient, radar charts added in future if user feedback requests |
+| **Q-5.3** | Should users be able to save/bookmark comparisons? | PM | Before Story 5.13 | **Phase 2 feature** - Requires user accounts. MVP uses URL sharing only. |
+| **Q-5.4** | What color palette for Chart.js? Match TailwindCSS theme? | UX Designer | Before Story 5.6 | **Use TailwindCSS colors** - Green-500, Blue-500, Purple-500, Orange-500, Pink-500 for consistency |
+| **Q-5.5** | Should charts update live if model data changes (admin updates)? | Architect | Before Story 5.14 | **No live updates** - TanStack Query refetch on window focus (5min stale time) is sufficient |
 
 ## Test Strategy Summary
 
-{{test_strategy}}
+**Testing Pyramid for Epic 5:**
+
+```
+         /\
+        /  \  E2E (5%)
+       /____\
+      /      \  Integration (25%)
+     /________\
+    /          \  Unit (70%)
+   /____________\
+```
+
+**Unit Tests (70% coverage target):**
+
+| Component | Test Cases | Tools |
+|-----------|------------|-------|
+| **useComparisonData hook** | Query key generation, enabled condition, cache behavior | Vitest, React Testing Library |
+| **comparisonStore** | Add/remove model, toggle metric, persist state | Vitest, Zustand testing utilities |
+| **CSV export utility** | Header generation, row formatting, special char escaping | Vitest |
+| **Chart data transformer** | Transform `ModelDto[]` to `ChartDataDto`, handle missing scores | Vitest |
+| **MetricSelector** | Multi-select logic, "Select All" functionality | Vitest, React Testing Library |
+| **CapabilityMatrix** | Grid rendering, checkmark logic for true/false/null | Vitest, React Testing Library |
+
+**Example Unit Test:**
+
+```typescript
+// src/utils/chartDataTransformer.test.ts
+import { describe, it, expect } from 'vitest';
+import { transformToChartData } from './chartDataTransformer';
+
+describe('transformToChartData', () => {
+  it('creates grouped bar chart data from models and benchmarks', () => {
+    const models = [
+      { id: '1', name: 'GPT-4', benchmarkScores: [{ benchmarkId: 'mmlu', score: 86.4 }] },
+      { id: '2', name: 'Claude 3', benchmarkScores: [{ benchmarkId: 'mmlu', score: 86.8 }] },
+    ];
+    const selectedBenchmarks = ['mmlu'];
+
+    const result = transformToChartData(models, selectedBenchmarks);
+
+    expect(result.labels).toEqual(['MMLU']);
+    expect(result.datasets).toHaveLength(2);
+    expect(result.datasets[0].data).toEqual([86.4]);
+    expect(result.datasets[1].data).toEqual([86.8]);
+  });
+
+  it('handles missing benchmark scores with null', () => {
+    const models = [
+      { id: '1', name: 'GPT-4', benchmarkScores: [] }, // Missing MMLU
+    ];
+    const selectedBenchmarks = ['mmlu'];
+
+    const result = transformToChartData(models, selectedBenchmarks);
+
+    expect(result.datasets[0].data).toEqual([null]);
+  });
+});
+```
+
+**Integration Tests (25% coverage target):**
+
+| Scenario | What to Test | Tools |
+|----------|--------------|-------|
+| **Comparison API integration** | Fetch comparison data, parse response, handle errors | Vitest, MSW (Mock Service Worker) |
+| **Chart rendering** | BenchmarkChart receives data, renders canvas, updates on prop change | Vitest, React Testing Library, canvas mock |
+| **URL state sync** | Navigate to `/compare?models=1,2`, verify models fetched, add model → URL updates | Vitest, React Router testing utils |
+| **Comparison table highlighting** | Cheapest price highlighted green, highest score highlighted | Vitest, screen queries |
+
+**Example Integration Test:**
+
+```typescript
+// src/pages/ComparisonPage/ComparisonPage.integration.test.tsx
+import { render, screen, waitFor } from '@testing-library/react';
+import { server } from '../../mocks/server';
+import { http, HttpResponse } from 'msw';
+import { ComparisonPage } from './ComparisonPage';
+
+describe('ComparisonPage Integration', () => {
+  it('fetches and displays comparison data', async () => {
+    server.use(
+      http.get('/api/models/compare', () => {
+        return HttpResponse.json({
+          models: [
+            { id: '1', name: 'GPT-4', inputPricePer1M: 10.0 },
+            { id: '2', name: 'Claude 3', inputPricePer1M: 15.0 },
+          ],
+          metadata: { modelCount: 2 }
+        });
+      })
+    );
+
+    render(<ComparisonPage />, { initialRoute: '/compare?models=1,2' });
+
+    await waitFor(() => {
+      expect(screen.getByText('GPT-4')).toBeInTheDocument();
+      expect(screen.getByText('Claude 3')).toBeInTheDocument();
+    });
+
+    // Verify cheapest price highlighted
+    const gpt4Price = screen.getByText('$10.00');
+    expect(gpt4Price).toHaveClass('text-green-600');
+  });
+});
+```
+
+**E2E Tests (5% coverage target):**
+
+| Critical Flow | Steps | Tool |
+|---------------|-------|------|
+| **Happy path comparison** | Select 3 models in table → Click Compare → Verify cards/table/chart render → Toggle metric → Export CSV | Playwright |
+| **Add/remove models** | Start with 2 models → Add 3rd via modal → Remove 1st model → Verify URL updates | Playwright |
+| **Chart interactions** | Hover over bar → Verify tooltip → Click legend → Verify model hidden | Playwright |
+| **Performance verification** | Load comparison with 5 models → Measure page load time (<2s) → Measure chart render (<1s) | Playwright + Lighthouse |
+
+**Example E2E Test:**
+
+```typescript
+// e2e/comparison.spec.ts
+import { test, expect } from '@playwright/test';
+
+test('full comparison workflow', async ({ page }) => {
+  await page.goto('/');
+
+  // Select 3 models in main table
+  await page.getByTestId('model-checkbox-1').check();
+  await page.getByTestId('model-checkbox-2').check();
+  await page.getByTestId('model-checkbox-3').check();
+
+  // Navigate to comparison
+  await page.getByRole('button', { name: 'Compare Selected' }).click();
+  await expect(page).toHaveURL(/\/compare\?models=/);
+
+  // Verify page loaded
+  await expect(page.getByTestId('model-card')).toHaveCount(3);
+  await expect(page.getByTestId('comparison-table')).toBeVisible();
+  await expect(page.getByTestId('benchmark-chart')).toBeVisible();
+
+  // Interact with chart
+  await page.getByTestId('metric-selector').click();
+  await page.getByRole('option', { name: 'GSM8K' }).click();
+
+  // Wait for chart update (debounced 300ms)
+  await page.waitForTimeout(400);
+  await expect(page.locator('canvas')).toBeVisible();
+
+  // Export CSV
+  await page.getByRole('button', { name: 'Export' }).click();
+  const downloadPromise = page.waitForEvent('download');
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toMatch(/comparison-\d{4}-\d{2}-\d{2}\.csv/);
+});
+
+test('comparison performance', async ({ page }) => {
+  const start = Date.now();
+  await page.goto('/compare?models=1,2,3,4,5');
+  await page.waitForSelector('[data-testid="benchmark-chart"]');
+  const loadTime = Date.now() - start;
+
+  expect(loadTime).toBeLessThan(2000); // AC-5.14: <2 seconds
+});
+```
+
+**Visual Regression Testing:**
+
+- Tool: Playwright visual comparisons
+- Snapshots: Chart rendering (grouped bars, legend, tooltips), Capability matrix (checkmarks)
+- Run on: Chrome, Firefox, Safari
+- Threshold: 5% pixel difference tolerance
+
+**Coverage Goals:**
+
+- **Overall:** 70%+ code coverage
+- **Critical paths:** 90%+ (comparison data fetch, chart rendering, URL state)
+- **Edge cases:** Missing data, API errors, >5 models attempted
+
+**Test Execution:**
+
+```bash
+# Unit + Integration
+pnpm test
+
+# E2E
+pnpm test:e2e
+
+# Performance
+pnpm test:perf
+
+# Visual regression
+pnpm test:visual
+```
