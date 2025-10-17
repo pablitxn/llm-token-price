@@ -2,15 +2,15 @@
 
 **Project:** llm-token-price
 **Created:** 2025-10-16
-**Last Updated:** 2025-10-17 (Story 2.2 Context Ready)
+**Last Updated:** 2025-10-17 (Story 2.3 Context Ready)
 
 ---
 
 ## Current Status
 
 **Current Phase:** 4-Implementation → Epic 1 Complete, Epic 2 Starting
-**Current Workflow:** story-context (Story 2.2) - Complete
-**Overall Progress:** 100% (Epic 1) + 2% (Epic 2 Context Ready - Stories 2.1, 2.2)
+**Current Workflow:** story-context (Story 2.3) - Complete
+**Overall Progress:** 100% (Epic 1) + 3% (Epic 2 Context Ready - Stories 2.1, 2.2, 2.3)
 
 **🎉 EPIC 1 COMPLETE!** All 11 foundational stories delivered (37/37 points)
 
@@ -288,6 +288,7 @@ LLM Pricing Calculator - A comprehensive web application for comparing LLM model
 
 ## Decisions Log
 
+- **2025-10-17**: Completed story-context for Story 2.3 (Build Models List View in Admin Panel). Context file: docs/stories/story-context-2.3.xml. Comprehensive context generated with 5 documentation artifacts (tech-spec-epic-2.md sections for API endpoints, acceptance criteria, AdminModelRepository; solution-architecture.md for admin panel patterns; story-2.2.md for AdminLayout integration), 6 code artifacts (AdminLayout.tsx wrapper from Story 2.2, admin.ts and models.ts API client patterns, ModelRepository.cs for query patterns, ModelsController.cs for controller structure, authStore.ts for JWT auth), 9 frontend + 3 backend dependencies (TanStack Query/Table for data/table management, React Router for navigation, date-fns for timestamps, Lucide for icons, EF Core for queries, JWT Bearer for auth), 4 constraint categories covering 13 specific constraints (hexagonal architecture flow, no caching for admin endpoints, JWT authorization requirements, MSW/TestContainers testing approach), 4 interface specifications (GET /api/admin/models REST endpoint with search/filter params, AdminModelDto with status/timestamps, useAdminModels React hook, AdminModelService.GetAllModelsAsync method), and 20 test ideas mapped to 6 acceptance criteria covering integration tests (auth + all models query), component tests (table rendering, search with debounce, action buttons), and E2E scenarios. Context documents full-stack admin models list implementation: backend AdminModelsController with JWT auth → AdminModelService → AdminModelRepository (no IsActive filter, UpdatedAt DESC ordering), frontend AdminModelsPage inside AdminLayout with search (300ms debounce), table with 6 columns (name, provider, input/output price, status badges, relative timestamps), and action buttons (Add New, Edit per row, Delete with confirmation). All existing auth infrastructure from Stories 2.1-2.2 identified and ready for integration. Next: DEV agent should run dev-story to implement GET /api/admin/models endpoint, AdminModelsPage with ModelList table, search functionality, and comprehensive test coverage.
 - **2025-10-17**: Completed story-context for Story 2.2 (Admin Dashboard Layout). Context file: docs/stories/story-context-2.2.xml. Comprehensive context generated with 5 documentation artifacts (tech-spec-epic-2.md, solution-architecture.md, ux-specification.md, story-2.1.md, story-2.2.md), 6 code artifacts (existing Layout.tsx, ProtectedRoute.tsx, authStore.ts, useAuth hook, AdminDashboardPage placeholder, App.tsx routing), 4 dependencies (React 19, React Router 7, TailwindCSS 4, Lucide React icons), 4 constraint categories (architectural, design, routing, testing), 4 interface specifications (AdminLayout props, admin routes config, useAuth hook, nav items structure), and 10 test ideas mapped to 5 acceptance criteria. Context documents master-detail layout pattern with sidebar navigation (Dashboard, Models, Benchmarks), responsive behavior (desktop always-visible, tablet/mobile drawer), admin header with username display and logout button, and Outlet-based nested routing. All existing auth infrastructure from Story 2.1 identified and ready for integration. Next: DEV agent should run dev-story to implement AdminLayout, AdminSidebar, AdminHeader components with nested routing and responsive design.
 - **2025-10-17**: Completed story-context for Story 2.1 (Admin Panel Authentication). Context file: docs/stories/epic_2/story-context-2.1.xml. Next: DEV agent should run dev-story to implement JWT authentication with HttpOnly cookies, admin login page, protected routes, and logout functionality.
 - **2025-10-17**: Regenerated story-context for Story 2.1 with implementation details. Updated context file with ✅ status markers showing all components have been implemented: AdminAuthController, AuthService, IAuthService, DTOs (LoginDto, AuthResponseDto), AdminLoginPage, useAuth hook, authStore, ProtectedRoute component, admin API client. All dependencies installed (JWT 8.14.0, JwtBearer 9.0.10, axios ^1.12.2, zustand ^5.0.8, zod ^4.1.12). Configuration complete in appsettings.Development.json. Story Status: Done. Next: Choose next Epic 2 story to work on OR continue with Epic 3 stories.

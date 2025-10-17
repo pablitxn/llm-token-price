@@ -222,7 +222,7 @@ const filteredModels = models.filter(model =>
 
 ### Context Reference
 
-<!-- Path(s) to story context XML will be added here by context workflow -->
+- `docs/stories/story-context-2.3.xml` (Generated: 2025-10-17)
 
 ### Agent Model Used
 
