@@ -1,0 +1,294 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>2.1</storyId>
+    <title>Admin Panel Authentication</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-17</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/epic_2/story-2.1.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>an administrator</asA>
+    <iWant>secure login to admin panel</iWant>
+    <soThat>only authorized users can manage model data</soThat>
+    <tasks>
+      <task id="1" ac="1">Create admin login page component (AdminLoginPage.tsx with Zod validation)</task>
+      <task id="2" ac="2,3">Implement backend authentication endpoint (AdminAuthController.cs, JWT generation)</task>
+      <task id="3" ac="4">Implement authentication state management (useAuth hook, Zustand authStore)</task>
+      <task id="4" ac="5">Implement protected routes (ProtectedRoute wrapper, redirect logic)</task>
+      <task id="5" ac="6">Implement logout functionality (logout endpoint, clear state)</task>
+      <task id="6" ac="all">Add authentication testing (unit, integration, frontend tests)</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC-2.1-1">Admin login page created with username/password fields</criterion>
+    <criterion id="AC-2.1-2">Backend authentication endpoint `/api/admin/auth/login` created</criterion>
+    <criterion id="AC-2.1-3">Simple authentication mechanism (hardcoded credentials for MVP, or basic JWT)</criterion>
+    <criterion id="AC-2.1-4">Session/token stored in browser for authenticated requests</criterion>
+    <criterion id="AC-2.1-5">Protected routes redirect to login if not authenticated</criterion>
+    <criterion id="AC-2.1-6">Logout functionality clears session</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/tech-spec-epic-2.md</path>
+        <title>Technical Specification - Epic 2: Model Data Management &amp; Admin CRUD</title>
+        <section>Security: JWT Authentication</section>
+        <snippet>JWT-based authentication with HttpOnly cookies for admin panel access. Token includes admin user identifier and role claim. 24-hour expiration, SameSite=Strict for CSRF protection.</snippet>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture</title>
+        <section>ADR-008: JWT for Admin Authentication</section>
+        <snippet>Decision to use JWT tokens stored in HttpOnly cookies rather than localStorage for improved XSS protection. No OAuth needed for MVP with 1-3 admin users.</snippet>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture</title>
+        <section>12.1 Authentication and Authorization</section>
+        <snippet>Admin authentication via JWT with bcrypt password hashing. Role-based access control with 'admin' role. HTTPS enforcement in production middleware.</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR-018: Admin Authentication System</section>
+        <snippet>Secure admin authentication required for accessing model data management. Support for 1-3 concurrent admin users in MVP phase.</snippet>
+      </doc>
+      <doc>
+        <path>CLAUDE.md</path>
+        <title>Project Instructions</title>
+        <section>Hexagonal Architecture - Backend Structure</section>
+        <snippet>Application layer contains DTOs and service interfaces. Infrastructure layer contains concrete implementations. API layer contains controllers that delegate to application services.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>services/backend/LlmTokenPrice.API/Program.cs</path>
+        <kind>configuration</kind>
+        <symbol>Program</symbol>
+        <lines>1-200</lines>
+        <reason>DI configuration reference for adding authentication services and middleware</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/api/models.ts</path>
+        <kind>api-client</kind>
+        <symbol>modelsApi</symbol>
+        <lines>1-50</lines>
+        <reason>Reference for creating admin API client pattern with axios</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/App.tsx</path>
+        <kind>router-config</kind>
+        <symbol>App</symbol>
+        <lines>1-100</lines>
+        <reason>Route configuration reference for adding admin protected routes</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/components/Layout.tsx</path>
+        <kind>component</kind>
+        <symbol>Layout</symbol>
+        <lines>1-50</lines>
+        <reason>Layout component pattern for creating AdminLayout with logout button</reason>
+      </artifact>
+      <artifact>
+        <path>services/backend/LlmTokenPrice.API/Controllers/ModelsController.cs</path>
+        <kind>controller</kind>
+        <symbol>ModelsController</symbol>
+        <lines>1-100</lines>
+        <reason>Reference controller pattern for creating AdminAuthController structure</reason>
+      </artifact>
+      <artifact>
+        <path>services/backend/LlmTokenPrice.Infrastructure/Data/AppDbContext.cs</path>
+        <kind>dbcontext</kind>
+        <symbol>AppDbContext</symbol>
+        <lines>1-50</lines>
+        <reason>Future reference if admin user table needs to be added post-MVP</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <backend>
+        <package name="System.IdentityModel.Tokens.Jwt" version="latest" required="true">JWT token generation and validation</package>
+        <package name="Microsoft.AspNetCore.Authentication.JwtBearer" version="latest" required="true">JWT authentication middleware</package>
+        <package name="BCrypt.Net-Next" version="latest" required="false">Password hashing (optional for MVP with hardcoded credentials)</package>
+      </backend>
+      <frontend>
+        <package name="axios" version="existing" required="true">HTTP client for authentication API calls</package>
+        <package name="zustand" version="existing" required="true">Auth state management</package>
+        <package name="zod" version="existing" required="true">Login form validation</package>
+        <package name="react-router-dom" version="existing" required="true">Protected route implementation</package>
+        <package name="@tanstack/react-query" version="existing" required="false">Optional for auth state caching</package>
+      </frontend>
+      <environment>
+        <variable name="JWT_SECRET_KEY" required="true">Secret key for signing JWT tokens (generate 32+ character random string)</variable>
+        <variable name="JWT_EXPIRATION_HOURS" required="false" default="24">Token expiration time in hours</variable>
+        <variable name="ADMIN_USERNAME" required="true">Hardcoded admin username for MVP</variable>
+        <variable name="ADMIN_PASSWORD" required="true">Hardcoded admin password for MVP (plaintext in dev, hashed in production)</variable>
+      </environment>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="security" priority="critical">
+      Use HttpOnly cookies for JWT storage to prevent XSS attacks. Never store tokens in localStorage.
+    </constraint>
+    <constraint type="security" priority="critical">
+      Set SameSite=Strict cookie attribute to prevent CSRF attacks.
+    </constraint>
+    <constraint type="security" priority="high">
+      Enforce HTTPS in production via middleware. HTTP allowed only in development.
+    </constraint>
+    <constraint type="architecture" priority="high">
+      Follow hexagonal architecture: AuthService in Application layer, AdminAuthController in API layer, no business logic in controllers.
+    </constraint>
+    <constraint type="architecture" priority="medium">
+      Use DTOs for all API requests/responses. No domain entities directly exposed.
+    </constraint>
+    <constraint type="implementation" priority="high">
+      Token expiration: 24 hours configurable via appsettings. Include exp and iat claims.
+    </constraint>
+    <constraint type="implementation" priority="medium">
+      Hardcoded credentials acceptable for MVP. Move to database with bcrypt hashing post-MVP.
+    </constraint>
+    <constraint type="frontend" priority="high">
+      Use Zustand for auth state management. Avoid prop drilling authentication status.
+    </constraint>
+    <constraint type="frontend" priority="medium">
+      Implement ProtectedRoute wrapper component for all /admin/* routes.
+    </constraint>
+    <constraint type="testing" priority="high">
+      Write integration tests with WebApplicationFactory to verify cookie setting and token validation.
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>POST /api/admin/auth/login</name>
+      <kind>REST endpoint</kind>
+      <signature>
+POST /api/admin/auth/login
+Request Body: { username: string, password: string }
+Response: { success: boolean, message: string }
+Cookie: admin_token (HttpOnly, Secure, SameSite=Strict, MaxAge=86400)
+Status: 200 OK (success) | 401 Unauthorized (invalid credentials) | 400 Bad Request (validation error)
+      </signature>
+      <path>services/backend/LlmTokenPrice.API/Controllers/Admin/AdminAuthController.cs</path>
+    </interface>
+    <interface>
+      <name>POST /api/admin/auth/logout</name>
+      <kind>REST endpoint</kind>
+      <signature>
+POST /api/admin/auth/logout
+Request: No body required (token in cookie)
+Response: { success: boolean, message: string }
+Cookie: admin_token (cleared, MaxAge=0)
+Status: 200 OK
+      </signature>
+      <path>services/backend/LlmTokenPrice.API/Controllers/Admin/AdminAuthController.cs</path>
+    </interface>
+    <interface>
+      <name>IAuthService</name>
+      <kind>Application service interface</kind>
+      <signature>
+public interface IAuthService
+{
+    Task&lt;AuthResponseDto&gt; AuthenticateAsync(LoginDto loginDto);
+    string GenerateJwtToken(string username, string role);
+    bool ValidateCredentials(string username, string password);
+}
+      </signature>
+      <path>services/backend/LlmTokenPrice.Application/Services/IAuthService.cs</path>
+    </interface>
+    <interface>
+      <name>useAuth Hook</name>
+      <kind>React custom hook</kind>
+      <signature>
+export function useAuth() {
+  const { isAuthenticated, user, login, logout } = useAuthStore();
+
+  return {
+    isAuthenticated: boolean,
+    user: { username: string, role: string } | null,
+    login: (username: string, password: string) =&gt; Promise&lt;void&gt;,
+    logout: () =&gt; Promise&lt;void&gt;,
+    isLoading: boolean,
+    error: string | null
+  };
+}
+      </signature>
+      <path>apps/web/src/hooks/useAuth.ts</path>
+    </interface>
+    <interface>
+      <name>ProtectedRoute Component</name>
+      <kind>React component</kind>
+      <signature>
+interface ProtectedRouteProps {
+  children: React.ReactNode;
+  redirectTo?: string;
+}
+
+export function ProtectedRoute({ children, redirectTo = '/admin/login' }: ProtectedRouteProps)
+      </signature>
+      <path>apps/web/src/components/ProtectedRoute.tsx</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing follows 70% unit / 25% integration / 5% E2E pyramid from Epic 1 test infrastructure. Use xUnit with FluentAssertions for backend, Vitest with Testing Library for frontend. Integration tests use WebApplicationFactory with TestContainers. JWT generation and validation are critical paths requiring high test coverage.
+    </standards>
+    <locations>
+      <location>services/backend/LlmTokenPrice.Application.Tests/Services/AuthServiceTests.cs</location>
+      <location>services/backend/LlmTokenPrice.Infrastructure.Tests/Integration/AuthControllerTests.cs</location>
+      <location>apps/web/src/hooks/__tests__/useAuth.test.ts</location>
+      <location>apps/web/src/pages/admin/__tests__/AdminLoginPage.test.tsx</location>
+      <location>apps/web/src/components/__tests__/ProtectedRoute.test.tsx</location>
+      <location>tests/e2e/admin-authentication.spec.ts</location>
+    </locations>
+    <ideas>
+      <idea ac="AC-2.1-2,AC-2.1-3">
+        **Unit: JWT Token Generation**
+        Test that GenerateJwtToken creates valid JWT with correct sub, role, exp, and iat claims. Verify token can be decoded and validated.
+      </idea>
+      <idea ac="AC-2.1-3">
+        **Unit: Credential Validation**
+        Test ValidateCredentials returns true for correct username/password, false for incorrect credentials.
+      </idea>
+      <idea ac="AC-2.1-2">
+        **Integration: Login Endpoint Success**
+        POST /api/admin/auth/login with valid credentials returns 200 OK and sets admin_token HttpOnly cookie with 24-hour MaxAge.
+      </idea>
+      <idea ac="AC-2.1-2">
+        **Integration: Login Endpoint Invalid Credentials**
+        POST /api/admin/auth/login with invalid credentials returns 401 Unauthorized and no cookie set.
+      </idea>
+      <idea ac="AC-2.1-6">
+        **Integration: Logout Endpoint**
+        POST /api/admin/auth/logout clears admin_token cookie (MaxAge=0) and returns 200 OK.
+      </idea>
+      <idea ac="AC-2.1-4">
+        **Frontend: useAuth Hook Login**
+        Calling login() with valid credentials updates isAuthenticated to true and stores user info in Zustand.
+      </idea>
+      <idea ac="AC-2.1-1">
+        **Frontend: Login Form Validation**
+        Login form shows validation errors for empty username/password. Submit button disabled until form valid.
+      </idea>
+      <idea ac="AC-2.1-5">
+        **Frontend: Protected Route Redirect**
+        ProtectedRoute redirects to /admin/login when isAuthenticated is false. Renders children when authenticated.
+      </idea>
+      <idea ac="AC-2.1-6">
+        **Frontend: Logout Clears State**
+        Calling logout() clears isAuthenticated, clears user from Zustand, and redirects to login page.
+      </idea>
+      <idea ac="AC-2.1-1,AC-2.1-5,AC-2.1-6">
+        **E2E: Full Authentication Flow**
+        Navigate to /admin → redirect to /admin/login → enter valid credentials → login success → redirect to /admin/dashboard → logout → redirect to /admin/login.
+      </idea>
+    </ideas>
+  </tests>
+</story-context>

@@ -1,6 +1,6 @@
 # Story 2.1: Admin Panel Authentication
 
-Status: Ready
+Status: In Progress
 
 ## Story
 
@@ -189,7 +189,7 @@ Cookie: {
 
 ### Context Reference
 
-<!-- Path(s) to story context XML will be added here by context workflow -->
+- `docs/stories/epic_2/story-context-2.1.xml` (Generated: 2025-10-17)
 
 ### Agent Model Used
 
