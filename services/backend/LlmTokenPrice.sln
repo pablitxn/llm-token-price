@@ -1,11 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# 
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{74B2813E-799C-453C-95D8-179D7D835F9F}"
-	ProjectSection(SolutionItems) = preProject
-		compose.yaml = compose.yaml
-	EndProjectSection
-EndProject
+#
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LlmTokenPrice.API", "LlmTokenPrice.API\LlmTokenPrice.API.csproj", "{37FBCF2E-9BC3-4745-97D9-7110E8202B5D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LlmTokenPrice.Application", "LlmTokenPrice.Application\LlmTokenPrice.Application.csproj", "{07F6E749-F911-4FDC-AC0F-474598B22542}"
@@ -19,6 +14,14 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LlmTokenPrice.Infrastructure.Tests", "LlmTokenPrice.Infrastructure.Tests\LlmTokenPrice.Infrastructure.Tests.csproj", "{46E23FB6-C91C-417B-911D-9268DC469660}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LlmTokenPrice.Application.Tests", "LlmTokenPrice.Application.Tests\LlmTokenPrice.Application.Tests.csproj", "{7E95ABB2-41E1-423C-A481-2662A6200460}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LlmTokenPrice.Tests.E2E", "LlmTokenPrice.Tests.E2E\LlmTokenPrice.Tests.E2E.csproj", "{09CEDE9B-6561-4681-8A9F-B0D34226F2E0}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "adapters", "adapters", "{912A9BFE-02E8-4246-B6D8-381B41891FFE}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ports", "ports", "{C67578E9-3C1E-4FCD-8506-6AC87732FC1B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{DA69CA9A-8550-4CEE-B415-2EAD861CB957}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -54,5 +57,18 @@ Global
 		{7E95ABB2-41E1-423C-A481-2662A6200460}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7E95ABB2-41E1-423C-A481-2662A6200460}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7E95ABB2-41E1-423C-A481-2662A6200460}.Release|Any CPU.Build.0 = Release|Any CPU
+		{09CEDE9B-6561-4681-8A9F-B0D34226F2E0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{09CEDE9B-6561-4681-8A9F-B0D34226F2E0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{09CEDE9B-6561-4681-8A9F-B0D34226F2E0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{09CEDE9B-6561-4681-8A9F-B0D34226F2E0}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{07F6E749-F911-4FDC-AC0F-474598B22542} = {C67578E9-3C1E-4FCD-8506-6AC87732FC1B}
+		{4490B7F3-5A95-4090-ACDA-EC22AD1C94D9} = {C67578E9-3C1E-4FCD-8506-6AC87732FC1B}
+		{FEECD0A1-B6A3-474F-BCDB-2A408DE7C06A} = {912A9BFE-02E8-4246-B6D8-381B41891FFE}
+		{7E95ABB2-41E1-423C-A481-2662A6200460} = {DA69CA9A-8550-4CEE-B415-2EAD861CB957}
+		{A7A8CB96-0447-48AD-B936-158BCF7534DC} = {DA69CA9A-8550-4CEE-B415-2EAD861CB957}
+		{46E23FB6-C91C-417B-911D-9268DC469660} = {DA69CA9A-8550-4CEE-B415-2EAD861CB957}
+		{09CEDE9B-6561-4681-8A9F-B0D34226F2E0} = {DA69CA9A-8550-4CEE-B415-2EAD861CB957}
 	EndGlobalSection
 EndGlobal

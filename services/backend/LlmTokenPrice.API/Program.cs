@@ -132,3 +132,9 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.Run();
+
+// Make Program class accessible for integration/E2E tests (WebApplicationFactory)
+namespace LlmTokenPrice.API
+{
+    public partial class Program { }
+}
