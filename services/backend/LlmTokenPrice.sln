@@ -16,6 +16,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LlmTokenPrice.Infrastructur
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LlmTokenPrice.Domain.Tests", "LlmTokenPrice.Domain.Tests\LlmTokenPrice.Domain.Tests.csproj", "{A7A8CB96-0447-48AD-B936-158BCF7534DC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LlmTokenPrice.Infrastructure.Tests", "LlmTokenPrice.Infrastructure.Tests\LlmTokenPrice.Infrastructure.Tests.csproj", "{46E23FB6-C91C-417B-911D-9268DC469660}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -42,5 +44,9 @@ Global
 		{A7A8CB96-0447-48AD-B936-158BCF7534DC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A7A8CB96-0447-48AD-B936-158BCF7534DC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A7A8CB96-0447-48AD-B936-158BCF7534DC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{46E23FB6-C91C-417B-911D-9268DC469660}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{46E23FB6-C91C-417B-911D-9268DC469660}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{46E23FB6-C91C-417B-911D-9268DC469660}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{46E23FB6-C91C-417B-911D-9268DC469660}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
