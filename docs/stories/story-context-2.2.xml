@@ -1,0 +1,247 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>2.2</storyId>
+    <title>Admin Dashboard Layout</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-17</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-2.2.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>an administrator</asA>
+    <iWant>admin dashboard with navigation</iWant>
+    <soThat>I can access different management functions</soThat>
+    <tasks>
+- Task 1: Create admin layout component (AC: #1, #3)
+- Task 2: Implement navigation menu (AC: #2)
+- Task 3: Create admin header component (AC: #4)
+- Task 4: Implement responsive layout (AC: #5)
+- Task 5: Set up admin routes
+- Task 6: Add layout testing
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. Admin layout component created with sidebar navigation
+2. Navigation menu includes: Models, Benchmarks, Dashboard (placeholder)
+3. Main content area renders selected section
+4. Header shows logged-in admin name and logout button
+5. Responsive layout works on desktop and tablet
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/tech-spec-epic-2.md</path>
+        <title>Technical Specification: Epic 2 - Model Data Management &amp; Admin CRUD</title>
+        <section>System Architecture Alignment</section>
+        <snippet>Epic 2 extends Hexagonal Architecture with admin use case layer. Application Layer adds AdminModelService, AdminBenchmarkService, AdminAuthService, DataQualityService, AuditLogService. Presentation Layer implements React admin panel components: AdminLayout with sidebar navigation, AdminHeader with user dropdown, AdminSidebar with menu items.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-2.md</path>
+        <title>Technical Specification: Epic 2</title>
+        <section>User Experience - Responsive admin layout with sidebar navigation</section>
+        <snippet>Admin layout provides sidebar navigation, search/filter in model lists, confirmation dialogs for destructive operations, success/error messaging, dashboard with data quality metrics. Responsive design works on desktop and tablet.</snippet>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture Document</title>
+        <section>2.3 Client-Side Architecture</section>
+        <snippet>React 18+ SPA with component-based architecture. Layout pattern: Master-detail with responsive behavior. TailwindCSS for styling. Lucide React for icons. React Router for nested routing.</snippet>
+      </doc>
+      <doc>
+        <path>docs/ux-specification.md</path>
+        <title>llm-token-price UX/UI Specification</title>
+        <section>Admin Panel Design Patterns</section>
+        <snippet>Admin interfaces target technical users (administrators). Desktop-first design with sidebar navigation. Component hierarchy emphasizes clarity and immediate feedback. Color scheme: Neutral grays for sidebars, white content areas.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-2.1.md</path>
+        <title>Story 2.1: Admin Panel Authentication</title>
+        <section>Implementation Details - Protected Route Pattern</section>
+        <snippet>Protected routes use ProtectedRoute wrapper component. Pattern: Route wraps AdminLayout with ProtectedRoute. Authentication checked via useAuthStore. User info includes username for display in header.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>apps/web/src/components/layout/Layout.tsx</path>
+        <kind>component</kind>
+        <symbol>Layout</symbol>
+        <lines>1-19</lines>
+        <reason>Existing public layout component - reference pattern for AdminLayout structure (Header/Main/Footer pattern with flex-col container)</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/components/auth/ProtectedRoute.tsx</path>
+        <kind>component</kind>
+        <symbol>ProtectedRoute</symbol>
+        <lines>1-51</lines>
+        <reason>Completed in Story 2.1 - wraps admin routes to enforce authentication. AdminLayout will be nested inside ProtectedRoute.</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/store/authStore.ts</path>
+        <kind>state-management</kind>
+        <symbol>useAuthStore</symbol>
+        <lines>1-93</lines>
+        <reason>Zustand auth store from Story 2.1 - provides user.username for header display and clearAuth() for logout button</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/hooks/useAuth.ts</path>
+        <kind>hook</kind>
+        <symbol>useAuth</symbol>
+        <lines>all</lines>
+        <reason>Auth hook from Story 2.1 - provides logout() function for admin header logout button</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/pages/admin/AdminDashboardPage.tsx</path>
+        <kind>page</kind>
+        <symbol>AdminDashboardPage</symbol>
+        <lines>1-57</lines>
+        <reason>Existing placeholder admin dashboard - currently has inline header with logout. Will be refactored to use AdminLayout component in Story 2.2</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/App.tsx</path>
+        <kind>routing</kind>
+        <symbol>App</symbol>
+        <lines>1-31</lines>
+        <reason>App routing configuration - currently has single /admin route. Story 2.2 will add nested routing for /admin/dashboard, /admin/models, /admin/benchmarks</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <react>
+        <package name="react" version="^19.1.1" />
+        <package name="react-dom" version="^19.1.1" />
+        <package name="react-router-dom" version="^7.9.4" />
+      </react>
+      <styling>
+        <package name="@tailwindcss/postcss" version="^4.1.14" />
+        <package name="@tailwindcss/vite" version="^4.1.14" />
+      </styling>
+      <icons>
+        <package name="lucide-react" version="^0.546.0" />
+      </icons>
+      <state>
+        <package name="zustand" version="^5.0.8" />
+      </state>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <architectural>
+      <constraint>Component must follow React functional component pattern with TypeScript strict mode</constraint>
+      <constraint>Use TailwindCSS utility classes only - no CSS modules or styled-components</constraint>
+      <constraint>AdminLayout uses children prop pattern for content slot rendering (same as public Layout)</constraint>
+      <constraint>Sidebar navigation must use React Router NavLink for active state management</constraint>
+      <constraint>All components must be in apps/web/src/components/ following domain-based organization</constraint>
+    </architectural>
+    <design>
+      <constraint>Color scheme: Neutral grays (slate-*) for sidebar, white (#ffffff) for content area</constraint>
+      <constraint>Spacing: Consistent padding-4, gap-6 as per TailwindCSS design system</constraint>
+      <constraint>Icons: Lucide React only (LayoutDashboard, Database, BarChart, LogOut icons)</constraint>
+      <constraint>Responsive breakpoints: Desktop lg: (1024px+), Tablet md: (768-1024px), Mobile &lt;md (&lt;768px)</constraint>
+      <constraint>Desktop: Sidebar always visible. Tablet/Mobile: Collapsible drawer sidebar</constraint>
+    </design>
+    <routing>
+      <constraint>Admin routes must use nested routing pattern: /admin wraps all sub-routes</constraint>
+      <constraint>/admin root redirects to /admin/dashboard using Navigate component</constraint>
+      <constraint>All admin routes wrapped with ProtectedRoute component from Story 2.1</constraint>
+      <constraint>Outlet component renders child routes in AdminLayout main content area</constraint>
+    </routing>
+    <testing>
+      <constraint>Component tests using Vitest + React Testing Library</constraint>
+      <constraint>Test sidebar navigation active state highlighting</constraint>
+      <constraint>Test responsive behavior (sidebar collapse on mobile breakpoint)</constraint>
+      <constraint>Test logout button triggers auth service logout method</constraint>
+    </testing>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>AdminLayout Component Props</name>
+      <kind>React Component Interface</kind>
+      <signature>
+        interface AdminLayoutProps {
+          children?: React.ReactNode
+        }
+      </signature>
+      <path>apps/web/src/components/layout/AdminLayout.tsx</path>
+    </interface>
+    <interface>
+      <name>Admin Routes Configuration</name>
+      <kind>React Router Routes</kind>
+      <signature>
+        &lt;Route path="/admin" element={&lt;ProtectedRoute&gt;&lt;AdminLayout /&gt;&lt;/ProtectedRoute&gt;}&gt;
+          &lt;Route index element={&lt;Navigate to="dashboard" replace /&gt;} /&gt;
+          &lt;Route path="dashboard" element={&lt;AdminDashboardPage /&gt;} /&gt;
+          &lt;Route path="models" element={&lt;AdminModelsPage /&gt;} /&gt;
+          &lt;Route path="benchmarks" element={&lt;AdminBenchmarksPage /&gt;} /&gt;
+        &lt;/Route&gt;
+      </signature>
+      <path>apps/web/src/App.tsx</path>
+    </interface>
+    <interface>
+      <name>useAuth Hook (from Story 2.1)</name>
+      <kind>React Hook</kind>
+      <signature>
+        interface UseAuthReturn {
+          user: User | null
+          isAuthenticated: boolean
+          login: (username: string, password: string) =&gt; Promise&lt;void&gt;
+          logout: () =&gt; Promise&lt;void&gt;
+          isLoading: boolean
+          error: string | null
+        }
+      </signature>
+      <path>apps/web/src/hooks/useAuth.ts</path>
+    </interface>
+    <interface>
+      <name>Navigation Items Structure</name>
+      <kind>Data Structure</kind>
+      <signature>
+        interface NavItem {
+          name: string
+          icon: LucideIcon
+          path: string
+          badge?: string
+        }
+
+        const navItems: NavItem[] = [
+          { name: 'Dashboard', icon: LayoutDashboard, path: '/admin/dashboard' },
+          { name: 'Models', icon: Database, path: '/admin/models' },
+          { name: 'Benchmarks', icon: BarChart, path: '/admin/benchmarks' }
+        ]
+      </signature>
+      <path>apps/web/src/components/layout/AdminSidebar.tsx</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Epic 1 established comprehensive testing infrastructure:
+      - Frontend: Vitest + React Testing Library for component tests
+      - Test files co-located: ComponentName.test.tsx next to ComponentName.tsx
+      - Coverage target: 70%+ overall, focusing on user interactions and state management
+      - Testing pyramid: 70% unit, 25% integration, 5% E2E
+      - E2E: Playwright for critical user flows (defer full admin flow to Story 2.3)
+    </standards>
+    <locations>
+      <location>apps/web/src/components/layout/__tests__/AdminLayout.test.tsx</location>
+      <location>apps/web/src/components/layout/__tests__/AdminSidebar.test.tsx</location>
+      <location>apps/web/src/components/layout/__tests__/AdminHeader.test.tsx</location>
+      <location>apps/web/src/pages/admin/__tests__/AdminDashboardPage.test.tsx</location>
+    </locations>
+    <ideas>
+      <test id="1" ac="AC#1,#3">AdminLayout renders sidebar and main content area correctly</test>
+      <test id="2" ac="AC#2">Navigation menu includes all three items: Dashboard, Models, Benchmarks with correct icons</test>
+      <test id="3" ac="AC#2">Navigation highlights active menu item based on current route path</test>
+      <test id="4" ac="AC#4">Header displays logged-in admin username from auth store</test>
+      <test id="5" ac="AC#4">Logout button in header calls useAuth().logout() when clicked</test>
+      <test id="6" ac="AC#5">Sidebar collapses to drawer on mobile breakpoint (&lt;768px)</test>
+      <test id="7" ac="AC#5">Desktop layout shows expanded sidebar always visible (≥1024px)</test>
+      <test id="8" ac="AC#3">Main content area updates when navigating between admin routes</test>
+      <test id="9" ac="AC#1">Sidebar transitions smoothly when collapsing/expanding</test>
+      <test id="10" ac="AC#2">Navigation items have proper hover states and accessibility attributes</test>
+    </ideas>
+  </tests>
+</story-context>
