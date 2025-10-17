@@ -132,6 +132,37 @@ public static class SampleDataSeeder
     }
 
     /// <summary>
+    /// Creates a benchmark score with validation against the benchmark's typical range.
+    /// </summary>
+    /// <param name="benchmark">The benchmark definition.</param>
+    /// <param name="score">The score value to validate.</param>
+    /// <param name="maxScore">The maximum possible score for this benchmark.</param>
+    /// <param name="verified">Whether the score has been verified.</param>
+    /// <param name="createdAt">The creation timestamp.</param>
+    /// <returns>A validated BenchmarkScore entity.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when score is outside the benchmark's typical range.</exception>
+    private static BenchmarkScore CreateScore(Benchmark benchmark, decimal score, decimal maxScore, bool verified, DateTime createdAt)
+    {
+        if (score < benchmark.TypicalRangeMin || score > benchmark.TypicalRangeMax)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(score),
+                score,
+                $"Score {score} is outside the typical range {benchmark.TypicalRangeMin}-{benchmark.TypicalRangeMax} for benchmark '{benchmark.BenchmarkName}'");
+        }
+
+        return new BenchmarkScore
+        {
+            Id = Guid.NewGuid(),
+            BenchmarkId = benchmark.Id,
+            Score = score,
+            MaxScore = maxScore,
+            CreatedAt = createdAt,
+            Verified = verified
+        };
+    }
+
+    /// <summary>
     /// Creates 10 sample LLM models with complete data (pricing, capabilities, benchmark scores).
     /// </summary>
     private static List<Model> CreateModelsWithCapabilitiesAndScores(List<Benchmark> benchmarks)
@@ -176,10 +207,10 @@ public static class SampleDataSeeder
             },
             BenchmarkScores = new List<BenchmarkScore>
             {
-                new BenchmarkScore { Id = Guid.NewGuid(), BenchmarkId = mmlu.Id, Score = 86.4M, MaxScore = 100, CreatedAt = now, Verified = true },
-                new BenchmarkScore { Id = Guid.NewGuid(), BenchmarkId = humanEval.Id, Score = 67.0M, MaxScore = 100, CreatedAt = now, Verified = true },
-                new BenchmarkScore { Id = Guid.NewGuid(), BenchmarkId = gsm8k.Id, Score = 92.0M, MaxScore = 100, CreatedAt = now, Verified = true },
-                new BenchmarkScore { Id = Guid.NewGuid(), BenchmarkId = mtBench.Id, Score = 9.0M, MaxScore = 10, CreatedAt = now, Verified = true }
+                CreateScore(mmlu, 86.4M, 100, true, now),
+                CreateScore(humanEval, 67.0M, 100, true, now),
+                CreateScore(gsm8k, 92.0M, 100, true, now),
+                CreateScore(mtBench, 9.0M, 10, true, now)
             }
         });
 
