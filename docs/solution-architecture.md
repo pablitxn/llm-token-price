@@ -1587,6 +1587,54 @@ docs(architecture): Add ADR for hexagonal architecture
 test(calculator): Add unit tests for cost estimation
 ```
 
+**Developer Skill Level Assumptions:**
+
+This architecture is designed for **intermediate-level developers** with the following assumed capabilities:
+
+- **Backend (.NET):**
+  - Comfortable with C# fundamentals, LINQ, and async/await patterns
+  - Basic understanding of dependency injection and repository pattern
+  - Familiarity with Entity Framework Core (migrations, queries, change tracking)
+  - Can read and understand hexagonal architecture principles (will learn specifics on the job)
+  - Able to write unit tests with xUnit and Moq
+
+- **Frontend (React):**
+  - Proficient in modern React (hooks, functional components, context)
+  - Strong TypeScript skills (generics, interfaces, type inference)
+  - Understanding of state management concepts (local vs. global state)
+  - Experience with build tools (Vite/Webpack) and package management (npm/pnpm)
+  - Familiarity with CSS frameworks (TailwindCSS patterns can be learned)
+
+- **General:**
+  - Comfortable with Git workflows (branching, pull requests, merge conflicts)
+  - Can read SQL and understand database schema design
+  - Basic Docker knowledge (docker-compose up/down sufficient)
+  - Understands RESTful API principles and HTTP status codes
+  - Can interpret error messages and debug using browser/IDE tools
+
+**Architecture Support for Intermediate Developers:**
+
+- **Clear layering:** Hexagonal architecture boundaries prevent "where does this go?" questions
+- **Comprehensive examples:** Code samples throughout documentation show patterns in context
+- **ADRs explain "why":** Architecture decisions documented with rationale, not just "what"
+- **Tech specs per epic:** Detailed implementation guidance reduces ambiguity
+- **Naming conventions:** Consistent patterns reduce cognitive load (Section 13.2-13.3)
+- **Testing strategy:** Clear test pyramid guidance (70% unit, 25% integration, 5% E2E)
+
+**Learning Curve Management:**
+
+- **Week 1:** Onboarding via Epic 1 tech spec + README, setup dev environment, understand monorepo structure
+- **Week 2:** Implement first story with pair programming, learn hexagonal boundaries hands-on
+- **Week 3-4:** Independent story development with code review feedback loop
+- **Month 2+:** Contributing to architecture decisions, writing ADRs, mentoring new developers
+
+**Advanced Topics (Learn as Needed):**
+
+- MassTransit message-driven architecture (Phase 2 - scraping pipeline)
+- TimescaleDB hypertables and continuous aggregates (Phase 2 - pricing history)
+- Advanced caching strategies (cache stampede prevention, distributed locking)
+- Performance optimization (profiling, query optimization, bundle analysis)
+
 ### 13.2 Naming Conventions
 
 **C# Backend:**
