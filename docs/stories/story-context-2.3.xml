@@ -1,0 +1,262 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>2.3</storyId>
+    <title>Build Models List View in Admin Panel</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-17</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-2.3.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>administrator</asA>
+    <iWant>to view all models in a table</iWant>
+    <soThat>I can see current data and select models to edit</soThat>
+    <tasks>
+      <task id="1" ac="1,2">Create admin models list page</task>
+      <task id="2" ac="3">Implement search functionality</task>
+      <task id="3" ac="4">Add "Add New Model" button</task>
+      <task id="4" ac="5,6">Add action buttons to table rows</task>
+      <task id="5" ac="1">Create backend API endpoint for admin models list</task>
+      <task id="6">Add table sorting</task>
+      <task id="7">Add pagination or virtual scrolling</task>
+      <task id="8">Add testing</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC-2.3.1">Admin models list page displays all models in table</criterion>
+    <criterion id="AC-2.3.2">Table shows: name, provider, input price, output price, status, last updated</criterion>
+    <criterion id="AC-2.3.3">Search box filters models by name or provider</criterion>
+    <criterion id="AC-2.3.4">"Add New Model" button navigates to creation form</criterion>
+    <criterion id="AC-2.3.5">"Edit" button on each row navigates to edit form</criterion>
+    <criterion id="AC-2.3.6">"Delete" button on each row triggers confirmation dialog</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/tech-spec-epic-2.md</path>
+        <title>Technical Specification: Epic 2 - Model Data Management &amp; Admin CRUD</title>
+        <section>API Endpoints - Admin Model Management</section>
+        <snippet>GET /api/admin/models endpoint returns all models (including inactive) with search/filter params. Requires JWT authorization. Response includes ModelDto[] with pagination meta. Admin endpoint NOT cached (real-time data). Models sorted by updated_at DESC. Performance target: &lt;200ms for paginated query.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-2.md</path>
+        <title>Technical Specification: Epic 2</title>
+        <section>Story 2.3 Acceptance Criteria</section>
+        <snippet>AC 2.3.1: Admin models list at /admin/models displays all models in TanStack Table. AC 2.3.2: Table columns include Name, Provider, Input Price, Output Price, Status, Last Updated (all sortable). AC 2.3.3: Search box filters by name/provider with 300ms debounce. AC 2.3.4-2.3.6: Action buttons for Add New, Edit (per row), Delete with confirmation.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-2.md</path>
+        <title>Technical Specification: Epic 2</title>
+        <section>Services and Modules - AdminModelRepository</section>
+        <snippet>AdminModelRepository extends IModelRepository with admin-specific queries (search, filter, soft-delete). Returns all models including inactive status. Implements search criteria and pagination. Located in Infrastructure layer.</snippet>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture Document</title>
+        <section>Client-Side Architecture - Admin Panel Patterns</section>
+        <snippet>Admin panel uses master-detail layout with AdminLayout wrapper. TanStack Query manages server state (5min stale time). Local useState for UI state (search, sort, pagination). URL query params preserve state for shareability. Component hierarchy: AdminModelsPage → SearchBar + ModelList → ModelRow[].</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-2.2.md</path>
+        <title>Story 2.2: Admin Dashboard Layout</title>
+        <section>Implementation - AdminLayout Component</section>
+        <snippet>AdminLayout implemented with AdminSidebar (nav items: Dashboard, Models, Benchmarks), AdminHeader (username display, logout dropdown), and Outlet for nested routes. Responsive: desktop permanent sidebar, mobile drawer. Navigation uses NavLink for active state highlighting.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>apps/web/src/components/layout/AdminLayout.tsx</path>
+        <kind>component</kind>
+        <symbol>AdminLayout</symbol>
+        <lines>1-40</lines>
+        <reason>Completed in Story 2.2 - provides layout wrapper for admin pages. Story 2.3's AdminModelsPage will render inside this layout's Outlet.</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/api/admin.ts</path>
+        <kind>api-client</kind>
+        <symbol>login, logout</symbol>
+        <lines>1-63</lines>
+        <reason>Existing admin API client pattern. New getAdminModels() function should follow same pattern: use apiClient with /admin/ prefix, include TypeScript interfaces, add JSDoc comments.</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/api/models.ts</path>
+        <kind>api-client</kind>
+        <symbol>fetchModels, fetchModelById</symbol>
+        <lines>1-22</lines>
+        <reason>Public models API pattern. Admin endpoint should return similar structure but include inactive models and additional admin fields (status, timestamps).</reason>
+      </artifact>
+      <artifact>
+        <path>services/backend/LlmTokenPrice.Infrastructure/Repositories/ModelRepository.cs</path>
+        <kind>repository</kind>
+        <symbol>ModelRepository.GetAllAsync</symbol>
+        <lines>31-42</lines>
+        <reason>Existing public repository filters IsActive=true and orders by Provider/Name. Admin version should remove IsActive filter, order by UpdatedAt DESC, and support search/filter parameters.</reason>
+      </artifact>
+      <artifact>
+        <path>services/backend/LlmTokenPrice.API/Controllers/ModelsController.cs</path>
+        <kind>controller</kind>
+        <symbol>ModelsController</symbol>
+        <lines>all</lines>
+        <reason>Public API controller pattern. AdminModelsController should follow similar structure but add [Authorize] attribute, use AdminModelService, and skip caching.</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/store/authStore.ts</path>
+        <kind>state-management</kind>
+        <symbol>useAuthStore</symbol>
+        <lines>1-93</lines>
+        <reason>Auth store from Story 2.1 provides JWT token state. Admin API calls will automatically include credentials via axios interceptor.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <frontend>
+        <package name="@tanstack/react-query" version="^5.90.5">Server state management for fetching admin models</package>
+        <package name="@tanstack/react-table" version="^8.21.3">Advanced table with sorting, filtering, pagination</package>
+        <package name="react-router-dom" version="^7.9.4">Navigation to /admin/models/new and /admin/models/:id/edit</package>
+        <package name="date-fns" version="^4.1.0">Format relative timestamps ("2 days ago")</package>
+        <package name="lucide-react" version="^0.546.0">Icons for Add button, Edit/Delete actions</package>
+        <package name="axios" version="^1.12.2">HTTP client for admin API calls</package>
+        <package name="zod" version="^4.1.12">Search input validation</package>
+        <package name="@testing-library/react" version="^16.3.0">Component testing for ModelList</package>
+        <package name="msw" version="^2.11.5">Mock admin API for integration tests</package>
+      </frontend>
+      <backend>
+        <package name="Microsoft.EntityFrameworkCore" version="9.0.x">Database queries with Include/Where/OrderBy</package>
+        <package name="Microsoft.AspNetCore.Authentication.JwtBearer" version="9.0.x">JWT authorization on admin endpoints</package>
+        <package name="FluentValidation" version="11.x">Search parameter validation</package>
+      </backend>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <architectural>
+      <constraint>Hexagonal Architecture: AdminModelsController (Presentation) → AdminModelService (Application) → AdminModelRepository (Infrastructure) → EF Core → PostgreSQL</constraint>
+      <constraint>Admin endpoints must NOT be cached (unlike public API). Real-time data required for data management tasks.</constraint>
+      <constraint>Repository layer: Admin version extends IModelRepository. Remove IsActive filter to show all models. Order by UpdatedAt DESC (most recent first).</constraint>
+      <constraint>Domain layer: No admin-specific logic. Model entity shared between public and admin contexts.</constraint>
+    </architectural>
+    <design>
+      <constraint>Component hierarchy: AdminModelsPage renders inside AdminLayout's Outlet (from Story 2.2)</constraint>
+      <constraint>Table implementation: Use HTML table (not TanStack Table) for MVP. TanStack Table optional for advanced features.</constraint>
+      <constraint>Responsive: Desktop-first design. Mobile optimization deferred to Epic 8.</constraint>
+      <constraint>Status badges: active=green, deprecated=red, beta=yellow/orange. Use Tailwind color utilities.</constraint>
+      <constraint>Search debouncing: 300ms delay to prevent excessive re-renders during typing.</constraint>
+    </design>
+    <security>
+      <constraint>All admin endpoints require JWT authorization via [Authorize] attribute</constraint>
+      <constraint>Frontend: axios interceptor automatically includes credentials (withCredentials: true)</constraint>
+      <constraint>Backend: Validate JWT token signature and expiration on every admin request</constraint>
+      <constraint>Error handling: Return 401 Unauthorized if token invalid/expired, 403 Forbidden if user not admin</constraint>
+    </security>
+    <testing>
+      <constraint>Component tests: Use MSW to mock GET /api/admin/models endpoint</constraint>
+      <constraint>Integration tests: Use TestContainers for real database, WebApplicationFactory for API</constraint>
+      <constraint>Test coverage target: 70% overall (90% for service layer, 60% for controllers/components)</constraint>
+      <constraint>Test authentication: Verify 401 returned for unauthenticated requests to admin endpoints</constraint>
+    </testing>
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>GET /api/admin/models</name>
+      <kind>REST endpoint</kind>
+      <signature>
+        GET /api/admin/models?search={string}&amp;provider={string}&amp;status={string}&amp;page={int}&amp;limit={int}
+        Authorization: Bearer {jwt_token}
+        Response: 200 OK + { data: AdminModelDto[], meta: { total: number, page: number, limit: number, timestamp: string } }
+        Error: 401 Unauthorized (invalid token), 500 Internal Server Error
+      </signature>
+      <path>services/backend/LlmTokenPrice.API/Controllers/Admin/AdminModelsController.cs</path>
+    </interface>
+    <interface>
+      <name>AdminModelDto</name>
+      <kind>DTO (Data Transfer Object)</kind>
+      <signature>
+        interface AdminModelDto {
+          id: string; // GUID
+          name: string;
+          provider: string;
+          version: string | null;
+          status: 'active' | 'deprecated' | 'beta';
+          inputPricePer1M: number; // decimal(10,6)
+          outputPricePer1M: number; // decimal(10,6)
+          currency: string;
+          capabilities: {
+            contextWindow: number;
+            supportsFunctionCalling: boolean;
+            supportsVision: boolean;
+            // ... other capabilities
+          };
+          createdAt: string; // ISO 8601
+          updatedAt: string; // ISO 8601
+        }
+      </signature>
+      <path>services/backend/LlmTokenPrice.Application/DTOs/AdminModelDto.cs (create), apps/web/src/types/admin.ts (create)</path>
+    </interface>
+    <interface>
+      <name>useAdminModels</name>
+      <kind>React Hook (TanStack Query)</kind>
+      <signature>
+        function useAdminModels(searchTerm?: string): {
+          data: AdminModelDto[] | undefined;
+          isLoading: boolean;
+          error: Error | null;
+          refetch: () =&gt; void;
+        }
+      </signature>
+      <path>apps/web/src/hooks/useAdminModels.ts (create)</path>
+    </interface>
+    <interface>
+      <name>AdminModelService.GetAllModelsAsync</name>
+      <kind>Application service method</kind>
+      <signature>
+        Task&lt;List&lt;AdminModelDto&gt;&gt; GetAllModelsAsync(
+          string? searchTerm = null,
+          string? provider = null,
+          string? status = null,
+          int page = 1,
+          int limit = 50,
+          CancellationToken cancellationToken = default
+        )
+      </signature>
+      <path>services/backend/LlmTokenPrice.Application/Services/AdminModelService.cs (create)</path>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>
+Testing follows 70/25/5 pyramid: 70% unit tests (services, validators), 25% integration tests (API endpoints with TestContainers), 5% E2E tests (Playwright). Use xUnit + FluentAssertions for backend, Vitest + Testing Library for frontend. MSW mocks API in component tests. Parallel test execution enabled. TestContainers provides isolated PostgreSQL 16 + Redis 7.2 instances. Respawn cleans database between tests (&lt;100ms). Given-When-Then structure for readability.
+    </standards>
+    <locations>
+      <location>services/backend/LlmTokenPrice.Application.Tests/Services/AdminModelServiceTests.cs</location>
+      <location>services/backend/LlmTokenPrice.API.Tests/Controllers/Admin/AdminModelsControllerTests.cs</location>
+      <location>apps/web/src/pages/admin/__tests__/AdminModelsPage.test.tsx</location>
+      <location>apps/web/src/components/admin/__tests__/ModelList.test.tsx</location>
+      <location>apps/web/src/hooks/__tests__/useAdminModels.test.ts</location>
+      <location>tests/e2e/admin-models-crud.spec.ts</location>
+    </locations>
+    <ideas>
+      <test ac="AC-2.3.1" type="integration">AdminModelsController GET /api/admin/models returns 200 with all models (including inactive) when authenticated</test>
+      <test ac="AC-2.3.1" type="integration">AdminModelsController GET /api/admin/models returns 401 when JWT token missing or invalid</test>
+      <test ac="AC-2.3.1" type="unit">AdminModelService.GetAllModelsAsync queries database and maps entities to AdminModelDto with all fields</test>
+      <test ac="AC-2.3.2" type="component">ModelList renders table with correct columns: Name, Provider, Input Price, Output Price, Status, Last Updated</test>
+      <test ac="AC-2.3.2" type="component">ModelList formats prices with 6 decimal places and currency symbol ($)</test>
+      <test ac="AC-2.3.2" type="component">ModelList formats timestamps with relative time using date-fns ("2 days ago")</test>
+      <test ac="AC-2.3.2" type="component">ModelList displays status badges with correct colors (active=green, deprecated=red, beta=yellow)</test>
+      <test ac="AC-2.3.3" type="component">Search input filters models by name (case-insensitive match)</test>
+      <test ac="AC-2.3.3" type="component">Search input filters models by provider (case-insensitive match)</test>
+      <test ac="AC-2.3.3" type="component">Search input debounces with 300ms delay (does not trigger filter on every keystroke)</test>
+      <test ac="AC-2.3.3" type="component">Search shows "No models found" message when filter returns empty results</test>
+      <test ac="AC-2.3.4" type="component">"Add New Model" button navigates to /admin/models/new when clicked</test>
+      <test ac="AC-2.3.5" type="component">Edit button on row navigates to /admin/models/{id}/edit with correct model ID</test>
+      <test ac="AC-2.3.6" type="component">Delete button on row triggers confirmation dialog with model name</test>
+      <test ac="AC-2.3.6" type="component">Delete confirmation dialog shows "Cancel" and "Delete" buttons</test>
+      <test ac="AC-2.3.1" type="e2e">Admin logs in → navigates to /admin/models → sees models table with data from database</test>
+      <test ac="AC-2.3.3" type="e2e">Admin searches for "GPT" → table filters to show only models with "GPT" in name</test>
+      <test type="integration">AdminModelService.GetAllModelsAsync with search param filters results by name/provider match</test>
+      <test type="integration">Admin repository orders models by UpdatedAt DESC (most recent first)</test>
+      <test type="unit">AdminModelService returns empty list when no models exist in database</test>
+    </ideas>
+  </tests>
+</story-context>
