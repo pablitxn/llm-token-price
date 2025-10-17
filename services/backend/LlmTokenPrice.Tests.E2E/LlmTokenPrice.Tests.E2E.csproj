@@ -9,9 +9,9 @@
 
   <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="6.0.2" />
-    <PackageReference Include="FluentAssertions" Version="8.7.1" />
+    <PackageReference Include="FluentAssertions" Version="7.1.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
-    <PackageReference Include="TngTech.ArchUnitNET.xUnit" Version="0.10.6" />
+    <PackageReference Include="Microsoft.Playwright" Version="1.49.0" />
     <PackageReference Include="xunit" Version="2.9.2" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
   </ItemGroup>
@@ -21,9 +21,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\LlmTokenPrice.Domain\LlmTokenPrice.Domain.csproj" />
-    <ProjectReference Include="..\LlmTokenPrice.Application\LlmTokenPrice.Application.csproj" />
-    <ProjectReference Include="..\LlmTokenPrice.Infrastructure\LlmTokenPrice.Infrastructure.csproj" />
     <ProjectReference Include="..\LlmTokenPrice.API\LlmTokenPrice.API.csproj" />
   </ItemGroup>
 
