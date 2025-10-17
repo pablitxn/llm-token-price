@@ -26,11 +26,12 @@
 
 **Backend Setup:**
 ```bash
-dotnet new sln -n Backend
-dotnet new classlib -n Backend.Domain -f net8.0
-dotnet new classlib -n Backend.Application -f net8.0
-dotnet new classlib -n Backend.Infrastructure -f net8.0
-dotnet new webapi -n Backend.API -f net8.0
+# Note: Actual implementation uses LlmTokenPrice.* naming for better clarity
+dotnet new sln -n LlmTokenPrice
+dotnet new classlib -n LlmTokenPrice.Domain -f net9.0
+dotnet new classlib -n LlmTokenPrice.Application -f net9.0
+dotnet new classlib -n LlmTokenPrice.Infrastructure -f net9.0
+dotnet new webapi -n LlmTokenPrice.API -f net9.0
 dotnet sln add **/*.csproj
 ```
 
