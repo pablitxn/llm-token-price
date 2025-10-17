@@ -34,13 +34,47 @@ services/backend/
 ```
 
 ### Frontend (`apps/web/`)
-- **React 19** with **TypeScript**
+- **React 19** with **TypeScript** (strict mode)
 - **Vite** as build tool with Rolldown
-- **TailwindCSS** for styling
-- **Zustand** for state management
-- **TanStack Query** for data fetching
+- **TailwindCSS 4** for styling
+- **Zustand** for client state management
+- **TanStack Query** for server state (API caching)
 - **TanStack Table** for data tables
 - **Chart.js** for data visualization
+- **React Router 7** for client-side routing
+
+**Component Structure:**
+```
+apps/web/src/
+├── main.tsx                  # React entry point with providers
+├── App.tsx                   # Route configuration
+├── /components/
+│   └── /layout/              # Layout components
+│       ├── Layout.tsx        # Main layout wrapper
+│       ├── Header.tsx        # Navigation header
+│       └── Footer.tsx        # Page footer
+├── /pages/                   # Route components
+│   ├── HomePage.tsx          # Landing page (/)
+│   ├── CalculatorPage.tsx   # Cost calculator (/calculator)
+│   ├── ComparisonPage.tsx   # Model comparison (/compare)
+│   └── NotFoundPage.tsx     # 404 handler
+├── /api/                     # API client utilities
+│   ├── client.ts             # Axios instance with interceptors
+│   └── health.ts             # Health check function
+└── /styles/
+    └── globals.css           # TailwindCSS + custom styles
+```
+
+**State Architecture:**
+- **Server State (TanStack Query):** API data with 5-minute stale time, 1 retry
+- **Client State (Zustand):** Comparison basket, filters, view preferences (future)
+- **Local State (useState):** Form inputs, modals, pagination
+
+**Routing:**
+- `/` → HomePage (landing page)
+- `/calculator` → CalculatorPage (cost calculator)
+- `/compare` → ComparisonPage (model comparison)
+- `/*` → NotFoundPage (404 handler)
 
 ## 🚀 Prerequisites
 
