@@ -437,4 +437,36 @@ public class ModelsController : ControllerBase
 
 ---
 
+## Post-Review Follow-ups
+
+### Story 1.5 (Redis Cache Connection) - Review Date: 2025-10-16
+
+**Review Outcome:** Approve with 5 action items (2 Medium, 3 Low)
+
+**Medium Priority:**
+1. **Add automated test coverage for RedisCacheRepository**
+   - Defer to Story 1.8 (CI/CD Pipeline) when xUnit test project is created
+   - Create `LlmTokenPrice.Infrastructure.Tests/Caching/RedisCacheRepositoryTests.cs`
+   - Test scenarios: cache hit/miss, Redis unavailable, JSON errors, TTL verification
+   - Estimated effort: 2-3 hours
+
+2. **Consider implementing retry logic for transient Redis failures**
+   - Defer to Phase 2 (post-MVP optimization)
+   - Use Polly NuGet package with 3 retries, exponential backoff (100ms, 200ms, 400ms)
+   - Apply only to transient RedisConnectionException
+   - Estimated effort: 4-6 hours
+
+**Low Priority:**
+3. **Add cache key validation utility** - Create `CacheKeys.ValidateKey()` method (1-2 hours)
+4. **Clean up corrupted cache entries on deserialization failure** - Add DeleteAsync call in JsonException catch block (30 minutes)
+5. **Document CancellationToken limitation** - Add XML comments explaining StackExchange.Redis 2.7 limitation (15 minutes)
+
+**Key Findings:**
+- All 6 acceptance criteria met (AC#5 partial - manual testing only, automated tests missing)
+- Excellent hexagonal architecture adherence (95%+ compliance)
+- Production-ready error handling with graceful degradation
+- No security vulnerabilities identified
+
+---
+
 **Next Epic:** Epic 2 - Model Data Management & Admin CRUD
