@@ -1,4 +1,3 @@
-# ATDD Checklist - Epic 1, Story 1.11: Establish Test Infrastructure and Validation Framework
 
 **Date:** 2025-10-17
 **Author:** Pablo
