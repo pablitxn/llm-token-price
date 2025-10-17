@@ -1,5 +1,8 @@
 # LLM Token Price Comparison Platform
 
+[![Backend CI](https://github.com/pablitxn/llm-token-price/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/pablitxn/llm-token-price/actions/workflows/backend-ci.yml)
+[![Frontend CI](https://github.com/pablitxn/llm-token-price/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/pablitxn/llm-token-price/actions/workflows/frontend-ci.yml)
+
 A modern web application for comparing and analyzing pricing across Large Language Model (LLM) providers. This platform helps developers and organizations make data-driven decisions about model selection by providing real-time pricing comparisons, cost calculations, and performance benchmarks.
 
 ## 📋 Project Overview
@@ -297,6 +300,129 @@ dotnet test
 cd apps/web
 pnpm run test
 ```
+
+## 🚦 CI/CD Pipeline
+
+This project uses **GitHub Actions** for automated continuous integration and deployment. All code changes are automatically validated on every push and pull request.
+
+### Pipeline Status
+
+- **Backend CI:** [![Backend CI](https://github.com/pablitxn/llm-token-price/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/pablitxn/llm-token-price/actions/workflows/backend-ci.yml)
+- **Frontend CI:** [![Frontend CI](https://github.com/pablitxn/llm-token-price/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/pablitxn/llm-token-price/actions/workflows/frontend-ci.yml)
+
+### Backend CI Pipeline
+
+**Workflow:** `.github/workflows/backend-ci.yml`
+
+**Triggers:**
+- Push to `main` branch (backend files only)
+- Pull requests to `main` branch (backend files only)
+
+**Steps:**
+1. Checkout code
+2. Setup .NET 9 SDK
+3. Start PostgreSQL 16 + TimescaleDB service container
+4. Start Redis 7.2 service container
+5. Restore dependencies (`dotnet restore`)
+6. Build solution (`dotnet build --configuration Release`)
+7. Run tests (`dotnet test --configuration Release`)
+
+**Service Containers:**
+- **PostgreSQL:** `timescale/timescaledb:2.13.0-pg16` on port 5432
+- **Redis:** `redis:7-alpine` on port 6379
+
+**Test Database:**
+- Database: `llmpricing_test`
+- Username: `postgres`
+- Password: `test`
+
+### Frontend CI Pipeline
+
+**Workflow:** `.github/workflows/frontend-ci.yml`
+
+**Triggers:**
+- Push to `main` branch (frontend files only)
+- Pull requests to `main` branch (frontend files only)
+
+**Steps:**
+1. Checkout code
+2. Setup Node.js 20
+3. Setup pnpm 10
+4. Cache pnpm store (speeds up subsequent runs)
+5. Install dependencies (`pnpm install --frozen-lockfile`)
+6. Run type check (`pnpm run type-check`)
+7. Run linter (`pnpm run lint`)
+8. Build application (`pnpm run build`)
+
+### Running CI Checks Locally
+
+Before pushing changes, verify your code passes all CI checks:
+
+**Backend:**
+```bash
+cd services/backend
+
+# Run the full CI workflow locally
+dotnet restore
+dotnet build --configuration Release
+dotnet test --configuration Release
+```
+
+**Frontend:**
+```bash
+cd apps/web
+
+# Run the full CI workflow locally
+pnpm install --frozen-lockfile
+pnpm run type-check
+pnpm run lint
+pnpm run build
+```
+
+### CI/CD Troubleshooting
+
+**Backend Pipeline Failures:**
+
+1. **Service container health check timeout:**
+   - PostgreSQL or Redis container failed to start
+   - Check GitHub Actions logs for service container errors
+   - Verify health check commands in workflow file
+
+2. **Build failures:**
+   - Missing dependencies: Run `dotnet restore` locally
+   - Version mismatch: Ensure .NET 9 is specified in workflow
+   - Check for compilation errors in changed files
+
+3. **Test failures:**
+   - Database connection issues: Verify connection string in workflow
+   - Flaky tests: Check test logs for timing issues
+   - Missing test data: Ensure tests set up required data
+
+**Frontend Pipeline Failures:**
+
+1. **Type check failures:**
+   - TypeScript errors: Run `pnpm run type-check` locally
+   - Strict mode violations: Fix `any` types and null checks
+   - Missing type definitions: Install missing `@types/*` packages
+
+2. **Lint failures:**
+   - ESLint errors: Run `pnpm run lint` locally
+   - Fix automatically: `pnpm run lint --fix`
+   - Check `.eslintrc.json` for rule configurations
+
+3. **Build failures:**
+   - Dependency issues: Delete `node_modules` and run `pnpm install`
+   - Bundle size exceeded: Check for large dependencies
+   - Syntax errors: Run build locally to see detailed errors
+
+4. **Cache issues:**
+   - Stale dependencies: Clear GitHub Actions cache
+   - Lockfile mismatch: Commit updated `pnpm-lock.yaml`
+
+**Branch Protection (when configured):**
+- Pull requests cannot be merged until all CI checks pass
+- Required checks: Backend CI and Frontend CI
+- Branches must be up to date before merging
 
 ## 📦 Caching Architecture
 

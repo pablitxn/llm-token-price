@@ -1,5 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
+# 
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{74B2813E-799C-453C-95D8-179D7D835F9F}"
 	ProjectSection(SolutionItems) = preProject
 		compose.yaml = compose.yaml
@@ -12,6 +13,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LlmTokenPrice.Domain", "LlmTokenPrice.Domain\LlmTokenPrice.Domain.csproj", "{4490B7F3-5A95-4090-ACDA-EC22AD1C94D9}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LlmTokenPrice.Infrastructure", "LlmTokenPrice.Infrastructure\LlmTokenPrice.Infrastructure.csproj", "{FEECD0A1-B6A3-474F-BCDB-2A408DE7C06A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LlmTokenPrice.Domain.Tests", "LlmTokenPrice.Domain.Tests\LlmTokenPrice.Domain.Tests.csproj", "{A7A8CB96-0447-48AD-B936-158BCF7534DC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -35,5 +38,9 @@ Global
 		{FEECD0A1-B6A3-474F-BCDB-2A408DE7C06A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FEECD0A1-B6A3-474F-BCDB-2A408DE7C06A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FEECD0A1-B6A3-474F-BCDB-2A408DE7C06A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A7A8CB96-0447-48AD-B936-158BCF7534DC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A7A8CB96-0447-48AD-B936-158BCF7534DC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A7A8CB96-0447-48AD-B936-158BCF7534DC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A7A8CB96-0447-48AD-B936-158BCF7534DC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
