@@ -52,7 +52,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 // Redis cache configuration (singleton connection multiplexer)
 // Note: Redis is optional - app will function without it (graceful degradation)
-builder.Services.AddSingleton<IConnectionMultiplexer?>(sp =>
+builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 {
     var logger = sp.GetRequiredService<ILogger<Program>>();
     var connectionString = builder.Configuration.GetConnectionString("Redis");
@@ -60,7 +60,7 @@ builder.Services.AddSingleton<IConnectionMultiplexer?>(sp =>
     if (string.IsNullOrWhiteSpace(connectionString))
     {
         logger.LogWarning("Redis connection string not configured. Application will run without caching.");
-        return null; // Graceful degradation: null multiplexer indicates cache unavailable
+        return null!; // Null-forgiving operator: Graceful degradation allows null, consumers must handle
     }
 
     try
@@ -87,7 +87,7 @@ builder.Services.AddSingleton<IConnectionMultiplexer?>(sp =>
     catch (Exception ex)
     {
         logger.LogError(ex, "Failed to connect to Redis. Application will continue without caching.");
-        return null; // Graceful degradation: return null on connection failure
+        return null!; // Null-forgiving operator: Return null on connection failure for graceful degradation
     }
 });
 
