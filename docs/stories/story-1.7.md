@@ -1,6 +1,6 @@
 # Story 1.7: Setup Frontend Application Shell
 
-Status: Ready for Review
+Status: Done
 
 ## Story
 
