@@ -1,0 +1,252 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>1.11</storyId>
+    <title>Establish Test Infrastructure and Validation Framework</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-17</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-1.11-test-infrastructure.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>backend developer</asA>
+    <iWant>comprehensive test infrastructure with database isolation, architecture validation, and E2E testing capabilities</iWant>
+    <soThat>I can write reliable tests that validate hexagonal architecture boundaries, database integrity, and critical infrastructure components</soThat>
+    <tasks>
+      <!-- Setup Phase (AC: #1, #2, #3) -->
+      <task group="Setup Phase">Install xUnit NuGet packages (xUnit 2.6.0, xUnit.runner.visualstudio, Microsoft.NET.Test.Sdk)</task>
+      <task group="Setup Phase">Install TestContainers.PostgreSql and TestContainers.Redis NuGet packages (3.6.0+)</task>
+      <task group="Setup Phase">Install Respawn NuGet package (6.1.0+) for database cleanup</task>
+      <task group="Setup Phase">Configure xUnit parallel execution in xunit.runner.json (maxParallelThreads: auto)</task>
+      <task group="Setup Phase">Create TestContainers configuration class with PostgreSQL and Redis container initialization</task>
+
+      <!-- Architecture Validation (AC: #4, #11) -->
+      <task group="Architecture Validation">Install ArchUnitNET NuGet package (0.10.0+)</task>
+      <task group="Architecture Validation">Create ArchitectureTests.cs in LlmTokenPrice.Tests.Unit project</task>
+      <task group="Architecture Validation">Define ArchUnit rules to enforce hexagonal architecture boundaries</task>
+      <task group="Architecture Validation">Write failing test that detects if domain depends on infrastructure packages</task>
+
+      <!-- Test Support Infrastructure (AC: #5, #7, #8) -->
+      <task group="Test Support">Install FluentAssertions NuGet package (6.12.0+)</task>
+      <task group="Test Support">Create DatabaseFixture.cs implementing IAsyncLifetime for xUnit</task>
+      <task group="Test Support">Create SampleDataSeeder.cs factory class with Bogus faker</task>
+
+      <!-- Integration Tests (AC: #9, #10) -->
+      <task group="Integration Tests">Create LlmTokenPrice.Tests.Integration project</task>
+      <task group="Integration Tests">Write PostgreSQL integration test (DatabaseIntegrationTests.cs)</task>
+      <task group="Integration Tests">Write Redis integration test (CacheIntegrationTests.cs)</task>
+
+      <!-- E2E Tests (AC: #6, #12) -->
+      <task group="E2E Tests">Install Playwright NuGet package (Microsoft.Playwright 1.40.0+)</task>
+      <task group="E2E Tests">Create LlmTokenPrice.Tests.E2E project</task>
+      <task group="E2E Tests">Configure Playwright with API request context for fast data seeding</task>
+      <task group="E2E Tests">Write API health endpoint E2E test (HealthCheckTests.cs)</task>
+
+      <!-- CI/CD Integration (AC: #13, #14) -->
+      <task group="CI/CD Integration">Create .github/workflows/test.yml GitHub Actions workflow</task>
+      <task group="CI/CD Integration">Configure test timeout limits (Unit: 1min, Integration: 5min, E2E: 10min)</task>
+      <task group="CI/CD Integration">Add test coverage reporting (Coverlet + ReportGenerator) with 70%+ target</task>
+      <task group="CI/CD Integration">Validate test execution times meet acceptance criteria thresholds</task>
+
+      <!-- Documentation and Validation -->
+      <task group="Documentation">Create docs/testing-guide.md with TestContainers setup and troubleshooting</task>
+      <task group="Documentation">Verify all 14 acceptance criteria are met with passing tests</task>
+      <task group="Documentation">Run full test suite and confirm execution time targets achieved</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">xUnit test framework configured with parallel test execution enabled</criterion>
+    <criterion id="AC2">TestContainers setup for PostgreSQL 16 and Redis 7.2 with automatic container lifecycle management</criterion>
+    <criterion id="AC3">Respawn database cleanup configured to reset database state between integration tests (less than 100ms cleanup)</criterion>
+    <criterion id="AC4">ArchUnitNET tests enforce hexagonal architecture boundaries (domain layer has zero infrastructure dependencies)</criterion>
+    <criterion id="AC5">FluentAssertions library integrated for readable test assertions</criterion>
+    <criterion id="AC6">Playwright E2E framework configured with API request context for fast data seeding</criterion>
+    <criterion id="AC7">DatabaseFixture (xUnit IClassFixture) provides shared test database instance across test classes</criterion>
+    <criterion id="AC8">SampleDataSeeder factory creates valid test entities (Models, Capabilities, Benchmarks, BenchmarkScores)</criterion>
+    <criterion id="AC9">Integration test validates PostgreSQL connection, migration execution, and entity creation</criterion>
+    <criterion id="AC10">Integration test validates Redis cache Get/Set/Delete operations with connection resilience</criterion>
+    <criterion id="AC11">Unit test validates hexagonal architecture boundaries (ArchUnit rules fail if domain depends on infrastructure)</criterion>
+    <criterion id="AC12">E2E test validates API health endpoint returns 200 OK with database + Redis status checks</criterion>
+    <criterion id="AC13">Test execution time meets targets: Unit tests less than 10s, Integration tests less than 30s, E2E smoke tests less than 5min</criterion>
+    <criterion id="AC14">CI/CD pipeline executes all test levels successfully in GitHub Actions workflow</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture Document</title>
+        <section>2.1 Hexagonal Architecture (Ports &amp; Adapters)</section>
+        <snippet>Hexagonal architecture enables domain isolation - business logic independent of infrastructure. Domain services testable without database/HTTP concerns. Clear boundaries prevent feature creep contamination.</snippet>
+      </doc>
+      <doc>
+        <path>docs/test-design-epic-1.md</path>
+        <title>Test Design: Epic 1 - Project Foundation</title>
+        <section>Risk Assessment &amp; Test Coverage Plan</section>
+        <snippet>Comprehensive test strategy covering 18 risks across TECH, DATA, OPS, PERF categories. P0 scenarios (12) run on every commit covering database schema, hexagonal boundaries, Redis connection, health checks. Total effort: 49.5 hours.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-1.md</path>
+        <title>Technical Specification: Epic 1</title>
+        <section>Testing Strategy</section>
+        <snippet>Epic 1 establishes comprehensive test infrastructure with xUnit (unit), TestContainers (integration), and Playwright (E2E). Testing pyramid: 70% unit, 25% integration, 5% E2E. Architecture tests enforce hexagonal boundaries.</snippet>
+      </doc>
+      <doc>
+        <path>docs/atdd-checklist-story-1.11.md</path>
+        <title>ATDD Checklist - Story 1.11</title>
+        <section>Failing Tests Created (RED Phase)</section>
+        <snippet>12 failing tests created across Unit (2 ArchUnit tests), Integration (8 database + Redis tests), and E2E (2 health endpoint tests). All tests in RED phase ready for implementation.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture-decisions.md</path>
+        <title>Architecture Decision Records</title>
+        <section>ADR-002: Hexagonal Architecture</section>
+        <snippet>Hexagonal Architecture chosen for domain isolation, testability, and maintainability. Domain layer has zero infrastructure dependencies. Repository interfaces defined as ports in domain layer.</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>NFR-015: Testing &amp; Quality</section>
+        <snippet>Comprehensive test coverage (70%+ code coverage), automated testing pipeline with unit/integration/E2E tests, architecture validation tests to enforce hexagonal boundaries.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>services/backend/LlmTokenPrice.Domain/Repositories/IModelRepository.cs</path>
+        <kind>interface</kind>
+        <symbol>IModelRepository</symbol>
+        <lines>14-40</lines>
+        <reason>Port interface that test infrastructure must validate. ArchUnitNET tests verify this interface lives in Domain layer, not Infrastructure.</reason>
+      </artifact>
+      <artifact>
+        <path>services/backend/LlmTokenPrice.Domain/Repositories/ICacheRepository.cs</path>
+        <kind>interface</kind>
+        <symbol>ICacheRepository</symbol>
+        <lines>1-20</lines>
+        <reason>Cache port interface. Integration tests will validate Redis implementations of this interface with TestContainers.</reason>
+      </artifact>
+      <artifact>
+        <path>services/backend/LlmTokenPrice.Infrastructure/Data/AppDbContext.cs</path>
+        <kind>class</kind>
+        <symbol>AppDbContext</symbol>
+        <lines>17-61</lines>
+        <reason>EF Core DbContext used by DatabaseFixture for integration tests. TestContainers will create instances for test isolation.</reason>
+      </artifact>
+      <artifact>
+        <path>services/backend/LlmTokenPrice.Infrastructure/Data/Seeds/SampleDataSeeder.cs</path>
+        <kind>class</kind>
+        <symbol>SampleDataSeeder</symbol>
+        <lines>1-100</lines>
+        <reason>Existing seeder that test SampleDataSeeder factory should be based on. Provides model for creating realistic test entities.</reason>
+      </artifact>
+      <artifact>
+        <path>services/backend/LlmTokenPrice.Infrastructure/Repositories/ModelRepository.cs</path>
+        <kind>class</kind>
+        <symbol>ModelRepository</symbol>
+        <lines>1-50</lines>
+        <reason>Concrete repository implementation. ArchUnitNET tests verify this adapter lives in Infrastructure layer, not Domain.</reason>
+      </artifact>
+      <artifact>
+        <path>.github/workflows/backend-ci.yml</path>
+        <kind>workflow</kind>
+        <symbol>Backend CI</symbol>
+        <lines>1-76</lines>
+        <reason>Existing CI workflow that test infrastructure must integrate with. Shows PostgreSQL + Redis service container pattern for GitHub Actions.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <dotnet>
+        <package name="xUnit" version="2.6.0" purpose="Unit test framework with parallel execution" />
+        <package name="xunit.runner.visualstudio" version="2.5.3" purpose="Visual Studio test adapter" />
+        <package name="Microsoft.NET.Test.Sdk" version="17.8.0" purpose="Test SDK for dotnet test CLI" />
+        <package name="TestContainers.PostgreSql" version="3.6.0+" purpose="PostgreSQL TestContainers for realistic integration tests" />
+        <package name="TestContainers.Redis" version="3.6.0+" purpose="Redis TestContainers for cache integration tests" />
+        <package name="Respawn" version="6.1.0+" purpose="Fast database cleanup between integration tests (less than 100ms)" />
+        <package name="ArchUnitNET.xUnit" version="0.10.6+" purpose="Architecture boundary validation tests" />
+        <package name="FluentAssertions" version="6.12.0" purpose="Readable test assertions" />
+        <package name="Microsoft.Playwright" version="1.40.0+" purpose="E2E API testing with request context" />
+        <package name="Bogus" version="35.3.0" purpose="Faker library for SampleDataSeeder test data generation" />
+        <package name="coverlet.collector" version="6.0.2" purpose="Code coverage collection" />
+      </dotnet>
+      <existing>
+        <package name="Microsoft.EntityFrameworkCore" version="9.0.10" purpose="Already installed for database access" />
+        <package name="Npgsql.EntityFrameworkCore.PostgreSQL" version="9.0.0" purpose="Already installed for PostgreSQL provider" />
+        <package name="StackExchange.Redis" version="2.8.16" purpose="Already installed for Redis caching" />
+      </existing>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Hexagonal Architecture: Domain layer must have ZERO dependencies on Infrastructure, Application, or API layers. ArchUnitNET tests enforce this boundary.</constraint>
+    <constraint>Repository interfaces (IModelRepository, ICacheRepository) must be defined as ports in Domain layer, not Infrastructure.</constraint>
+    <constraint>Concrete repository implementations (ModelRepository, RedisCacheRepository) must live in Infrastructure layer as adapters.</constraint>
+    <constraint>Test projects must reference domain entities without circular dependencies.</constraint>
+    <constraint>TestContainers must use postgres:16-alpine and redis:7.2-alpine images matching production versions.</constraint>
+    <constraint>DatabaseFixture must implement IAsyncLifetime for proper container lifecycle management (startup/teardown).</constraint>
+    <constraint>Respawn cleanup must complete in less than 100ms to meet integration test execution time targets (less than 30s total).</constraint>
+    <constraint>Test execution time targets: Unit tests less than 10s, Integration tests less than 30s, E2E smoke tests less than 5min.</constraint>
+    <constraint>xUnit parallel execution must be enabled (maxParallelThreads: auto) for faster test runs.</constraint>
+    <constraint>Playwright E2E tests use API request context (not browser automation) for health endpoint validation.</constraint>
+    <constraint>GitHub Actions CI/CD must use service containers for PostgreSQL + Redis (matching existing backend-ci.yml pattern).</constraint>
+    <constraint>Code coverage target: 70%+ overall, enforced via Coverlet + Codecov integration.</constraint>
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>IModelRepository</name>
+      <kind>Repository Port Interface</kind>
+      <signature>Task&lt;List&lt;Model&gt;&gt; GetAllAsync(CancellationToken cancellationToken = default)</signature>
+      <path>services/backend/LlmTokenPrice.Domain/Repositories/IModelRepository.cs</path>
+    </interface>
+    <interface>
+      <name>ICacheRepository</name>
+      <kind>Cache Port Interface</kind>
+      <signature>Task&lt;T?&gt; GetAsync&lt;T&gt;(string key, CancellationToken cancellationToken = default)</signature>
+      <path>services/backend/LlmTokenPrice.Domain/Repositories/ICacheRepository.cs</path>
+    </interface>
+    <interface>
+      <name>AppDbContext</name>
+      <kind>EF Core DbContext</kind>
+      <signature>DbSet&lt;Model&gt; Models, DbSet&lt;Capability&gt; Capabilities, DbSet&lt;Benchmark&gt; Benchmarks, DbSet&lt;BenchmarkScore&gt; BenchmarkScores</signature>
+      <path>services/backend/LlmTokenPrice.Infrastructure/Data/AppDbContext.cs</path>
+    </interface>
+    <interface>
+      <name>/api/health</name>
+      <kind>REST Endpoint</kind>
+      <signature>GET /api/health → 200 OK with { database: { status: "healthy" }, redis: { status: "healthy" } }</signature>
+      <path>services/backend/LlmTokenPrice.API/Controllers/HealthController.cs</path>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>
+      The project follows a comprehensive testing pyramid approach with xUnit as the primary test framework. Unit tests (70% of coverage) validate domain logic and architecture boundaries using ArchUnitNET to enforce hexagonal architecture constraints. Integration tests (25% of coverage) use TestContainers for PostgreSQL 16 and Redis 7.2 to provide realistic database and cache testing environments, with Respawn handling fast database cleanup (less than 100ms between tests). E2E tests (5% of coverage) use Playwright with API request context (not browser automation) to validate critical endpoints like /api/health. All tests use FluentAssertions for readable assertions and follow Given-When-Then structure. The test infrastructure enables parallel test execution via xUnit configuration (maxParallelThreads: auto) to meet strict execution time targets: Unit tests less than 10s, Integration tests less than 30s, E2E smoke tests less than 5min. Code coverage is collected via Coverlet and reported to Codecov with a 70%+ target enforced in CI/CD.
+    </standards>
+    <locations>
+      <location>tests/LlmTokenPrice.Tests.Unit/**/*.cs (Unit tests including ArchitectureTests.cs)</location>
+      <location>tests/LlmTokenPrice.Tests.Integration/**/*.cs (Integration tests: DatabaseIntegrationTests.cs, CacheIntegrationTests.cs)</location>
+      <location>tests/LlmTokenPrice.Tests.Integration/Fixtures/**/*.cs (Test fixtures: DatabaseFixture.cs with IAsyncLifetime)</location>
+      <location>tests/LlmTokenPrice.Tests.Integration/Factories/**/*.cs (Test data factories: SampleDataSeeder.cs with Bogus faker)</location>
+      <location>tests/LlmTokenPrice.Tests.E2E/**/*.cs (E2E tests: HealthCheckTests.cs with Playwright)</location>
+      <location>.github/workflows/test.yml (CI/CD test workflow integrating all test levels)</location>
+      <location>xunit.runner.json (xUnit parallel execution configuration at solution root)</location>
+    </locations>
+    <ideas>
+      <idea ac="AC4,AC11">ArchUnitNET test: DomainLayer_Should_Not_Depend_On_Infrastructure - Validates Domain layer has zero dependencies on Infrastructure, Application, or API packages</idea>
+      <idea ac="AC4,AC11">ArchUnitNET test: RepositoryInterfaces_Should_Be_In_DomainLayer - Validates IModelRepository and ICacheRepository are defined as ports in Domain.Repositories namespace</idea>
+      <idea ac="AC4,AC11">ArchUnitNET test: ConcreteRepositories_Should_Be_In_InfrastructureLayer - Validates ModelRepository and RedisCacheRepository are adapters in Infrastructure.Repositories</idea>
+      <idea ac="AC2,AC7,AC9">DatabaseFixture integration test: PostgreSQL_Connection_Should_Succeed - TestContainers PostgreSQL 16 starts and accepts connections via AppDbContext</idea>
+      <idea ac="AC2,AC7,AC9">DatabaseFixture integration test: EFCore_Migrations_Should_Execute_Successfully - Validates migrations run without errors in TestContainer</idea>
+      <idea ac="AC3,AC9">Respawn integration test: Database_Cleanup_Should_Complete_In_Under_100ms - Validates Respawn checkpoint cleanup performance meets target</idea>
+      <idea ac="AC8,AC9">SampleDataSeeder integration test: Model_Entity_Should_Be_Created_With_Valid_Relationships - Creates Model with Capability and BenchmarkScores using faker factory</idea>
+      <idea ac="AC2,AC10">Redis integration test: Redis_Connection_Should_Succeed - TestContainers Redis 7.2 starts and accepts connections</idea>
+      <idea ac="AC10">Redis integration test: Cache_GetSetDelete_Operations_Should_Work - Validates ICacheRepository implementation with TTL expiration</idea>
+      <idea ac="AC10">Redis integration test: Cache_Should_Fallback_To_Database_When_Redis_Unavailable - Tests graceful degradation when Redis container stopped</idea>
+      <idea ac="AC6,AC12">Playwright E2E test: HealthEndpoint_Should_Return_200_OK_With_All_Services_Healthy - Validates /api/health returns 200 with database and Redis status</idea>
+      <idea ac="AC12">Playwright E2E test: HealthEndpoint_Should_Report_Unhealthy_When_Database_Unavailable - Tests health check degraded status with DB unavailable</idea>
+      <idea ac="AC1,AC13">xUnit configuration test: Parallel_Execution_Should_Be_Enabled - Validates xunit.runner.json has maxParallelThreads: auto configured</idea>
+      <idea ac="AC14">GitHub Actions test: CI_Pipeline_Should_Execute_All_Test_Levels - Validates test.yml runs Unit, Integration, and E2E tests with service containers</idea>
+      <idea ac="AC5">FluentAssertions validation test: Test_Assertions_Should_Use_FluentAssertions_Syntax - Sample test demonstrating .Should().BeTrue() readable assertions</idea>
+    </ideas>
+  </tests>
+</story-context>
