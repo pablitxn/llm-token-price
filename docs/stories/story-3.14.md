@@ -1,6 +1,6 @@
 # Story 3.14: Add Context Window and Capabilities Icons
 
-Status: Draft
+Status: Ready
 
 ## Story
 

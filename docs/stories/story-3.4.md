@@ -1,6 +1,6 @@
 # Story 3.4: Implement Column Sorting
 
-Status: Draft
+Status: Ready
 
 ## Story
 

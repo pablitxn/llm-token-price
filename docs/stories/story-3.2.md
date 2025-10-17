@@ -1,6 +1,6 @@
 # Story 3.2: Fetch and Display Models in Basic Table
 
-Status: Draft
+Status: Ready
 
 ## Story
 

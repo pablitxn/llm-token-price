@@ -1,6 +1,6 @@
 # Story 3.12: Implement Table Pagination or Virtual Scrolling
 
-Status: Draft
+Status: Ready
 
 ## Story
 

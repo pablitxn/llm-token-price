@@ -1,6 +1,6 @@
 # Story 3.11: Create Comparison Basket UI
 
-Status: Draft
+Status: Ready
 
 ## Story
 

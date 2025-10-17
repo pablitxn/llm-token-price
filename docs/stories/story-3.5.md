@@ -1,6 +1,6 @@
 # Story 3.5: Add Provider Filter
 
-Status: Draft
+Status: Ready
 
 ## Story
 
