@@ -1,6 +1,6 @@
 # Story 1.2: Configure Build Tools and Package Management
 
-Status: Done
+Status: Ready for Review
 
 ## Story
 

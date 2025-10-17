@@ -1,6 +1,6 @@
 # Story 1.3: Setup PostgreSQL Database and Connection
 
-Status: Done
+Status: Ready for Review
 
 ## Story
 

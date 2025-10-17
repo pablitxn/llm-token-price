@@ -1,6 +1,6 @@
 # Story 1.8: Configure CI/CD Pipeline
 
-Status: Done
+Status: Ready for Review
 
 ## Story
 
