@@ -1,6 +1,6 @@
 # Story 3.8: Implement Search Functionality
 
-Status: Draft
+Status: Ready
 
 ## Story
 

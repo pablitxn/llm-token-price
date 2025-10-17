@@ -1,6 +1,6 @@
 # Story 3.7: Add Price Range Filter
 
-Status: Draft
+Status: Ready
 
 ## Story
 

@@ -1,6 +1,6 @@
 # Story 3.10: Add Checkbox Selection for Models
 
-Status: Draft
+Status: Ready
 
 ## Story
 

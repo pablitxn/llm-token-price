@@ -1,6 +1,6 @@
 # Story 3.6: Add Capabilities Filters
 
-Status: Draft
+Status: Ready
 
 ## Story
 

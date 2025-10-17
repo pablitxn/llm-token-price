@@ -1,6 +1,6 @@
 # Story 3.9: Display Benchmark Scores in Table
 
-Status: Draft
+Status: Ready
 
 ## Story
 

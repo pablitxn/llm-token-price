@@ -19,7 +19,7 @@ So that I can verify backend/frontend connectivity and begin building API endpoi
 
 ## Tasks / Subtasks
 
-- [ ] Create HealthController in API layer (AC: 1, 5)
+- [x] Create HealthController in API layer (AC: 1, 5)
   - [ ] Create `Backend.API/Controllers/HealthController.cs` with `[ApiController]` and `[Route("api/[controller]")]` attributes
   - [ ] Inject `AppDbContext` and `IConnectionMultiplexer` via constructor dependency injection
   - [ ] Implement GET endpoint with `[HttpGet]` attribute

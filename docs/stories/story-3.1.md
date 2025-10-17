@@ -1,6 +1,6 @@
 # Story 3.1: Create Public Homepage with Basic Layout
 
-Status: Draft
+Status: Ready
 
 ## Story
 
