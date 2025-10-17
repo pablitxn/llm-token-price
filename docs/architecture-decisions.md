@@ -374,4 +374,65 @@ Generate solution architecture in **expert mode**:
 
 ---
 
+## ADR-009: Upgrade to React 19, React Router 7, and Zustand 5
+
+**Status:** Accepted | **Date:** 2025-10-16 (Story 1.7 implementation)
+
+**Context:**
+- Original solution-architecture.md specified React 18.2.0, React Router 6.21.0, Zustand 4.4.7
+- During Story 1.7 implementation, developer upgraded to latest stable versions:
+  - React 19.1.1 (major version bump from 18.2.0)
+  - React Router 7.9.4 (major version bump from 6.21.0)
+  - Zustand 5.0.8 (major version bump from 4.4.7)
+  - TanStack Query 5.90.5 (minor bump from 5.17.0, acceptable)
+- Post-implementation review flagged version mismatches as potential risk
+
+**Decision:**
+Accept upgraded versions as project baseline and update tech spec accordingly. Rationale:
+1. **React 19** benefits outweigh migration costs:
+   - Concurrent rendering improvements for model list performance
+   - Better TypeScript support with `use` hook
+   - Server Components prep (potential future SSR for landing pages)
+   - Official release (not beta), production-ready
+2. **React Router 7** aligns with future needs:
+   - Data fetching primitives (loaders/actions) useful for Epic 3-5
+   - Type-safe routing reduces bugs
+   - Migration path clear, breaking changes minimal for our use case
+3. **Zustand 5** offers better TypeScript inference:
+   - Type-safe selectors without manual typing
+   - Smaller bundle (compatibility with React 19)
+   - Migration from v4 trivial (no API changes for our pattern)
+4. **Implementation already complete and tested**:
+   - All quality gates met (build <15s, bundle <500KB, zero errors)
+   - TailwindCSS 4 compatibility addressed (`@apply` → vanilla CSS)
+   - Production build verified (358ms, 83.45KB gzipped)
+
+**Consequences:**
+- ✅ Future-proof: Aligned with 2025 ecosystem (React 19 stable release)
+- ✅ Performance: React 19 concurrent features benefit model filtering/sorting
+- ✅ Developer experience: Better TypeScript inference, modern patterns
+- ✅ No rework: Implementation already validated and working
+- ⚠️ Documentation debt: Update solution-architecture.md version table
+- ⚠️ Team alignment: Ensure all developers aware of version baseline
+- ❌ Potential unknown breaking changes (mitigated by comprehensive testing in Epic 1)
+
+**Migration Notes:**
+- React 18→19: No code changes required (backward compatible for our usage)
+- Router 6→7: Route config pattern unchanged, future loaders/actions additive
+- Zustand 4→5: Zero breaking changes for our store patterns
+- TailwindCSS 3→4: `@apply` deprecated, using vanilla CSS (addressed in Story 1.7)
+
+**Action Items:**
+1. ✅ Update `docs/solution-architecture.md` Section 1.1 version table (to be done)
+2. ✅ Document in Story 1.7 review (completed)
+3. ⏳ Update Epic 2-8 tech specs if they reference specific versions (deferred)
+4. ⏳ Add React 19/Router 7 best practices to coding standards (deferred to Epic 2)
+
+**References:**
+- [React 19 Upgrade Guide](https://react.dev/blog/2024/12/05/react-19)
+- [React Router 7 Migration](https://reactrouter.com/en/main/upgrading/v6)
+- [Zustand v5 Release Notes](https://github.com/pmndrs/zustand/releases/tag/v5.0.0)
+
+---
+
 _All architectural decisions traceable to specific requirements (FRs/NFRs) and validated via cohesion check (95% readiness)_

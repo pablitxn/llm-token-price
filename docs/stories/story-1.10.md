@@ -1,6 +1,6 @@
 # Story 1.10: Create Basic GET API for Models List
 
-Status: Ready
+Status: Ready for Review
 
 ## Story
 

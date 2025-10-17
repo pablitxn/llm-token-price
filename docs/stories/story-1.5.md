@@ -1,6 +1,6 @@
 # Story 1.5: Setup Redis Cache Connection
 
-Status: Done
+Status: Ready for Review
 
 ## Story
 

@@ -1,6 +1,6 @@
 # Story 1.1: Initialize Project Repository and Development Environment
 
-Status: Done
+Status: Ready for Review
 
 ## Story
 
