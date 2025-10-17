@@ -3,7 +3,7 @@
 .claude/
 bmad/
 docs/
-.CLAUDE
+CLAUDE.md
 
 # Build outputs
 artifacts/
