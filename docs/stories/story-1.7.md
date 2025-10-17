@@ -300,6 +300,7 @@ apiClient.interceptors.response.use(
 - **2025-10-16**: Senior Developer Review notes appended (Status: InProgress) - Changes requested. Review identified 2 high-severity issues (scope creep in HomePage implementation, missing file documentation), 2 medium-severity issues (version mismatches, missing font loading), and 2 low-severity documentation gaps. All 6 acceptance criteria technically met but HomePage exceeds intended "placeholder" scope. Action items created for resolution.
 - **2025-10-16**: Review feedback addressed (Status: Review Passed) - Accepted scope expansion (Option 1). Updated ACs #7-8 to formalize HomePage API integration. Added missing files to documentation (models.ts, types/models.ts). Created ADR-009 documenting React 19/Router 7/Zustand 5 version upgrades. All high-severity issues resolved. Medium/low-severity items deferred to appropriate follow-up tasks (font loading, unit tests, E2E tests). Story approved with expanded scope.
 - **2025-10-16**: Story marked complete (Status: Done) - All acceptance criteria met (8/8 including expanded scope). Review passed with formalized scope expansion. Frontend application shell complete with working model listings, routing, layout, and API integration. Story 1.7 delivers: React 19 app with QueryClient/Router providers, 4 routes with Layout wrapper, TailwindCSS 4 design system, axios client with interceptors, HomePage with model cards displaying pricing/capabilities/benchmarks. Quality gates exceeded. Ready for Epic 1 continuation.
+- **2025-10-16**: Post-review improvements applied - Action items #4 (font loading - already complete in Story 1.2), #8 (ModelCard component extraction - completed, reduced HomePage from 110 to 51 lines, 53% reduction). Action items #5, #6, #7 remain deferred to Story 1.8 test infrastructure. New file: `apps/web/src/components/models/ModelCard.tsx`. All quality gates passed: TypeScript ✓, ESLint ✓, Build 326ms ✓, Bundle 101.91KB ✓.
 
 ## Dev Agent Record
 
@@ -363,6 +364,7 @@ Frontend application shell is now ready for Epic 3 implementation (Public Compar
 - `apps/web/src/api/health.ts` - Health check API function
 - `apps/web/src/api/models.ts` - **[EXPANDED SCOPE]** Models API functions (fetchModels, fetchModelById)
 - `apps/web/src/types/models.ts` - **[EXPANDED SCOPE]** TypeScript interfaces for Model DTOs
+- `apps/web/src/components/models/ModelCard.tsx` - **[POST-REVIEW]** Reusable model card component (extracted from HomePage)
 
 **Modified Files:**
 - `README.md` - Added Frontend Architecture section with component structure, state architecture, and routing documentation
@@ -491,11 +493,11 @@ Story 1.7 successfully implements the React application shell with routing, stat
 1. ✅ **[High - RESOLVED] Resolve HomePage scope creep**: **ACCEPTED expanded scope** - Updated ACs #7-8 to formalize HomePage API integration and model listings. Story 1.10 frontend work considered partially complete. - Related: AC #2, #7, #8, HomePage.tsx
 2. ✅ **[High - RESOLVED] Add missing file to documentation**: Added `apps/web/src/api/models.ts` and `apps/web/src/types/models.ts` to File List with [EXPANDED SCOPE] markers - Related: File List section
 3. ✅ **[Med - RESOLVED] Document version upgrades**: Created ADR-009 in architecture-decisions.md documenting React 19/Router 7/Zustand 5 upgrade rationale and consequences - Related: package.json, architecture-decisions.md
-4. ⏳ **[Med - DEFERRED] Add font loading**: Add Inter and JetBrains Mono font loading (Google Fonts CDN or local files) - Deferred to follow-up task (not blocking story approval) - Related: globals.css:42, index.html
-5. ⏳ **[Med - DEFERRED] Add unit tests**: Add unit tests for HomePage, Layout, Header components (target: 70% coverage) - Deferred to Epic 1 test infrastructure story - Related: All component files
+4. ✅ **[Med - RESOLVED] Add font loading**: Added Inter and JetBrains Mono font loading via Google Fonts CDN in index.html (completed in Story 1.2) - Related: globals.css:42, index.html
+5. ⏳ **[Med - DEFERRED] Add unit tests**: Add unit tests for HomePage, Layout, Header components (target: 70% coverage) - Deferred to Epic 1 test infrastructure story (Story 1.8) - Related: All component files
 6. ⏳ **[Low - DEFERRED] Add E2E tests**: Add Playwright E2E smoke test for basic routing (/, /calculator, /compare, 404) - Deferred to Story 1.8 (CI/CD Pipeline includes Playwright setup) - Related: AC #2, #5
 7. ⏳ **[Low - DEFERRED] Add API error tests**: Add MSW-based tests for API client error scenarios (timeout, 401, 500) - Deferred to Epic 1 test infrastructure story - Related: client.ts
-8. ⏳ **[Low - OPTIONAL] Extract ModelCard component**: Extract ModelCard component if HomePage complexity increases in Epic 3 - Optional refactoring, not required for story approval - Related: HomePage.tsx:42-102
+8. ✅ **[Low - RESOLVED] Extract ModelCard component**: Extracted reusable ModelCard component from HomePage (110 lines → 51 lines, 53% reduction). New file: `apps/web/src/components/models/ModelCard.tsx` - Related: HomePage.tsx:42-102
 9. ✅ **[Low - RESOLVED] Clarify Zustand status**: Zustand installed for future use (Epic 3+ for comparison basket, filter state); no stores implemented in Story 1.7 scope - Related: Dev Notes section
 
 ### Resolution Summary
