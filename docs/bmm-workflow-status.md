@@ -2,15 +2,15 @@
 
 **Project:** llm-token-price
 **Created:** 2025-10-16
-**Last Updated:** 2025-10-17 (Epic 1 Complete - Story 1.11 approved)
+**Last Updated:** 2025-10-17 (Story 2.2 Context Ready)
 
 ---
 
 ## Current Status
 
 **Current Phase:** 4-Implementation → Epic 1 Complete, Epic 2 Starting
-**Current Workflow:** story-context (Story 2.1) - Complete (Regenerated with implementation details)
-**Overall Progress:** 100% (Epic 1) + 1% (Epic 2 Context Ready)
+**Current Workflow:** story-context (Story 2.2) - Complete
+**Overall Progress:** 100% (Epic 1) + 2% (Epic 2 Context Ready - Stories 2.1, 2.2)
 
 **🎉 EPIC 1 COMPLETE!** All 11 foundational stories delivered (37/37 points)
 
@@ -288,6 +288,7 @@ LLM Pricing Calculator - A comprehensive web application for comparing LLM model
 
 ## Decisions Log
 
+- **2025-10-17**: Completed story-context for Story 2.2 (Admin Dashboard Layout). Context file: docs/stories/story-context-2.2.xml. Comprehensive context generated with 5 documentation artifacts (tech-spec-epic-2.md, solution-architecture.md, ux-specification.md, story-2.1.md, story-2.2.md), 6 code artifacts (existing Layout.tsx, ProtectedRoute.tsx, authStore.ts, useAuth hook, AdminDashboardPage placeholder, App.tsx routing), 4 dependencies (React 19, React Router 7, TailwindCSS 4, Lucide React icons), 4 constraint categories (architectural, design, routing, testing), 4 interface specifications (AdminLayout props, admin routes config, useAuth hook, nav items structure), and 10 test ideas mapped to 5 acceptance criteria. Context documents master-detail layout pattern with sidebar navigation (Dashboard, Models, Benchmarks), responsive behavior (desktop always-visible, tablet/mobile drawer), admin header with username display and logout button, and Outlet-based nested routing. All existing auth infrastructure from Story 2.1 identified and ready for integration. Next: DEV agent should run dev-story to implement AdminLayout, AdminSidebar, AdminHeader components with nested routing and responsive design.
 - **2025-10-17**: Completed story-context for Story 2.1 (Admin Panel Authentication). Context file: docs/stories/epic_2/story-context-2.1.xml. Next: DEV agent should run dev-story to implement JWT authentication with HttpOnly cookies, admin login page, protected routes, and logout functionality.
 - **2025-10-17**: Regenerated story-context for Story 2.1 with implementation details. Updated context file with ✅ status markers showing all components have been implemented: AdminAuthController, AuthService, IAuthService, DTOs (LoginDto, AuthResponseDto), AdminLoginPage, useAuth hook, authStore, ProtectedRoute component, admin API client. All dependencies installed (JWT 8.14.0, JwtBearer 9.0.10, axios ^1.12.2, zustand ^5.0.8, zod ^4.1.12). Configuration complete in appsettings.Development.json. Story Status: Done. Next: Choose next Epic 2 story to work on OR continue with Epic 3 stories.
 - **2025-10-16**: Initialized workflow status. Project defined as Level 4 (Enterprise Scale) web application with UI components. Greenfield project. Skipped Phase 1 Analysis (already have detailed specification). Next: Start Phase 2 with PRD workflow using PM agent.

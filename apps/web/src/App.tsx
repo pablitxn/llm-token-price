@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import Layout from './components/layout/Layout'
 import HomePage from './pages/HomePage'
 import CalculatorPage from './pages/CalculatorPage'
@@ -6,26 +6,40 @@ import ComparisonPage from './pages/ComparisonPage'
 import NotFoundPage from './pages/NotFoundPage'
 import AdminLoginPage from './pages/admin/AdminLoginPage'
 import AdminDashboardPage from './pages/admin/AdminDashboardPage'
+import AdminModelsPage from './pages/admin/AdminModelsPage'
+import AdminBenchmarksPage from './pages/admin/AdminBenchmarksPage'
+import AdminLayout from './components/layout/AdminLayout'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 
 export default function App() {
   return (
-    <Layout>
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/calculator" element={<CalculatorPage />} />
-        <Route path="/compare" element={<ComparisonPage />} />
-        <Route path="/admin/login" element={<AdminLoginPage />} />
-        <Route
-          path="/admin"
-          element={
-            <ProtectedRoute>
-              <AdminDashboardPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="*" element={<NotFoundPage />} />
-      </Routes>
-    </Layout>
+    <Routes>
+      {/* Public Routes (with Layout) */}
+      <Route path="/" element={<Layout><HomePage /></Layout>} />
+      <Route path="/calculator" element={<Layout><CalculatorPage /></Layout>} />
+      <Route path="/compare" element={<Layout><ComparisonPage /></Layout>} />
+
+      {/* Admin Login (no layout) */}
+      <Route path="/admin/login" element={<AdminLoginPage />} />
+
+      {/* Admin Routes (nested with AdminLayout) */}
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute>
+            <AdminLayout />
+          </ProtectedRoute>
+        }
+      >
+        {/* Default /admin redirects to /admin/dashboard */}
+        <Route index element={<Navigate to="dashboard" replace />} />
+        <Route path="dashboard" element={<AdminDashboardPage />} />
+        <Route path="models" element={<AdminModelsPage />} />
+        <Route path="benchmarks" element={<AdminBenchmarksPage />} />
+      </Route>
+
+      {/* 404 Not Found */}
+      <Route path="*" element={<Layout><NotFoundPage /></Layout>} />
+    </Routes>
   )
 }
