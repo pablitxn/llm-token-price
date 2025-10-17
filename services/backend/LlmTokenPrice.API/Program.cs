@@ -1,6 +1,8 @@
+using LlmTokenPrice.Application.Services;
 using LlmTokenPrice.Domain.Repositories;
 using LlmTokenPrice.Infrastructure.Caching;
 using LlmTokenPrice.Infrastructure.Data;
+using LlmTokenPrice.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using StackExchange.Redis;
 
@@ -91,6 +93,12 @@ builder.Services.AddSingleton<IConnectionMultiplexer?>(sp =>
 
 // Cache repository (scoped)
 builder.Services.AddScoped<ICacheRepository, RedisCacheRepository>();
+
+// Domain repositories (scoped)
+builder.Services.AddScoped<IModelRepository, ModelRepository>();
+
+// Application services (scoped)
+builder.Services.AddScoped<IModelQueryService, ModelQueryService>();
 
 var app = builder.Build();
 
