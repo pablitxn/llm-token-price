@@ -1,3 +1,4 @@
+using LlmTokenPrice.Infrastructure.Data.Seeds;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -37,8 +38,8 @@ public static class DbInitializer
                 logger?.LogInformation("Database is up to date, no migrations to apply");
             }
 
-            // Seed data will be called here in Story 1.9
-            // await SeedDataAsync(context, logger);
+            // Seed sample data in development environment
+            await SampleDataSeeder.SeedAsync(context, logger);
 
             logger?.LogInformation("Database initialization completed");
         }
