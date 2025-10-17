@@ -68,7 +68,9 @@ public class RedisCacheRepository : ICacheRepository
         }
         catch (JsonException ex)
         {
-            _logger.LogError(ex, "Failed to deserialize cached value for key: {Key}", key);
+            _logger.LogError(ex, "Failed to deserialize cached value for key: {Key}. Deleting corrupted entry.", key);
+            // Self-healing: Remove corrupted cache entry to prevent repeated failures
+            await DeleteAsync(key, cancellationToken);
             return default; // Return null on deserialization error
         }
         catch (Exception ex)
