@@ -9,8 +9,8 @@
 ## Current Status
 
 **Current Phase:** 4-Implementation → In Progress
-**Current Workflow:** story-approved (Story 1.6) - Complete
-**Overall Progress:** 96%
+**Current Workflow:** review-story (Story 1.8) - Complete
+**Overall Progress:** 97%
 
 **Project Level:** 4 (Enterprise Scale)
 **Project Type:** Web Application
@@ -294,14 +294,15 @@
 
 | Story ID | File | Completed Date | Points |
 | -------- | ---- | -------------- | ------ |
+| 1.1 | docs/stories/story-1.1.md | 2025-10-16 | 3 |
 | 1.6 | docs/stories/story-1.6.md | 2025-10-16 | 3 |
 | 1.4 | docs/stories/story-1.4.md | 2025-10-16 | 5 |
 | 1.3 | docs/stories/story-1.3.md | 2025-10-16 | 3 |
 | 1.2 | docs/stories/story-1.2.md | 2025-10-16 | 3 |
 | 1.7 | docs/stories/story-1.7.md | 2025-10-16 | 5 |
 
-**Total completed:** 5 stories
-**Total points completed:** 19 points
+**Total completed:** 6 stories
+**Total points completed:** 22 points
 
 ---
 
@@ -365,26 +366,29 @@ LLM Pricing Calculator - A comprehensive web application for comparing LLM model
 - **2025-10-16**: Completed review-story for Story 1.6 (Create Basic API Structure with Health Endpoint). Review outcome: Approve with 2 low-priority action items. All 6 acceptance criteria met (100% coverage): HealthController with latency measurements, CORS configuration for localhost:5173, Swagger/OpenAPI documentation, JSON serialization (camelCase, null exclusion), health status codes (200 OK/503 Service Unavailable), frontend-to-backend CORS connectivity verified. Key findings: 0 high/medium severity issues, 2 low-priority items (missing Story Context XML documentation, unit test coverage gap deferred to Story 1.8). Architectural alignment: 95% hexagonal compliance, production-ready patterns (graceful Redis degradation, structured logging, dependency injection). Security: No vulnerabilities identified, development credentials acceptable with documented warnings. Build quality: 0 errors, 0 warnings, 4.34s build time. Story status updated: Ready for Review → Review Passed. Progress: 94% → 95%. Next: Address review feedback (optional) then mark story-approved when ready, or continue with other Epic 1 stories (1.1, 1.5, 1.8-1.10).
 - **2025-10-16**: Completed review-story workflow for Story 1.5 (Setup Redis Cache Connection). Review outcome: **Approve** with 5 action items (2 Medium, 3 Low). All 6 acceptance criteria met (AC#5 partial - manual testing only, automated tests missing). Excellent hexagonal architecture adherence (95%+). Production-ready error handling with graceful degradation. No security vulnerabilities. Key findings: Missing automated tests (defer to Story 1.8), no retry logic for transient failures (defer to Phase 2), minor security hardening opportunities. Action items persisted to: story tasks (Review Follow-ups section), backlog.md (created with 5 entries), tech-spec-epic-1.md (Post-Review Follow-ups section). Story status updated: Ready for Review → Review Passed. Progress: 95% → 95%. Next: Address review action items or continue with remaining Epic 1 stories (1.1, 1.8-1.10).
 - **2025-10-16**: Story 1.6 (Create Basic API Structure with Health Endpoint) approved and marked done by DEV agent. Review action item L1 addressed (Story Context documentation added). All 6 acceptance criteria met with production-ready API infrastructure: HealthController with latency measurements, CORS configuration, Swagger/OpenAPI documentation, JSON serialization. Story moved IN PROGRESS → DONE. Total completed: 5 stories, 19 points. Epic 1 foundation stories progress: 5/10 stories complete (1.2, 1.3, 1.4, 1.6, 1.7). Progress: 95% → 96%. Next: Continue with remaining Epic 1 stories (1.1, 1.5, 1.8-1.10).
+- **2025-10-16**: Story 1.1 (Initialize Project Repository and Development Environment) approved and marked done by DEV agent. All 6 acceptance criteria met with strong hexagonal architecture enforcement (Domain layer has zero dependencies). Monorepo structure successfully established with .NET 9 backend + React 19 frontend, comprehensive .gitignore, docker-compose.yml for services. Story moved IN PROGRESS → DONE. Total completed: 6 stories, 22 points. Epic 1 foundation stories progress: 6/10 stories complete (1.1, 1.2, 1.3, 1.4, 1.6, 1.7). Progress: 96% → 97%. Next: Continue with remaining Epic 1 stories (1.5, 1.8-1.10).
+- **2025-10-16**: Completed review-story for Story 1.8 (Configure CI/CD Pipeline). Review outcome: **Approve** with 5 action items (3 Medium, 2 Low). All 6 acceptance criteria met (100% coverage). Implementation demonstrates production-ready CI/CD infrastructure: path-based triggers, PostgreSQL + Redis service containers with health checks, 5 passing unit tests with FluentAssertions, pnpm store caching, comprehensive documentation. Quality metrics: Backend build 2.4s (0 errors, 0 warnings, 5/5 tests), Frontend type-check/lint/build all passing. Key findings: Missing Story Context XML (M1), no code coverage reporting (M2), ESLint security plugins incomplete (M3), limited entity test coverage (L1), frontend pipeline caching opportunity (L2). Action items persisted to backlog.md. Story status updated: Ready for Review → Review Passed. Next: Address review feedback when ready, then mark story-approved to complete Story 1.8.
 
 ---
 
 ## What to do next
 
-**What to do next:** Continue with Epic 1 stories - Story 1.5 (Setup Redis Cache Connection) or Story 1.1 (Initialize Project Repository)
+**What to do next:** Address Story 1.8 review feedback (optional) or proceed to mark story complete with `story-approved` workflow
 
-**Command to run:** `/bmm:agents:dev` and run `dev-story` workflow for next story
+**Command to run:** `/bmm:agents:dev` and run `story-approved` workflow for Story 1.8
 
 **Context:**
-- Story 1.2 has been marked complete (2nd story done in Epic 1)
-- Story 1.1 is next in sequence for Epic 1 foundation
-- Story establishes monorepo structure, .gitignore, README, build verification
-- Critical foundation for all subsequent Epic 1 stories
+- Story 1.8 (CI/CD Pipeline) has passed Senior Developer Review
+- All 6 acceptance criteria met (100% coverage)
+- 5 action items identified (3 Medium, 2 Low) - all non-blocking enhancements
+- Review outcome: Approve (production-ready implementation)
+- Action items persisted to backlog.md for future work
 
 **Epic 1 Progress:**
-- ✅ **Completed:** Story 1.2 (Configure Build Tools), Story 1.7 (Frontend Shell)
-- 🎯 **Next:** Story 1.1 (Initialize Project Repository)
-- 📋 **Remaining:** Stories 1.3-1.6, 1.8-1.10 (8 stories)
-- 📊 **Overall Progress:** 90%
+- ✅ **Completed:** Stories 1.1, 1.2, 1.3, 1.4, 1.6, 1.7 (6 stories, 22 points)
+- 🔍 **Under Review:** Story 1.8 (Review Passed, awaiting approval)
+- 📋 **Remaining:** Stories 1.5, 1.9, 1.10 (3 stories)
+- 📊 **Overall Progress:** 97%
 
 ---
 
