@@ -195,6 +195,75 @@ The `appsettings.Development.json` file is automatically excluded from git (.git
 
 **⚠️ Security Note:** The `dev_password` is only for local development. Production credentials are managed via environment variables.
 
+### 6. Database Seeding
+
+The application **automatically seeds** the database with sample data on first startup in development environments. This provides realistic test data for API endpoints and frontend components without manual configuration.
+
+**Sample Data Includes:**
+- **10 LLM Models** from 5 providers:
+  - **OpenAI:** GPT-4, GPT-3.5 Turbo
+  - **Anthropic:** Claude 3 Opus, Claude 3 Sonnet, Claude 3 Haiku
+  - **Google:** Gemini 1.5 Pro, Gemini 1.5 Flash
+  - **Meta:** Llama 3 70B, Llama 3 8B (open source, free)
+  - **Mistral:** Mistral Large
+
+- **5 Benchmark Definitions:**
+  - **MMLU** (Massive Multitask Language Understanding) - Reasoning
+  - **HumanEval** - Code Generation
+  - **GSM8K** - Math Reasoning
+  - **HELM** - Language Understanding
+  - **MT-Bench** - Multi-turn Dialogue
+
+- **34+ Benchmark Scores** linking models to performance metrics
+- **Model Capabilities** (context windows, feature flags, pricing)
+
+**How It Works:**
+1. On first startup, the backend checks if the database is empty
+2. If no models exist, it seeds benchmarks → models → capabilities → scores
+3. On subsequent startups, seeding is **skipped automatically** (idempotent)
+4. All data is timestamped and ready for querying immediately
+
+**Verify Seeding:**
+```bash
+# Check seeding logs when starting the backend
+cd services/backend
+ASPNETCORE_ENVIRONMENT=Development dotnet run --project LlmTokenPrice.API
+
+# Look for these log messages:
+# ✅ "Seeding database with sample data..."
+# ✅ "Seeded 5 benchmarks"
+# ✅ "Seeded 10 models with capabilities and benchmark scores"
+# ✅ "Database seeded successfully"
+
+# Or on subsequent runs:
+# ℹ️ "Database already contains model data. Skipping seed."
+```
+
+**Query Sample Data:**
+```bash
+# Using Docker (PostgreSQL via docker exec)
+docker exec llmpricing_postgres psql -U llmpricing -d llmpricing_dev -c \
+  'SELECT "Name", "Provider", "InputPricePer1M", "OutputPricePer1M" FROM models ORDER BY "Provider";'
+
+# Expected output: 10 models with pricing from various providers
+```
+
+**Reset Database & Re-seed:**
+```bash
+# Stop containers and remove volumes (deletes ALL data)
+docker compose down -v
+
+# Restart containers with fresh database
+docker compose up -d
+
+# Start backend - automatic seeding will run
+cd services/backend
+ASPNETCORE_ENVIRONMENT=Development dotnet run --project LlmTokenPrice.API
+```
+
+**Production Note:**
+Sample data seeding runs **only in Development environment**. Production databases use manual CSV imports via the admin panel (Epic 4).
+
 ## 🏃 Running the Application
 
 ### Development Mode
