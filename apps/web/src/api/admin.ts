@@ -123,6 +123,24 @@ export const createModel = async (
 }
 
 /**
+ * Updates an existing model in the admin panel
+ * Sends model data to backend API which validates and updates in database.
+ * On success, cache:models:* patterns are invalidated server-side.
+ *
+ * @param id - Model unique identifier (GUID)
+ * @param model - Update model request payload with fields to update
+ * @returns Promise resolving to updated model with refreshed UpdatedAt timestamp
+ * @throws Error if model not found (404), validation fails (400 Bad Request with field details), unauthorized (401), or server error (500)
+ */
+export const updateModel = async (
+  id: string,
+  model: CreateModelRequest
+): Promise<AdminModelResponse> => {
+  const response = await apiClient.put<AdminModelResponse>(`/admin/models/${id}`, model)
+  return response.data
+}
+
+/**
  * Deletes a model from the system (soft delete - sets isActive = false)
  *
  * @param id - Model unique identifier (GUID)

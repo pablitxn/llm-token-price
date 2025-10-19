@@ -307,6 +307,113 @@ public class AdminModelsController : ControllerBase
     }
 
     /// <summary>
+    /// Updates an existing LLM model in the system.
+    /// Updates model properties, capabilities, and refreshes UpdatedAt timestamp.
+    /// </summary>
+    /// <param name="id">The unique identifier (GUID) of the model to update.</param>
+    /// <param name="request">The update model request with fields to modify.</param>
+    /// <param name="cancellationToken">Cancellation token for async operation.</param>
+    /// <returns>Updated model with refreshed audit timestamps.</returns>
+    /// <response code="200">Model successfully updated.</response>
+    /// <response code="400">Validation failed (invalid data).</response>
+    /// <response code="404">Model not found.</response>
+    /// <response code="401">If JWT token is missing, invalid, or expired.</response>
+    /// <response code="500">If an unexpected error occurs during processing.</response>
+    [HttpPut("{id}")]
+    [ProducesResponseType(typeof(AdminApiResponse<AdminModelDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> Update(
+        Guid id,
+        [FromBody] CreateModelRequest request,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            _logger.LogInformation(
+                "Updating model: {ModelId} - {ModelName} by {Provider}",
+                id,
+                request.Name,
+                request.Provider);
+
+            // Update model (FluentValidation runs automatically via middleware)
+            var updatedModel = await _adminModelService.UpdateModelAsync(id, request, cancellationToken);
+
+            if (updatedModel == null)
+            {
+                _logger.LogWarning("Model not found for update: {ModelId}", id);
+                return NotFound(new
+                {
+                    error = new
+                    {
+                        code = "NOT_FOUND",
+                        message = $"Model with ID {id} not found"
+                    }
+                });
+            }
+
+            _logger.LogInformation(
+                "Model updated successfully: {ModelId} - {ModelName}",
+                id,
+                updatedModel.Name);
+
+            // Return 200 OK with updated model
+            return Ok(new AdminApiResponse<AdminModelDto>
+            {
+                Data = updatedModel,
+                Meta = new AdminApiResponseMeta
+                {
+                    Cached = false,
+                    Timestamp = DateTime.UtcNow
+                }
+            });
+        }
+        catch (InvalidOperationException ex) when (ex.Message.Contains("already exists"))
+        {
+            _logger.LogWarning(
+                "Duplicate model update attempted: {ModelId} - {ModelName} by {Provider}",
+                id,
+                request.Name,
+                request.Provider);
+
+            return Conflict(new
+            {
+                error = new
+                {
+                    code = "DUPLICATE_MODEL",
+                    message = ex.Message,
+                    details = new[]
+                    {
+                        new { field = "name", message = "Model with this name and provider already exists" },
+                        new { field = "provider", message = "Model with this name and provider already exists" }
+                    }
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Error updating model: {ModelId} - {ModelName} by {Provider}",
+                id,
+                request.Name,
+                request.Provider);
+
+            return StatusCode(StatusCodes.Status500InternalServerError, new
+            {
+                error = new
+                {
+                    code = "INTERNAL_ERROR",
+                    message = "An unexpected error occurred while updating the model",
+                    details = ex.Message
+                }
+            });
+        }
+    }
+
+    /// <summary>
     /// Deletes (soft delete) a model by setting isActive = false.
     /// Model data is preserved for audit purposes but will no longer appear in public API.
     /// </summary>

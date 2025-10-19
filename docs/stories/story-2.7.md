@@ -386,7 +386,7 @@ private async Task InvalidateCacheForModel(Guid id)
 
 ### Context Reference
 
-<!-- Path(s) to story context XML will be added here by context workflow -->
+- `docs/stories/story-context-2.7.xml` (Generated: 2025-10-19)
 
 ### Agent Model Used
 
@@ -394,6 +394,55 @@ claude-sonnet-4-5-20250929
 
 ### Debug Log References
 
+None
+
 ### Completion Notes List
 
+**Status:** Code Complete
+**Dev Started:** 2025-10-19
+**Dev Completed:** 2025-10-19
+
+**Implementation Summary:**
+
+Successfully implemented edit model functionality following hexagonal architecture principles. Extended existing ModelForm component with dual-mode support (create/edit) rather than duplicating logic, ensuring maintainability. Backend implementation added UpdateModelAsync service method with proper duplicate detection (excluding self), EF Core change tracking for updates, and automatic timestamp management.
+
+**Key Implementation Decisions:**
+
+1. **Shared Form Component Pattern**: Extended ModelForm with mode prop instead of creating separate EditModelForm, achieving DRY and consistent validation
+2. **Immutable Fields**: Disabled name/provider fields in edit mode with visual indicators to prevent modification of composite unique keys
+3. **Date Pre-population**: Used date-fns format() to convert ISO strings to yyyy-MM-dd for HTML date inputs
+4. **EF Core Tracking**: Removed AsNoTracking from GetByIdAsync to enable change tracking for UPDATE operations
+5. **Smart Duplicate Detection**: Enhanced duplicate check to exclude current model (existingModel.Id != id)
+6. **Automatic Cache Invalidation**: TanStack Query invalidateQueries refreshes both list and detail caches post-update
+
+**Testing Results:**
+
+- ✅ Backend Build: Successful (Release mode, 0 errors)
+- ✅ Backend Tests: 137/137 passing (Domain: 13, Application: 70, Infrastructure: 25, E2E: 29)
+- ✅ Frontend Type Check: Zero errors (TypeScript strict mode)
+- ✅ All Acceptance Criteria verified
+
+**Acceptance Criteria Verification:**
+
+- ✅ AC1: Edit form loads existing model data via GET /api/admin/models/{id}
+- ✅ AC2: Form pre-populated with dates, pricing, capabilities from model.capability object
+- ✅ AC3: PUT /api/admin/models/{id} endpoint created with proper error handling
+- ✅ AC4: Endpoint updates model + capabilities in single EF transaction
+- ✅ AC5: UpdatedAt timestamp refreshed via DateTime.UtcNow
+- ✅ AC6: Success redirects to /admin/models with TanStack Query cache invalidation
+
 ### File List
+
+**Frontend (React/TypeScript):**
+1. `apps/web/src/pages/admin/EditModelPage.tsx` (NEW) - Edit page with route params, model fetching, error/loading states
+2. `apps/web/src/components/admin/ModelForm.tsx` (MODIFIED) - Added mode prop, conditional field disabling, dual mutation hooks (create/update)
+3. `apps/web/src/api/admin.ts` (MODIFIED) - Added updateModel(id, model) API client function
+4. `apps/web/src/hooks/useUpdateModel.ts` (NEW) - TanStack Query mutation hook with cache invalidation
+5. `apps/web/src/App.tsx` (MODIFIED) - Added /admin/models/:id/edit route with EditModelPage
+
+**Backend (.NET/C#):**
+6. `services/backend/LlmTokenPrice.API/Controllers/Admin/AdminModelsController.cs` (MODIFIED) - Added PUT {id} endpoint (200/400/404/401 responses)
+7. `services/backend/LlmTokenPrice.Application/Services/IAdminModelService.cs` (MODIFIED) - Added UpdateModelAsync method signature
+8. `services/backend/LlmTokenPrice.Application/Services/AdminModelService.cs` (MODIFIED) - Implemented UpdateModelAsync with duplicate check, field updates, SaveChangesAsync
+9. `services/backend/LlmTokenPrice.Domain/Repositories/IAdminModelRepository.cs` (MODIFIED) - Added SaveChangesAsync method signature
+10. `services/backend/LlmTokenPrice.Infrastructure/Repositories/AdminModelRepository.cs` (MODIFIED) - Implemented SaveChangesAsync, enabled tracking for GetByIdAsync
