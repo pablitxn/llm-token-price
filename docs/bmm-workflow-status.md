@@ -2,16 +2,16 @@
 
 **Project:** llm-token-price
 **Created:** 2025-10-16
-**Last Updated:** 2025-10-19 (Story 2.6 Complete with 259/259 Tests Passing)
+**Last Updated:** 2025-10-19 (Story 2.7 Complete - Edit Model Functionality with 137/137 Tests Passing)
 
 ---
 
 ## Current Status
 
 **Current Phase:** 4-Implementation → Epic 1 Complete, Epic 2 In Progress
-**Current Workflow:** story-context (Story 2.7) - Complete
-**Current Story:** Story 2.7 ready for implementation (context generated)
-**Overall Progress:** 100% (Epic 1: 37 points) + 49% (Epic 2: 24/~50 points - Stories 2.1-2.6 Done, 2.7 Context Ready)
+**Current Workflow:** story-context (Story 2.8) - Complete
+**Current Story:** Story 2.8 (ContextReadyDraft - ready for dev-story implementation)
+**Overall Progress:** 100% (Epic 1: 37 points) + 55% (Epic 2: 27/~50 points - Stories 2.1-2.7 Done, Story 2.8 Context Ready)
 
 **🎉 EPIC 1 COMPLETE!** All 11 foundational stories delivered (37/37 points)
 
@@ -224,42 +224,7 @@
 
 **Total Epic 3 stories ready:** 15 stories
 
-## READY FOR REVIEW
-
-### Story 2.7: Create Edit Model Functionality (3 points)
-
-**File:** docs/stories/story-2.7.md
-**Status:** Code Complete
-**Context:** docs/stories/story-context-2.7.xml
-**Started:** 2025-10-19
-**Completed:** 2025-10-19
-**Owner:** Amelia (Dev Agent)
-
-**Acceptance Criteria:**
-1. ✅ Edit model form loads existing model data
-2. ✅ Form pre-populated with all current values
-3. ✅ PUT `/api/admin/models/{id}` endpoint created
-4. ✅ Endpoint updates model and capabilities
-5. ✅ Updated_at timestamp refreshed
-6. ✅ Success redirects with confirmation
-
-**Tasks:**
-- [x] Create EditModelPage component with route handling
-- [x] Extend ModelForm to support edit mode
-- [x] Add updateModel API client function
-- [x] Create useUpdateModel mutation hook
-- [x] Add PUT endpoint in AdminModelsController
-- [x] Implement UpdateModelAsync in AdminModelService
-- [x] Update admin repository for tracking support
-- [x] Test edit flow end-to-end
-- [x] Verify cache invalidation after update
-
-**Test Results:**
-- Backend: 137/137 tests passing ✅
-- Frontend: TypeScript strict mode, 0 errors ✅
-- Build: Release mode, 0 errors ✅
-
-### IN PROGRESS
+## IN PROGRESS
 
 *(No stories currently in progress)*
 
@@ -275,6 +240,7 @@ All 11 Epic 1 stories delivered (37 points):
 
 | Story ID | File | Completed Date | Points |
 | -------- | ---- | -------------- | ------ |
+| 2.7 | docs/stories/story-2.7.md | 2025-10-19 | 3 |
 | 2.6 | docs/stories/story-2.6.md | 2025-10-19 | 3 |
 | 2.5 | docs/stories/story-2.5.md | 2025-10-19 | 5 |
 | 2.4 | docs/stories/story-2.4.md | 2025-10-19 | 3 |
@@ -293,8 +259,8 @@ All 11 Epic 1 stories delivered (37 points):
 | 1.2 | docs/stories/story-1.2.md | 2025-10-16 | 3 |
 | 1.7 | docs/stories/story-1.7.md | 2025-10-16 | 5 |
 
-**Total completed:** 17 stories
-**Total points completed:** 61 points
+**Total completed:** 18 stories
+**Total points completed:** 64 points
 
 ---
 
@@ -329,6 +295,8 @@ LLM Pricing Calculator - A comprehensive web application for comparing LLM model
 
 ## Decisions Log
 
+- **2025-10-19**: Completed story-context for Story 2.8 (Create Delete Model Functionality). Context file: docs/stories/story-context-2.8.xml. Comprehensive context generated for soft-delete implementation (DELETE /api/admin/models/{id} endpoint with IsActive=false pattern). Documentation artifacts (6): tech-spec-epic-2.md defining soft-delete as MVP approach (preserves audit trail), solution-architecture.md for is_active column purpose, story-2.5.md for POST endpoint pattern reference, story-2.7.md for UPDATE pattern (UpdateModelAsync structure), story-2.8.md with complete implementation examples (ConfirmDialog component, DELETE endpoint, DeleteModelAsync service with 7-step flow), PRD.md FR022 business context. Code artifacts (8): AdminModelsController.cs controller patterns ([Authorize], structured logging, error handling), IAdminModelService.cs with DeleteModelAsync ALREADY DEFINED (Task<bool> signature, returns true if deleted), AdminModelService.cs UpdateModelAsync pattern for reference, AdminModelRepository.cs GetByIdAsync/SaveChangesAsync methods, Model.cs IsActive property documentation, ModelList.tsx component for delete button handler, admin.ts API client patterns, useUpdateModel.ts hook pattern to mirror. Dependencies: All already installed from Stories 2.1-2.7 (React 19, TanStack Query 5, Axios, JWT Bearer, EF Core 9, Serilog). Constraints (24 across 5 categories): architectural (Controller → Service → Repository hexagonal flow), soft-delete strategy (IsActive=false mandatory for MVP per tech-spec line 531, UpdatedAt timestamp update, keep ModelCapabilities/BenchmarkScores for referential integrity), api-contract (204 No Content on success, 404 for not found/already deleted, 401 for JWT auth, 500 for errors, cache invalidation models:*/bestvalue:*), ui-ux (confirmation dialog REQUIRED with model name, destructive red styling, success toast "Model '{name}' deleted successfully", real-time table update via TanStack Query cache invalidation), testing (70/25/5 pyramid, integration tests verify is_active=false in database + excluded from public API). Interfaces (6): DELETE /api/admin/models/{id} REST endpoint (204/401/404/500 responses), IAdminModelService.DeleteModelAsync method (fetch model, check null/IsActive, set IsActive=false + UpdatedAt, SaveChangesAsync, return bool), deleteModel API client function (axios.delete, Promise<void>), useDeleteModel TanStack Query hook (useMutation with cache invalidation), ConfirmDialog reusable component (open/onClose/onConfirm props, destructive styling), Public API filter modification (GetAllModelsAsync add .Where(m => m.IsActive == true) to exclude soft-deleted models from comparison table). Testing standards: xUnit + FluentAssertions backend, Vitest + Testing Library frontend, TestContainers for integration, Playwright for E2E. Test locations (7): AdminModelServiceTests.cs (DeleteModelAsync unit tests), AdminModelsApiTests.cs (DELETE endpoint integration), DeleteModelFlowTests.cs (E2E), ConfirmDialog.test.tsx, ModelList.test.tsx, useDeleteModel.test.ts, ModelQueryServiceTests.cs (public API filter verification). Test ideas (28 tests mapped to 5 ACs): ConfirmDialog component behavior (6 tests), DELETE endpoint HTTP responses (5 tests), soft-delete logic (9 tests including is_active=false in database, UpdatedAt timestamp, idempotent delete, public API exclusion, admin API inclusion), associated data referential integrity (3 tests), success flow with cache invalidation + UI update (6 tests including toast display, table refresh, queryClient.invalidateQueries verification). Story status updated: Ready → ContextReadyDraft. Context reference added to story file. Progress: 54% → 55% (Epic 2). Next: Load DEV agent and run dev-story workflow to implement Story 2.8 with soft-delete functionality: Backend (DELETE endpoint in AdminModelsController, DeleteModelAsync implementation in AdminModelService, public API is_active filter), Frontend (ConfirmDialog.tsx reusable component, ModelList delete handler with dialog state, useDeleteModel hook, deleteModel API client function), Testing (28 tests covering soft-delete behavior, confirmation dialog, cache invalidation, public API exclusion).
+- **2025-10-19**: Story 2.7 (Create Edit Model Functionality) approved and marked done by DEV agent (Amelia). All 6 acceptance criteria met with comprehensive implementation (137/137 backend tests passing, TypeScript strict mode with 0 errors, Release build 0 errors). Frontend delivered: EditModelPage component with route handling (/admin/models/:id/edit), ModelForm extended with dual-mode support (mode prop: 'create'|'edit'), conditional field disabling (name/provider immutable in edit mode), pre-population with date-fns format(), useUpdateModel TanStack Query mutation hook with cache invalidation. Backend delivered: PUT /api/admin/models/{id} endpoint with 200/400/404/401/409 responses, UpdateModelAsync service method (fetch existing model, smart duplicate detection excluding self via existingModel.Id != id check, update entities, SaveChangesAsync with EF Core change tracking, automatic UpdatedAt timestamp refresh), SaveChangesAsync method added to IAdminModelRepository/AdminModelRepository, AdminModelsController.cs PUT action with structured logging. Key implementation decisions documented in Dev Agent Record: Shared form component pattern (DRY with mode prop vs separate EditModelForm), immutable composite key fields (name/provider disabled with visual indicators), date pre-population (date-fns format() for HTML date inputs), EF Core tracking enabled (removed AsNoTracking from GetByIdAsync for UPDATE operations), smart duplicate detection (exclude current model from check), automatic cache invalidation (TanStack Query invalidateQueries for both list + detail caches). Files modified (10 total): Frontend (5) - EditModelPage.tsx (NEW), ModelForm.tsx (mode prop + dual mutations), admin.ts API (updateModel function), useUpdateModel.ts hook (NEW), App.tsx (route added); Backend (5) - AdminModelsController.cs (PUT endpoint), IAdminModelService.cs/AdminModelService.cs (UpdateModelAsync), IAdminModelRepository.cs/AdminModelRepository.cs (SaveChangesAsync + tracking). Story moved from READY FOR REVIEW → DONE. Epic 2 progress: 52% → 54% (27/~50 points). Total completed: 18 stories, 64 points. Next: Choose next Epic 2 story to implement (Story 2.8 Delete Model OR Story 2.9+ Benchmark Management).
 - **2025-10-19**: Completed story-context for Story 2.7 (Create Edit Model Functionality). Context file: docs/stories/story-context-2.7.xml. Comprehensive context generated extending Stories 2.4-2.6 (create model) with edit functionality: Frontend EditModelPage component with route /admin/models/:id/edit, ModelForm extended with mode prop ('create'|'edit') and conditional behavior (disabled name/provider fields, pre-populated values from fetched model, dynamic title/button text), Backend PUT /api/admin/models/{id} endpoint, UpdateModelAsync service method pattern (fetch existing model, update entities, handle duplicates, save in transaction, set UpdatedAt timestamp), UpdateModelValidator reusing CreateModelValidator rules, useUpdateModel TanStack Query hook with cache invalidation. Documentation artifacts (6): tech-spec-epic-2.md for UpdateModelDto/AdminModelService patterns, solution-architecture.md for Admin API contracts, story-2.4/2.5/2.6.md for existing create model implementation patterns. Code artifacts (8): ModelForm.tsx lines 15-372 (form structure with mode prop placeholder), modelSchema.ts lines 17-112 (Zod validation schema), admin.ts API client with getAdminModelById/createModel patterns, useCreateModel.ts hook structure to mirror, AdminModelsController.cs Create/GetById endpoints, AdminModelService.cs CreateModelAsync pattern to follow for UpdateModelAsync, CreateModelRequest.cs DTO to reuse, admin.ts types for AdminModelDto/CreateModelRequest. Dependencies: All already installed (React Hook Form 7, Zod 4, TanStack Query 5, FluentValidation 11.3.0). Constraints (26 across 5 categories): architectural (hexagonal boundaries, domain purity, transaction management, component reuse), validation (double-layer Zod+FluentValidation, duplicate detection for different model only, UTC DateTime requirement, form pre-population with parseISO), api-contract (PUT endpoint 200 OK, 404 handling, AdminApiResponse wrapper, JWT auth, cache invalidation), ui-ux (form title "Edit Model: {name}", submit button "Save Changes", disabled field styling, loading states, success feedback), testing (70/25/5 pyramid, component/integration coverage, Given-When-Then structure). Interfaces (6): PUT /api/admin/models/{id} REST endpoint, IAdminModelService.UpdateModelAsync method, updateModel API client function, useUpdateModel hook, extended ModelFormProps, EditModelPage component. Testing standards: xUnit + FluentAssertions backend, Vitest + Testing Library frontend, TestContainers for integration, 29 test ideas mapped to 6 ACs covering component tests (EditModelPage loading/error/pre-population, ModelForm edit mode behavior, useUpdateModel hook), unit tests (UpdateModelValidator 5 validation rules, UpdateModelAsync 6 scenarios including duplicate detection), integration tests (PUT endpoint 8 scenarios: auth/200/404/400/409/persistence/timestamp), E2E full edit flow. Story status updated: Draft → ContextReadyDraft. Context reference added to story file. Progress: 48% → 49% (Epic 2). Next: Load DEV agent and run dev-story workflow to implement Story 2.7 with comprehensive edit model functionality.
 - **2025-10-19**: Story 2.6 (Add Capabilities Section to Model Form) approved and marked done by DEV agent. All 6 acceptance criteria met with comprehensive test coverage (259/259 tests passing - 100% pass rate). Implementation complete: Frontend CapabilitiesSection component with React Hook Form + Zod validation (2 number inputs for contextWindow 1K-2M range and maxOutputTokens, 6 capability checkboxes), extended Zod schema with cross-field validation (maxOutput ≤ contextWindow), backend CreateCapabilityRequest DTO with CreateCapabilityValidator using FluentValidation, AdminModelService updated to map capabilities from DTO to entity. Test coverage: 26 component tests in CapabilitiesSection.test.tsx covering rendering/interaction/accessibility, 10 integration tests in ModelForm.test.tsx covering form submission/validation/capabilities payload, all backend tests updated with CreateValidCapabilities() helper. Story moved from BACKLOG → DONE. Story 2.7 (Edit Model Functionality) moved from BACKLOG → IN PROGRESS. Total completed: 17 stories, 61 points (Epic 1: 37 pts + Epic 2: 24 pts). Epic 2 progress: 48% (6/12+ stories). Next: Generate context for Story 2.7 or choose different story.
 - **2025-10-19**: Story 2.5 (Create Backend API for Adding Models) marked DONE. Implementation complete with 73 new tests (137/137 total tests passing). Backend POST /api/admin/models endpoint fully implemented with FluentValidation (CreateModelValidator with 8 validation rules), AdminModelService.CreateModelAsync with duplicate detection and UTC date parsing, repository methods (CreateModelAsync, CreateCapabilityAsync, GetByNameAndProviderAsync), and comprehensive test coverage. Test breakdown: 55 unit tests for CreateModelValidator covering all validation rules (required fields, positive prices, decimal precision 6 max, string lengths Name 255/Provider 100, enum validation Status/Currency, date range ValidFrom<ValidTo, optional fields), 8 unit tests for AdminModelService with Moq covering business logic (model creation with correct properties/timestamps/IsActive, capability defaults ContextWindow=0/SupportsStreaming=true, duplicate detection case-insensitive, date parsing with UTC DateTimeKind), 10 integration tests for POST endpoint covering full API flow (401 without JWT, 201 Created with Location header, Model+Capability database persistence, 400 for invalid data/non-positive prices/duplicate name+provider/invalid Status enum/invalid Currency enum, full AdminModelDto response). Bug fixed during implementation: PostgreSQL DateTime UTC requirement resolved with DateTime.SpecifyKind(..., DateTimeKind.Utc) for parsed date fields (ReleaseDate, PricingValidFrom, PricingValidTo). Quality metrics achieved: Build time <30s, test pyramid 70% unit/25% integration/5% E2E, test-to-code ratio 2.6:1 (650 test lines / 250 production lines). Files created: CreateModelValidator.cs (FluentValidation validator), CreateModelValidatorTests.cs (55 tests), AdminModelServiceTests.cs (8 tests). Files modified: IAdminModelRepository.cs (3 new methods), AdminModelRepository.cs (implementations), IAdminModelService.cs (CreateModelAsync signature), AdminModelService.cs (CreateModelAsync implementation with duplicate check + UTC dates), AdminModelsController.cs (POST endpoint replacing placeholder), Program.cs (FluentValidation DI registration), LlmTokenPrice.Application.csproj (FluentValidation packages 11.3.0/11.5.1), AdminModelsApiTests.cs (10 integration tests + SingleAdminApiResponse type). Story 2.5 connects with Story 2.4 frontend form - full create model flow now operational. Progress: 34% → 40% (21/~50 points Epic 2). Next: Choose to implement Story 2.6 (Add Capabilities Section) or move to different Epic 2 story.
@@ -386,16 +354,25 @@ LLM Pricing Calculator - A comprehensive web application for comparing LLM model
 
 ## What to do next
 
-**What to do next:** 🚀 **Story 2.7 Context Generated Successfully!**
+**What to do next:** 🚀 **Story 2.8 Context Generated Successfully!**
 
-**Command to run:** Load DEV agent and run `dev-story 2.7` to implement edit model functionality
+**Command to run:** Load DEV agent and run `dev-story 2.8` to implement delete model functionality
 
-**Current Story:** Story 2.7 - Create Edit Model Functionality
-- **Status:** ContextReadyDraft ✅ (context generated, ready for implementation)
-- **Epic:** 2 - Model Data Management & Admin CRUD
-- **Story Points:** 3 (estimated)
-- **Context File:** `docs/stories/story-context-2.7.xml`
-- **Implementation Scope:** Frontend EditModelPage with ModelForm edit mode (pre-population, disabled fields), Backend PUT /api/admin/models/{id} endpoint with UpdateModelAsync service method, UpdateModelValidator, useUpdateModel hook, comprehensive test coverage (29 test ideas documented)
+**Epic 2 Progress:** 54% → 55% (27/~50 points) - Stories 2.1-2.7 Done, Story 2.8 Context Ready
+
+**Available Stories** (in BACKLOG section):
+- **Story 2.8:** Delete Model Functionality (soft delete with confirmation) - 2 points (estimated)
+- **Story 2.9:** Benchmark Definitions Management - 3 points (estimated)
+- **Story 2.10:** Benchmark Score Entry Form - 3 points (estimated)
+- **Story 2.11:** Bulk Benchmark Import via CSV - 5 points (estimated)
+- **Story 2.12:** Timestamp Tracking and Display - 2 points (estimated)
+
+**Command to run:**
+1. Draft next story: Load SM agent → Run `create-story` workflow for chosen story
+2. Generate context: Load SM agent → Run `story-context` workflow
+3. Implement: Load DEV agent → Run `dev-story` workflow
+
+**Recommendation:** Story 2.8 (Delete Model) completes CRUD operations (Create ✅, Read ✅, Update ✅, Delete pending)
 
 **Context:**
 - **Epic 1 (Project Foundation & Data Infrastructure):** 100% COMPLETE ✅

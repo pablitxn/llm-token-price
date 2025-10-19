@@ -1,0 +1,411 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>2.8</storyId>
+    <title>Create Delete Model Functionality</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-19</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-2.8.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>administrator</asA>
+    <iWant>delete models</iWant>
+    <soThat>I can remove outdated or incorrect entries</soThat>
+    <tasks>
+      **11 Task Groups, 66 Subtasks:**
+      1. Add delete confirmation dialog (6 subtasks) - Create reusable ConfirmDialog.tsx component
+      2. Implement delete button in models list (5 subtasks) - onClick handler, state management
+      3. Create DELETE endpoint (7 subtasks) - AdminModelsController DELETE action with JWT auth
+      4. Decide soft-delete vs hard-delete strategy (5 subtasks) - Evaluate and document decision (soft-delete recommended)
+      5. Implement soft-delete service method (10 subtasks) - DeleteModelAsync with IsActive=false, timestamp update
+      6. Handle associated data (7 subtasks) - Cascade behavior for capabilities and benchmark scores
+      7. Implement frontend delete mutation (7 subtasks) - useDeleteModel TanStack Query hook
+      8. Update models list to exclude deleted models (4 subtasks) - WHERE is_active=true filter in public API
+      9. Add audit logging for delete (5 subtasks) - Log action "DELETE" with before state
+      10. Add model recovery feature (4 subtasks) - Optional enhancement, can defer to post-MVP
+      11. Add testing (12 subtasks) - Component, unit, integration, E2E tests
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    **5 Acceptance Criteria (ACs 2.8.1 - 2.8.5):**
+
+    AC 2.8.1: Delete button triggers confirmation dialog
+    - Delete button in ModelList component opens modal
+    - Dialog displays model name in warning message: "Are you sure you want to delete '{modelName}'? This action cannot be undone."
+    - Cancel button closes dialog without action
+    - Confirm button (red/destructive styling) triggers delete mutation
+
+    AC 2.8.2: DELETE /api/admin/models/{id} endpoint created
+    - Endpoint accepts model GUID from route parameter
+    - [Authorize] attribute requires JWT authentication
+    - Calls AdminModelService.DeleteModelAsync(id)
+    - Returns 204 No Content on success
+    - Returns 404 Not Found if model doesn't exist or already deleted
+    - Swagger/OpenAPI documentation added
+
+    AC 2.8.3: Endpoint soft-deletes model (sets is_active=false) or hard-deletes
+    - **Soft-delete approach selected for MVP** (preserves audit trail)
+    - Sets model.IsActive = false instead of removing row
+    - Sets model.UpdatedAt = DateTime.UtcNow
+    - Model data preserved in database for audit purposes
+    - Public API excludes deleted models (WHERE is_active=true filter)
+    - Admin API can still query deleted models (for recovery or viewing)
+
+    AC 2.8.4: Associated capabilities and benchmark scores handled (cascade delete or set inactive)
+    - ModelCapabilities: Keep in database (one-to-one relationship, no is_active column)
+    - BenchmarkScores: Keep in database (historical data valuable, foreign key remains valid)
+    - Database foreign keys maintain referential integrity
+    - Future recovery feature can reactivate model with intact data
+
+    AC 2.8.5: Success refreshes models list with confirmation message
+    - TanStack Query invalidates models query cache on success
+    - Deleted model removed from admin panel table (real-time UI update)
+    - Success toast displays: "Model '{name}' deleted successfully"
+    - Confirmation dialog closes automatically
+    - Error toast displays on 404/500 errors with actionable message
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      **6 Documentation Artifacts:**
+
+      1. tech-spec-epic-2.md (Sections: Soft-Delete Strategy, DELETE Endpoint Spec, Audit Logging)
+         - Path: docs/tech-spec-epic-2.md (lines 36, 530-533)
+         - Relevance: Defines soft-delete as MVP approach (sets is_active=false to preserve audit trail)
+         - Key excerpt: "Soft delete (sets is_active=false) to preserve audit trail, Cache invalidation, Audit log entry"
+
+      2. solution-architecture.md (Section: Database Schema - is_active column, Admin API Contracts)
+         - Path: docs/solution-architecture.md
+         - Relevance: Documents Model.IsActive field purpose and soft-delete pattern
+         - Key excerpt: "is_active BOOLEAN DEFAULT true (soft delete flag, public API filters WHERE is_active=true)"
+
+      3. story-2.5.md (CREATE pattern for reference - POST endpoint)
+         - Path: docs/stories/story-2.5.md
+         - Relevance: Shows AdminModelsController POST pattern, AdminModelService.CreateModelAsync structure, FluentValidation, transaction management, cache invalidation
+         - Pattern to mirror: [Authorize] attribute, structured logging, AdminApiResponse wrapper, error handling (400/401/500)
+
+      4. story-2.7.md (UPDATE pattern for reference - PUT endpoint)
+         - Path: docs/stories/story-2.7.md
+         - Relevance: Shows UpdateModelAsync pattern, duplicate detection, SaveChangesAsync, timestamp management (UpdatedAt = DateTime.UtcNow)
+         - Pattern to mirror: Fetch existing model, check if null (return 404), update fields, set UpdatedAt, call SaveChangesAsync
+
+      5. story-2.8.md (THIS STORY - Dev Notes section)
+         - Path: docs/stories/story-2.8.md (lines 115-410)
+         - Relevance: Complete implementation examples for ConfirmDialog component, DELETE endpoint, DeleteModelAsync service, soft-delete flow, audit log JSON structure
+         - Code snippets: Lines 184-327 (ConfirmDialog, ModelList handler, DELETE endpoint, DeleteModelAsync service with 7-step flow)
+
+      6. PRD.md (Functional Requirements FR018-FR027 - Admin CRUD operations)
+         - Path: docs/PRD.md
+         - Relevance: Defines admin panel requirements including "Delete models with confirmation" (FR022)
+         - Business context: Ensures data accuracy by allowing admins to remove outdated/incorrect entries
+    </docs>
+    <code>
+      **8 Code Artifacts (Existing Implementations):**
+
+      1. AdminModelsController.cs - Controller patterns
+         - Path: services/backend/LlmTokenPrice.API/Controllers/Admin/AdminModelsController.cs (lines 1-150)
+         - Kind: controller
+         - Symbol: AdminModelsController class
+         - Lines: 1-133 (GetAll endpoint), 145-150 (GetById endpoint structure)
+         - Reason: DELETE endpoint will follow same pattern: [Authorize] attribute, structured logging, try-catch error handling, AdminApiResponse wrapper (or 204 No Content for DELETE)
+         - Implementation notes: Inject IAdminModelService, use _logger.LogInformation for success/error, return StatusCode for errors
+
+      2. IAdminModelService.cs - Service interface with DeleteModelAsync ALREADY DEFINED
+         - Path: services/backend/LlmTokenPrice.Application/Services/IAdminModelService.cs (lines 50-60)
+         - Kind: interface
+         - Symbol: IAdminModelService.DeleteModelAsync
+         - Lines: 50-60
+         - Reason: **Interface already exists!** Signature: Task&lt;bool&gt; DeleteModelAsync(Guid id, CancellationToken cancellationToken = default). Returns true if deleted, false if not found. XML documentation describes soft-delete behavior.
+         - Implementation notes: Service method needs implementation in AdminModelService.cs
+
+      3. AdminModelService.cs - Service implementation patterns (UpdateModelAsync for reference)
+         - Path: services/backend/LlmTokenPrice.Application/Services/AdminModelService.cs
+         - Kind: service
+         - Symbol: UpdateModelAsync method (Story 2.7 implementation)
+         - Reason: DELETE will follow similar pattern: Fetch model by ID → Check if null → Modify entity → Call SaveChangesAsync → Return result
+         - Pattern to mirror: Error handling, EF Core change tracking, transaction management, structured logging
+
+      4. AdminModelRepository.cs - Repository methods (GetByIdAsync, SaveChangesAsync)
+         - Path: services/backend/LlmTokenPrice.Infrastructure/Repositories/AdminModelRepository.cs
+         - Kind: repository
+         - Symbol: GetByIdAsync, SaveChangesAsync methods
+         - Reason: DeleteModelAsync in service will call GetByIdAsync to fetch model, then SaveChangesAsync to persist IsActive=false change
+         - Implementation notes: No new repository methods needed - existing methods support soft-delete
+
+      5. Model.cs - Domain entity with IsActive property
+         - Path: services/backend/LlmTokenPrice.Domain/Entities/Model.cs (lines 81-84)
+         - Kind: entity
+         - Symbol: Model.IsActive property
+         - Lines: 81-84
+         - Reason: Soft delete flag documented: "Soft delete flag. False indicates model is deleted but preserved for audit trail. Defaults to true."
+         - Implementation notes: Set IsActive = false, UpdatedAt = DateTime.UtcNow for soft-delete
+
+      6. ModelList.tsx - Frontend component with edit/delete action buttons
+         - Path: apps/web/src/components/admin/ModelList.tsx
+         - Kind: component
+         - Symbol: ModelList component
+         - Reason: Add delete button click handler, state for confirmation dialog (deleteDialog: { id: string, name: string } | null)
+         - Implementation notes: Create ConfirmDialog.tsx reusable component, useState for dialog state, handleDeleteClick/handleConfirmDelete functions
+
+      7. admin.ts - API client functions (createModel, updateModel patterns)
+         - Path: apps/web/src/api/admin.ts
+         - Kind: api_client
+         - Symbol: createModel, updateModel functions
+         - Reason: Add deleteModel(id: string) function following same pattern: axios.delete(`/api/admin/models/${id}`)
+         - Implementation notes: Return type: Promise&lt;void&gt; for 204 No Content response
+
+      8. useUpdateModel.ts - TanStack Query mutation hook pattern
+         - Path: apps/web/src/hooks/useUpdateModel.ts
+         - Kind: hook
+         - Symbol: useUpdateModel hook
+         - Reason: Create useDeleteModel hook following same pattern: useMutation with onSuccess cache invalidation (queryClient.invalidateQueries({ queryKey: ['admin-models'] }))
+         - Implementation notes: Handle loading state, error handling, success callbacks
+    </code>
+    <dependencies>
+      **All Dependencies Already Installed (Epic 2 Stories 2.1-2.7):**
+
+      Frontend (React/TypeScript):
+      - React 19.x (UI framework)
+      - React Router 7.x (routing for /admin/models)
+      - TanStack Query 5.x (useDeleteModel mutation hook)
+      - Axios 1.x (HTTP client for DELETE request)
+      - Zustand 5.x (optional: authStore for JWT token)
+      - Lucide React 0.x (Trash2 icon for delete button)
+      - date-fns 4.x (date formatting, if needed)
+
+      Backend (.NET/C#):
+      - .NET 9.0 (web framework)
+      - ASP.NET Core 9.0 (API controllers)
+      - Microsoft.AspNetCore.Authentication.JwtBearer 9.0.10 ([Authorize] attribute)
+      - Entity Framework Core 9.0.10 (SaveChangesAsync, change tracking)
+      - Serilog 8.0.0 (structured logging)
+
+      No new packages required - Story 2.8 reuses all existing dependencies from Stories 2.1-2.7.
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    **24 Constraints Across 5 Categories:**
+
+    **Architectural Constraints (Hexagonal Architecture):**
+    1. DELETE endpoint must follow Controller → Service → Repository flow (AdminModelsController → AdminModelService → AdminModelRepository)
+    2. AdminModelService.DeleteModelAsync must NOT contain EF Core/database logic - only orchestration and business rules
+    3. Soft-delete business logic belongs in Application layer (set IsActive=false), data persistence in Infrastructure layer (SaveChangesAsync)
+    4. Domain entity (Model) remains pure - no EF annotations, no service dependencies
+    5. Frontend components follow unidirectional data flow: UI action → mutation hook → API client → backend
+
+    **Soft-Delete Strategy Constraints:**
+    6. **Soft-delete mandatory for MVP** - model.IsActive = false, NOT database row deletion (preserves audit trail per tech-spec-epic-2.md line 531)
+    7. Set model.UpdatedAt = DateTime.UtcNow on delete (timestamp shows when model was deleted)
+    8. Keep associated ModelCapabilities (no is_active column, one-to-one relationship)
+    9. Keep associated BenchmarkScores (historical data valuable, foreign key remains valid)
+    10. Public API (GET /api/models) MUST filter WHERE is_active=true (exclude deleted models from comparison table)
+    11. Admin API (GET /api/admin/models) shows ALL models (including is_active=false) for recovery/viewing
+
+    **API Contract Constraints:**
+    12. DELETE /api/admin/models/{id} returns 204 No Content on success (RESTful standard for successful delete)
+    13. Return 404 Not Found if model doesn't exist OR already deleted (model.IsActive == false)
+    14. Return 401 Unauthorized if JWT token missing/invalid/expired ([Authorize] attribute enforcement)
+    15. Return 500 Internal Server Error with structured error object on exceptions
+    16. Invalidate cache on success: cache:models:*, cache:model:{id}:*, cache:bestvalue:* (TanStack Query + Redis)
+
+    **UI/UX Constraints:**
+    17. Confirmation dialog REQUIRED before delete (AC 2.8.1) - prevent accidental deletions
+    18. Dialog message MUST include model name: "Are you sure you want to delete '{modelName}'? This action cannot be undone."
+    19. Confirm button styled as destructive (red background, e.g., bg-red-600 hover:bg-red-700)
+    20. Success toast displays immediately after deletion: "Model '{name}' deleted successfully"
+    21. Error toast for 404: "Model not found or already deleted"
+    22. Deleted model removed from table in real-time (TanStack Query cache invalidation triggers UI re-render)
+
+    **Testing Constraints:**
+    23. Test pyramid: 70% unit (DeleteModelAsync logic, soft-delete behavior), 25% integration (DELETE endpoint E2E with TestContainers), 5% E2E (Playwright full delete flow)
+    24. Integration tests MUST verify: is_active=false in database, model excluded from public API GET /api/models, cache invalidated, audit log entry created (if audit logging implemented)
+  </constraints>
+  <interfaces>
+    **6 Interface Specifications:**
+
+    1. REST Endpoint: DELETE /api/admin/models/{id}
+       - HTTP Method: DELETE
+       - Route: /api/admin/models/{id}
+       - Authorization: Required (Bearer {jwt_token})
+       - Path Parameters: id (Guid) - Model unique identifier
+       - Request Body: None
+       - Success Response: 204 No Content (empty body)
+       - Error Responses:
+         * 401 Unauthorized: JWT token missing/invalid/expired
+         * 404 Not Found: Model not found or already deleted (is_active=false)
+         * 500 Internal Server Error: { error: { code: "INTERNAL_ERROR", message: "...", details: "..." } }
+       - Side Effects: Sets model.IsActive=false, model.UpdatedAt=DateTime.UtcNow, invalidates cache (models:*, bestvalue:*)
+
+    2. Service Method: IAdminModelService.DeleteModelAsync
+       - Signature: Task&lt;bool&gt; DeleteModelAsync(Guid id, CancellationToken cancellationToken = default)
+       - Return Value: bool (true if model found and deleted, false if not found or already deleted)
+       - Behavior:
+         * Fetch model by ID using repository.GetByIdAsync(id)
+         * Return false if model == null OR model.IsActive == false (idempotent delete)
+         * Set model.IsActive = false
+         * Set model.UpdatedAt = DateTime.UtcNow
+         * Call repository.SaveChangesAsync() to persist changes
+         * Invalidate cache patterns (via domain event or direct cache service call)
+         * Return true on success
+       - Error Handling: Catch exceptions, log error, rethrow for controller to handle
+
+    3. API Client Function: deleteModel(id: string)
+       - Signature: async function deleteModel(id: string): Promise&lt;void&gt;
+       - Implementation: axios.delete(`/api/admin/models/${id}`, { headers: { Authorization: `Bearer ${token}` } })
+       - Return Value: Promise&lt;void&gt; (204 No Content has no response body)
+       - Error Handling: Axios throws on 4xx/5xx, catch in mutation hook
+
+    4. React Hook: useDeleteModel()
+       - Signature: function useDeleteModel(): UseMutationResult&lt;void, Error, string, unknown&gt;
+       - TanStack Query Implementation:
+         * useMutation({ mutationFn: deleteModel, onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-models'] }) })
+       - Parameters: Model ID (string GUID)
+       - Side Effects:
+         * On success: Invalidate ['admin-models'] query cache (triggers ModelList re-fetch and removes deleted model from UI)
+         * On error: TanStack Query error state available for toast display
+       - Usage in component: const deleteMutation = useDeleteModel(); deleteMutation.mutate(modelId)
+
+    5. Component: ConfirmDialog (Reusable UI Component)
+       - Props Interface:
+         * open: boolean (dialog visibility state)
+         * onClose: () => void (callback for Cancel or outside click)
+         * onConfirm: () => void (callback for Confirm button click)
+         * title: string (dialog header text, e.g., "Delete Model")
+         * message: string (warning text with model name)
+         * confirmText?: string (button label, default "Confirm", override with "Delete")
+         * loading?: boolean (disable buttons during mutation, show spinner)
+       - Behavior:
+         * Render modal overlay with backdrop blur
+         * Display title, message, Cancel + Confirm buttons
+         * Confirm button: destructive styling (red), disabled if loading, shows spinner if loading
+         * Cancel button: secondary styling, closes dialog
+         * Close dialog on successful confirm (parent component responsibility via onSuccess)
+
+    6. Public API Filter: ModelQueryService.GetAllModelsAsync
+       - Modification Required: Add .Where(m => m.IsActive == true) filter to existing query
+       - Current Implementation: Returns all models (no IsActive filter in Story 1.10)
+       - Updated Implementation:
+         ```csharp
+         public async Task&lt;List&lt;ModelDto&gt;&gt; GetAllModelsAsync(CancellationToken cancellationToken)
+         {
+             return await _dbContext.Models
+                 .Where(m => m.IsActive == true) // NEW: Exclude soft-deleted models
+                 .Include(m => m.Capability)
+                 .Include(m => m.BenchmarkScores.OrderByDescending(bs => bs.Score).Take(3))
+                 .Select(m => MapToDto(m))
+                 .ToListAsync(cancellationToken);
+         }
+         ```
+       - Ensures deleted models NEVER appear in public comparison table (critical for data integrity)
+  </interfaces>
+  <tests>
+    <standards>
+      **Testing Standards (Established in Epic 1 Story 1.11):**
+
+      Backend Testing (.NET):
+      - Framework: xUnit 2.9.2 with FluentAssertions 7.0.0 for readable assertions
+      - Mocking: Moq 4.18.4 for repository/service mocking in unit tests
+      - Integration Testing: WebApplicationFactory + TestContainers (PostgreSQL 16, Redis 7.2)
+      - Database Cleanup: Respawn 6.1.0 for fast database reset between tests (&lt;100ms)
+      - Test Structure: Given-When-Then (Arrange-Act-Assert)
+      - Test Naming: MethodName_Scenario_ExpectedBehavior (e.g., DeleteModelAsync_WhenModelNotFound_ReturnsFalse)
+      - Parallel Execution: Enabled for unit tests, disabled for integration tests (database contention)
+
+      Frontend Testing (React/TypeScript):
+      - Framework: Vitest 3.x with Testing Library (@testing-library/react 16.x)
+      - Mocking: MSW (Mock Service Worker) for API mocking in component tests
+      - Assertions: Vitest matchers + Testing Library queries (getByRole, getByText)
+      - Test Structure: Given-When-Then comments for clarity
+      - User-Centric: Test user interactions (click, type) not implementation details
+
+      E2E Testing:
+      - Framework: Playwright 1.48.2 (installed in Epic 1 Story 1.11)
+      - Browser: Chromium headless for CI/CD
+      - Test Flow: Full user journey (login → navigate → delete → verify)
+
+      Coverage Goals:
+      - Overall: 70%+ code coverage (enforced in CI via codecov)
+      - Domain/Application Services: 90%+ (critical business logic)
+      - Test Pyramid: 70% unit / 25% integration / 5% E2E
+    </standards>
+    <locations>
+      **7 Test File Locations:**
+
+      Backend Unit Tests:
+      1. services/backend/tests/LlmTokenPrice.Application.Tests/Services/AdminModelServiceTests.cs
+         - Test: DeleteModelAsync method (soft-delete logic, timestamp update, return values)
+
+      Backend Integration Tests:
+      2. services/backend/tests/LlmTokenPrice.Infrastructure.Tests/Api/AdminModelsApiTests.cs
+         - Test: DELETE /api/admin/models/{id} endpoint (full HTTP stack with TestContainers)
+
+      Backend E2E Tests:
+      3. services/backend/tests/LlmTokenPrice.E2E.Tests/Admin/DeleteModelFlowTests.cs
+         - Test: Full delete flow with Playwright (login → delete → verify exclusion from public API)
+
+      Frontend Component Tests:
+      4. apps/web/src/components/ui/__tests__/ConfirmDialog.test.tsx
+         - Test: ConfirmDialog component (rendering, button clicks, loading states)
+
+      5. apps/web/src/components/admin/__tests__/ModelList.test.tsx
+         - Test: Delete button handler, dialog state management, mutation integration
+
+      Frontend Hook Tests:
+      6. apps/web/src/hooks/__tests__/useDeleteModel.test.ts
+         - Test: useDeleteModel mutation hook (success, error, cache invalidation)
+
+      Public API Filter Tests:
+      7. services/backend/tests/LlmTokenPrice.Application.Tests/Services/ModelQueryServiceTests.cs
+         - Test: GetAllModelsAsync filters WHERE is_active=true (soft-deleted models excluded)
+    </locations>
+    <ideas>
+      **28 Test Ideas Mapped to Acceptance Criteria:**
+
+      **AC 2.8.1: Delete button triggers confirmation dialog**
+      - [Component] ConfirmDialog renders with correct title and message
+      - [Component] ConfirmDialog displays model name in message text
+      - [Component] Cancel button closes dialog without calling mutation
+      - [Component] Confirm button calls onConfirm callback
+      - [Component] Confirm button disabled and shows spinner when loading=true
+      - [Component] Dialog closes when open prop changes to false
+
+      **AC 2.8.2: DELETE endpoint created**
+      - [Integration] DELETE /api/admin/models/{id} returns 204 No Content on success
+      - [Integration] DELETE without JWT token returns 401 Unauthorized
+      - [Integration] DELETE with invalid/expired JWT returns 401 Unauthorized
+      - [Integration] DELETE with valid model ID returns 204 (happy path)
+      - [Integration] Swagger documentation generated for DELETE endpoint (verify in Swagger UI)
+
+      **AC 2.8.3: Endpoint soft-deletes model**
+      - [Unit] DeleteModelAsync sets model.IsActive = false
+      - [Unit] DeleteModelAsync sets model.UpdatedAt = DateTime.UtcNow (within 1 second tolerance)
+      - [Unit] DeleteModelAsync returns true when model exists and IsActive=true
+      - [Unit] DeleteModelAsync returns false when model not found (null)
+      - [Unit] DeleteModelAsync returns false when model already deleted (IsActive=false, idempotent)
+      - [Integration] DELETE request sets is_active=false in PostgreSQL database (verify with raw query)
+      - [Integration] DELETE request updates updated_at timestamp in database
+      - [Integration] Soft-deleted model NOT returned by public GET /api/models (filtered out)
+      - [Integration] Soft-deleted model still accessible via admin GET /api/admin/models (shows all)
+
+      **AC 2.8.4: Associated data handled**
+      - [Integration] DELETE model keeps associated ModelCapabilities row (foreign key valid)
+      - [Integration] DELETE model keeps associated BenchmarkScores rows (foreign keys valid)
+      - [Integration] Soft-deleted model + capabilities can be queried by admin (referential integrity)
+
+      **AC 2.8.5: Success refreshes models list**
+      - [Component] ModelList delete button click opens confirmation dialog
+      - [Component] Confirm delete calls useDeleteModel.mutate with correct model ID
+      - [Component] Success callback invalidates ['admin-models'] query key (verify queryClient.invalidateQueries called)
+      - [Component] Deleted model removed from table after mutation success (UI re-renders)
+      - [Component] Success toast displays with model name: "Model '{name}' deleted successfully"
+      - [Component] Error toast displays on 404: "Model not found or already deleted"
+      - [E2E] Full delete flow: Admin logs in → navigates to models → clicks delete → confirms → model disappears from table → public API excludes deleted model
+
+      **Total:** 28 tests (19 unit/integration backend, 7 component frontend, 1 E2E, 1 public API filter verification)
+    </ideas>
+  </tests>
+</story-context>
