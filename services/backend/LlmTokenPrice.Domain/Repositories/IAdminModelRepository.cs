@@ -48,4 +48,20 @@ public interface IAdminModelRepository
     /// Eagerly loads Capability and BenchmarkScores.ThenInclude(Benchmark) to avoid N+1 queries.
     /// </remarks>
     Task<Model?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Deletes a model (soft delete - sets IsActive = false and updates UpdatedAt).
+    /// Model data is preserved in database for audit trail.
+    /// </summary>
+    /// <param name="id">The unique identifier (GUID) of the model to delete.</param>
+    /// <param name="cancellationToken">Cancellation token for async operation.</param>
+    /// <returns>True if model was found and deleted, false if not found.</returns>
+    /// <remarks>
+    /// Performs soft delete by:
+    /// 1. Setting IsActive = false (model won't appear in public API)
+    /// 2. Setting UpdatedAt = DateTime.UtcNow (audit trail)
+    /// 3. Saving changes to database
+    /// Model is NOT physically removed from database, preserving audit trail.
+    /// </remarks>
+    Task<bool> DeleteModelAsync(Guid id, CancellationToken cancellationToken = default);
 }

@@ -50,6 +50,12 @@ public class AdminModelService : IAdminModelService
         return model == null ? null : MapToAdminDto(model);
     }
 
+    /// <inheritdoc />
+    public async Task<bool> DeleteModelAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await _adminRepository.DeleteModelAsync(id, cancellationToken);
+    }
+
     /// <summary>
     /// Maps a Model entity to an AdminModelDto for admin API response.
     /// Includes all fields including CreatedAt, IsActive, and nested data.
