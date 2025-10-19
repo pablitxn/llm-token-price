@@ -5,8 +5,8 @@
  * Story 2.3: Build Models List View in Admin Panel
  */
 
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ModelList } from '@/components/admin/ModelList'
 import { useAdminModels, useDeleteModel } from '@/hooks/useAdminModels'
 import type { AdminModelDto } from '@/types/admin'
@@ -41,12 +41,25 @@ function useDebounce<T>(value: T, delay: number = 300): T {
  */
 export default function AdminModelsPage() {
   const navigate = useNavigate()
-  const [searchTerm, setSearchTerm] = useState('')
+  const [searchParams, setSearchParams] = useSearchParams()
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [modelToDelete, setModelToDelete] = useState<AdminModelDto | null>(null)
 
+  // Initialize search term from URL params or empty string
+  const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '')
+
   // Debounce search term to avoid excessive re-renders and API calls
   const debouncedSearchTerm = useDebounce(searchTerm, 300)
+
+  // Sync search term with URL params when it changes
+  useEffect(() => {
+    if (searchTerm) {
+      setSearchParams({ search: searchTerm })
+    } else {
+      // Remove search param if empty
+      setSearchParams({})
+    }
+  }, [searchTerm, setSearchParams])
 
   // Fetch models using TanStack Query hook
   const { data: models, isLoading, error, refetch } = useAdminModels(debouncedSearchTerm)

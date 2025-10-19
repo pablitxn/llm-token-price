@@ -29,28 +29,35 @@ const mockModels: AdminModelDto[] = [
   },
 ]
 
-// Mock functions
-const mockRefetch = vi.fn()
-const mockMutateAsync = vi.fn()
+// Mock functions - must be declared with vi.hoisted() for use in vi.mock()
+const { mockRefetch, mockMutateAsync, mockUseAdminModels, mockUseDeleteModel } = vi.hoisted(() => ({
+  mockRefetch: vi.fn(),
+  mockMutateAsync: vi.fn(),
+  mockUseAdminModels: vi.fn(),
+  mockUseDeleteModel: vi.fn(),
+}))
 
 // Mock the useAdminModels and useDeleteModel hooks
 vi.mock('@/hooks/useAdminModels', () => ({
-  useAdminModels: vi.fn(() => ({
+  useAdminModels: mockUseAdminModels,
+  useDeleteModel: mockUseDeleteModel,
+}))
+
+beforeEach(() => {
+  vi.clearAllMocks()
+  // Default mock setup for most tests (empty data)
+  mockUseAdminModels.mockReturnValue({
     data: [],
     isLoading: false,
     error: null,
     refetch: mockRefetch,
     isFetching: false,
-  })),
-  useDeleteModel: vi.fn(() => ({
+  })
+  mockUseDeleteModel.mockReturnValue({
     mutateAsync: mockMutateAsync,
     isLoading: false,
     error: null,
-  })),
-}))
-
-beforeEach(() => {
-  vi.clearAllMocks()
+  })
 })
 
 describe('AdminModelsPage', () => {
@@ -86,17 +93,20 @@ describe('AdminModelsPage', () => {
   })
 })
 
-// TODO: Fix mock configuration for delete tests - beforeEach async not working as expected
-describe.skip('AdminModelsPage - Delete Functionality', () => {
-  beforeEach(async () => {
-    // Import the hook mock and set return value with models
-    const { useAdminModels } = await import('@/hooks/useAdminModels')
-    vi.mocked(useAdminModels).mockReturnValue({
+describe('AdminModelsPage - Delete Functionality', () => {
+  beforeEach(() => {
+    // Reconfigure the mock with models data for delete tests
+    mockUseAdminModels.mockReturnValue({
       data: mockModels,
       isLoading: false,
       error: null,
       refetch: mockRefetch,
       isFetching: false,
+    })
+    mockUseDeleteModel.mockReturnValue({
+      mutateAsync: mockMutateAsync,
+      isLoading: false,
+      error: null,
     })
   })
 
@@ -113,10 +123,12 @@ describe.skip('AdminModelsPage - Delete Functionality', () => {
     const deleteButton = screen.getByRole('button', { name: /Delete GPT-4/i })
     await user.click(deleteButton)
 
-    // Verify modal is shown
+    // Verify modal is shown with heading and buttons
     await waitFor(() => {
-      expect(screen.getByText('Delete Model')).toBeInTheDocument()
-      expect(screen.getByText(/Are you sure you want to delete GPT-4/i)).toBeInTheDocument()
+      expect(screen.getByRole('heading', { name: 'Delete Model' })).toBeInTheDocument()
+      // Verify delete and cancel buttons are present
+      expect(screen.getByRole('button', { name: /^Delete$/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /Cancel/i })).toBeInTheDocument()
     })
   })
 
@@ -134,9 +146,9 @@ describe.skip('AdminModelsPage - Delete Functionality', () => {
     const deleteButton = screen.getByRole('button', { name: /Delete GPT-4/i })
     await user.click(deleteButton)
 
-    // Wait for modal and click confirm
+    // Wait for modal
     await waitFor(() => {
-      expect(screen.getByText('Delete Model')).toBeInTheDocument()
+      expect(screen.getByRole('heading', { name: 'Delete Model' })).toBeInTheDocument()
     })
 
     const confirmButton = screen.getByRole('button', { name: /^Delete$/i })
@@ -239,5 +251,101 @@ describe.skip('AdminModelsPage - Delete Functionality', () => {
     expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to delete model:', deleteError)
 
     consoleErrorSpy.mockRestore()
+  })
+})
+
+describe('AdminModelsPage - URL Query Params Persistence', () => {
+  beforeEach(() => {
+    // Reset mocks to default for URL params tests
+    mockUseAdminModels.mockReturnValue({
+      data: [],
+      isLoading: false,
+      error: null,
+      refetch: mockRefetch,
+      isFetching: false,
+    })
+    mockUseDeleteModel.mockReturnValue({
+      mutateAsync: mockMutateAsync,
+      isLoading: false,
+      error: null,
+    })
+  })
+
+  it('reads search term from URL params on mount', () => {
+    // Render with search param in URL
+    renderWithProviders(<AdminModelsPage />, {
+      initialEntries: ['/admin/models?search=GPT'],
+    })
+
+    // Verify search input has the value from URL
+    const searchInput = screen.getByPlaceholderText(/Search by model name or provider/i) as HTMLInputElement
+    expect(searchInput.value).toBe('GPT')
+
+    // Verify the "Searching for" text is displayed
+    expect(screen.getByText(/Searching for:/i)).toBeInTheDocument()
+    expect(screen.getByText('GPT')).toBeInTheDocument()
+  })
+
+  it('updates search input value when user types', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<AdminModelsPage />)
+
+    // Type in search input
+    const searchInput = screen.getByPlaceholderText(/Search by model name or provider/i)
+    await user.type(searchInput, 'Claude')
+
+    // Verify input value is updated
+    await waitFor(() => {
+      expect((searchInput as HTMLInputElement).value).toBe('Claude')
+    })
+
+    // Verify the "Searching for" text is displayed
+    await waitFor(() => {
+      expect(screen.getByText(/Searching for:/i)).toBeInTheDocument()
+    })
+  })
+
+  it('clears search input when clear button is clicked', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<AdminModelsPage />, {
+      initialEntries: ['/admin/models?search=GPT'],
+    })
+
+    // Verify search input has initial value
+    const searchInput = screen.getByPlaceholderText(/Search by model name or provider/i) as HTMLInputElement
+    expect(searchInput.value).toBe('GPT')
+
+    // Click clear button
+    const clearButton = screen.getByLabelText(/Clear search/i)
+    await user.click(clearButton)
+
+    // Verify search input is cleared
+    await waitFor(() => {
+      expect(searchInput.value).toBe('')
+    })
+
+    // Verify the "Searching for" text is no longer displayed
+    expect(screen.queryByText(/Searching for:/i)).not.toBeInTheDocument()
+  })
+
+  it('preserves search term on component remount', () => {
+    // First render with search term
+    const { unmount } = renderWithProviders(<AdminModelsPage />, {
+      initialEntries: ['/admin/models?search=Anthropic'],
+    })
+
+    // Verify search input has the value
+    let searchInput = screen.getByPlaceholderText(/Search by model name or provider/i) as HTMLInputElement
+    expect(searchInput.value).toBe('Anthropic')
+
+    // Unmount and remount with same URL
+    unmount()
+    renderWithProviders(<AdminModelsPage />, {
+      initialEntries: ['/admin/models?search=Anthropic'],
+    })
+
+    // Verify search term is still present after remount
+    searchInput = screen.getByPlaceholderText(/Search by model name or provider/i) as HTMLInputElement
+    expect(searchInput.value).toBe('Anthropic')
   })
 })
