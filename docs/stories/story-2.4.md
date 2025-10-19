@@ -272,7 +272,7 @@ Error Response: {
 
 ### Context Reference
 
-<!-- Path(s) to story context XML will be added here by context workflow -->
+- **Story Context XML:** [docs/stories/story-context-2.4.xml](./story-context-2.4.xml)
 
 ### Agent Model Used
 

@@ -1,0 +1,288 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>2.4</storyId>
+    <title>Create Add New Model Form</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-19</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-2.4.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>administrator</asA>
+    <iWant>form to add new LLM model</iWant>
+    <soThat>I can expand the model database</soThat>
+    <tasks>
+      <task id="1" ac="1">Create add model form page (AddModelPage.tsx, ModelForm.tsx, React Hook Form, Zod schema, breadcrumb, TailwindCSS styling)</task>
+      <task id="2" ac="1">Add basic info fields (Model Name, Provider, Version, Release Date, Status dropdown with active/deprecated/beta, field labels, inline validation errors)</task>
+      <task id="3" ac="1">Add pricing fields (Input Price per 1M, Output Price per 1M, Currency dropdown USD/EUR/GBP, Pricing Valid From/To dates, helper text, 6 decimal places formatting)</task>
+      <task id="4" ac="2,3,6">Implement form validation (required fields, positive prices, 6 decimal places max, name/provider length limits, valid_from &lt; valid_to, red error text, disable submit on errors)</task>
+      <task id="5" ac="4,5">Implement form submission (TanStack Query mutation, loading spinner, POST /api/admin/models, redirect to /admin/models with success toast, display server validation errors)</task>
+      <task id="6">Add form actions (Save primary button, Cancel secondary button, unsaved changes confirmation, Reset Form button)</task>
+      <task id="7">Create admin models API endpoint placeholder (Story 2.5 dependency, endpoint contract defined, returns 501 Not Implemented)</task>
+      <task id="8">Add testing (Vitest component tests for ModelForm, test required/price/date validation, test form submission/success/error, test cancel navigation)</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC-2.4.1">Add model form page created with all required fields: Basic info (name, provider, version, release date, status) and Pricing (input price/1M, output price/1M, currency, validity dates)</criterion>
+    <criterion id="AC-2.4.2">Form validation ensures required fields completed (name, provider, status, input price, output price, currency)</criterion>
+    <criterion id="AC-2.4.3">Form validation ensures prices are positive numbers (&gt;0) with max 6 decimal places</criterion>
+    <criterion id="AC-2.4.4">"Save" button posts data to backend API (POST /api/admin/models)</criterion>
+    <criterion id="AC-2.4.5">Success redirects to models list (/admin/models) with confirmation message toast</criterion>
+    <criterion id="AC-2.4.6">Error displays validation messages (client-side from Zod, server-side from API)</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/tech-spec-epic-2.md</path>
+        <title>Epic 2 Technical Specification</title>
+        <section>3.1 Data Models - C# DTOs</section>
+        <snippet>Defines CreateModelDto structure with all required fields (Name, Provider, Version, ReleaseDate, Status, InputPricePer1M, OutputPricePer1M, Currency, PricingValidFrom/To, CreateCapabilityDto). Model creation API contract POST /api/admin/models with request/response schemas, cache invalidation patterns, and FluentValidation error codes.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-2.md</path>
+        <title>Epic 2 Technical Specification</title>
+        <section>3.2 Data Models - TypeScript Frontend Types</section>
+        <snippet>Defines CreateModelRequest interface matching backend DTO (name, provider, version, releaseDate, status enum, inputPricePer1M, outputPricePer1M, currency, pricingValidFrom/To, CreateCapabilityRequest). Specifies form field types and validation constraints for React components.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-2.md</path>
+        <title>Epic 2 Technical Specification</title>
+        <section>2. Services/Modules - ModelForm Component</section>
+        <snippet>Presentation layer React form component for model creation/editing with validation. Takes model entity (edit mode) or null (create mode), returns form submission with CreateModelDto/UpdateModelDto. Implements React Hook Form + Zod validation pattern.</snippet>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture</title>
+        <section>7.2 Admin API Contracts</section>
+        <snippet>Admin API follows REST conventions with POST /api/admin/models for model creation. Response includes created model with ID, audit timestamps (createdAt/updatedAt), and cache invalidation triggers for cache:models:* patterns. Error responses use standard format with field-specific validation details.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-2.3.md</path>
+        <title>Story 2.3 - Build Models List View</title>
+        <section>Implementation - AdminModelsPage</section>
+        <snippet>Establishes admin page patterns: page header with action button, search with debounce (300ms), loading/error states, navigation via useNavigate. "Add New Model" button navigates to /admin/models/new route. Uses TanStack Query for server state management.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>apps/web/src/pages/admin/AdminModelsPage.tsx</path>
+        <kind>page</kind>
+        <symbol>AdminModelsPage</symbol>
+        <lines>1-307</lines>
+        <reason>Reference implementation for admin page patterns: page header structure, search with useDebounce (300ms), loading/error states, TanStack Query integration, navigation to /admin/models/new on "Add New Model" button click. Story 2.4 AddModelPage should follow same structural patterns.</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/api/admin.ts</path>
+        <kind>api-client</kind>
+        <symbol>getAdminModels, getAdminModelById</symbol>
+        <lines>76-103</lines>
+        <reason>Existing admin API client patterns using apiClient.get/post. Story 2.4 needs to add createModel function following same pattern: export async function, apiClient.post with generic type, return response.data. Used by TanStack Query mutations.</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/types/admin.ts</path>
+        <kind>types</kind>
+        <symbol>AdminModelDto, AdminApiResponse</symbol>
+        <lines>1-59</lines>
+        <reason>Existing admin TypeScript types. Story 2.4 needs to add CreateModelRequest interface matching backend CreateModelDto. Should include all form fields: name, provider, version, releaseDate, status, inputPricePer1M, outputPricePer1M, currency, pricingValidFrom/To.</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/hooks/useAdminModels.ts</path>
+        <kind>hook</kind>
+        <symbol>useAdminModels</symbol>
+        <lines>59-94</lines>
+        <reason>TanStack Query hook pattern for GET requests. Story 2.4 needs similar mutation hook (useCreateModel) using useMutation instead of useQuery. Hook should call createModel API function, invalidate ['admin', 'models'] query key on success, return mutate function and loading/error states.</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/hooks/useAuth.ts</path>
+        <kind>hook</kind>
+        <symbol>useAuth</symbol>
+        <lines>1-50</lines>
+        <reason>Authentication hook providing isAuthenticated state and logout function. AddModelPage should be protected route requiring authentication (handled by AdminLayout). Form submission should handle 401 errors by redirecting to login.</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/components/layout/AdminLayout.tsx</path>
+        <kind>layout</kind>
+        <symbol>AdminLayout</symbol>
+        <lines>1-150</lines>
+        <reason>Admin layout component wrapping all admin pages with sidebar navigation and header. AddModelPage will be rendered within AdminLayout via React Router Outlet. Layout provides navigation context and breadcrumb structure.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <frontend>
+        <package name="react" version="^19.0.0" purpose="Core UI library for component rendering" />
+        <package name="react-router-dom" version="^7.1.3" purpose="Client-side routing for navigation (useNavigate)" />
+        <package name="@tanstack/react-query" version="^5.64.2" purpose="Server state management for form mutation (useMutation)" />
+        <package name="react-hook-form" version="^7.54.2" purpose="Uncontrolled form state management with performance optimization" />
+        <package name="@hookform/resolvers" version="^3.9.1" purpose="Zod resolver integration for React Hook Form validation" />
+        <package name="zod" version="^3.24.1" purpose="Client-side schema validation for form fields" />
+        <package name="axios" version="^1.12.2" purpose="HTTP client for API requests (via apiClient)" />
+        <package name="lucide-react" version="^0.469.0" purpose="Icon library for form field icons and buttons" />
+        <package name="date-fns" version="^4.1.0" purpose="Date formatting and parsing for date picker fields" />
+      </frontend>
+      <backend>
+        <package name="Microsoft.AspNetCore.Authentication.JwtBearer" version="9.0.10" purpose="JWT authentication for admin endpoints" />
+        <package name="FluentValidation" version="11.11.0" purpose="Server-side validation for CreateModelDto (Story 2.5)" />
+        <package name="FluentValidation.AspNetCore" version="11.3.0" purpose="ASP.NET Core integration for automatic validation" />
+      </backend>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <architectural>
+      <constraint>Form follows uncontrolled pattern using React Hook Form (better performance than controlled inputs)</constraint>
+      <constraint>Validation follows double-layer strategy: Zod client-side (immediate UX feedback) + FluentValidation server-side (security, Story 2.5)</constraint>
+      <constraint>Form submission uses TanStack Query useMutation (optimistic updates, automatic error handling, query invalidation)</constraint>
+      <constraint>API client follows existing admin.ts patterns: export async function, apiClient.post&lt;T&gt;, return response.data</constraint>
+      <constraint>Page structure matches AdminModelsPage patterns: page header with title/description, loading/error states, navigation via useNavigate</constraint>
+    </architectural>
+    <design>
+      <constraint>Form fields styled with TailwindCSS utility classes matching existing admin UI (gray-700 labels, border-gray-300 inputs, red-600 errors)</constraint>
+      <constraint>Required fields marked with red asterisk (*) next to label</constraint>
+      <constraint>Validation errors display inline below each field in text-sm text-red-600</constraint>
+      <constraint>Price inputs show 6 decimal places with helper text explaining format</constraint>
+      <constraint>Submit button shows loading spinner during mutation (disabled state)</constraint>
+      <constraint>Success redirects to /admin/models with toast confirmation message</constraint>
+    </design>
+    <validation>
+      <constraint>Required fields: name, provider, status, inputPricePer1M, outputPricePer1M, currency</constraint>
+      <constraint>Price validation: Must be positive numbers (&gt;0), max 6 decimal places (multipleOf 0.000001)</constraint>
+      <constraint>String length limits: name max 255 chars, provider max 100 chars, version max 50 chars</constraint>
+      <constraint>Date validation: pricingValidFrom &lt; pricingValidTo (custom Zod refine)</constraint>
+      <constraint>Status must be enum: 'active' | 'deprecated' | 'beta' (default: 'active')</constraint>
+      <constraint>Currency must be enum: 'USD' | 'EUR' | 'GBP' (default: 'USD')</constraint>
+    </validation>
+    <api-integration>
+      <constraint>Endpoint: POST /api/admin/models (Story 2.5 implements backend, Story 2.4 calls endpoint)</constraint>
+      <constraint>Request body must match CreateModelDto structure from tech-spec-epic-2.md</constraint>
+      <constraint>Success response (201 Created) includes created model with ID and audit timestamps</constraint>
+      <constraint>Error response (400 Bad Request) includes field-specific validation errors in details array</constraint>
+      <constraint>Authentication required: 401 Unauthorized redirects to /admin/login</constraint>
+      <constraint>On success: Invalidate ['admin', 'models'] query key to refresh models list cache</constraint>
+    </api-integration>
+    <routing>
+      <constraint>Route path: /admin/models/new (matches AdminModelsPage navigation target)</constraint>
+      <constraint>Protected route: Wrapped in AdminLayout (handles authentication check)</constraint>
+      <constraint>Cancel button navigates back to /admin/models using useNavigate(-1) or navigate('/admin/models')</constraint>
+      <constraint>Success redirects to /admin/models with state: { message: 'Model created successfully' }</constraint>
+    </routing>
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>POST /api/admin/models</name>
+      <kind>REST endpoint</kind>
+      <signature>
+        Request: CreateModelDto { name, provider, version?, releaseDate?, status, inputPricePer1M, outputPricePer1M, currency, pricingValidFrom?, pricingValidTo?, capabilities }
+        Response (201): { data: AdminModelDto, meta: { timestamp, cached: false } }
+        Error (400): { error: { code: "VALIDATION_ERROR", message: string, details: Array&lt;{ field, message }&gt; } }
+        Error (401): Unauthorized (redirect to login)
+      </signature>
+      <path>services/backend/LlmTokenPrice.API/Controllers/Admin/AdminModelsController.cs (Story 2.5)</path>
+    </interface>
+    <interface>
+      <name>createModel</name>
+      <kind>API client function</kind>
+      <signature>
+        export const createModel = async (model: CreateModelRequest): Promise&lt;AdminModelResponse&gt; =&gt; AdminModelResponse
+        Uses: apiClient.post&lt;AdminModelResponse&gt;('/admin/models', model)
+      </signature>
+      <path>apps/web/src/api/admin.ts (Story 2.4 adds this)</path>
+    </interface>
+    <interface>
+      <name>CreateModelRequest</name>
+      <kind>TypeScript interface</kind>
+      <signature>
+        interface CreateModelRequest {
+          name: string
+          provider: string
+          version?: string
+          releaseDate?: string
+          status: 'active' | 'deprecated' | 'beta'
+          inputPricePer1M: number
+          outputPricePer1M: number
+          currency: string
+          pricingValidFrom?: string
+          pricingValidTo?: string
+          // Note: Story 2.4 focuses on basic info + pricing, Story 2.6 adds capabilities
+        }
+      </signature>
+      <path>apps/web/src/types/admin.ts (Story 2.4 adds this)</path>
+    </interface>
+    <interface>
+      <name>useCreateModel</name>
+      <kind>TanStack Query mutation hook</kind>
+      <signature>
+        export function useCreateModel() {
+          return useMutation({
+            mutationFn: createModel,
+            onSuccess: () =&gt; queryClient.invalidateQueries({ queryKey: ['admin', 'models'] }),
+            onError: (error) =&gt; handle authentication/validation errors
+          })
+        }
+        Returns: { mutate, isPending, isError, error }
+      </signature>
+      <path>apps/web/src/hooks/useCreateModel.ts (Story 2.4 creates this)</path>
+    </interface>
+    <interface>
+      <name>createModelSchema</name>
+      <kind>Zod validation schema</kind>
+      <signature>
+        const createModelSchema = z.object({
+          name: z.string().min(1).max(255),
+          provider: z.string().min(1).max(100),
+          version: z.string().max(50).optional(),
+          releaseDate: z.string().optional(),
+          status: z.enum(['active', 'deprecated', 'beta']),
+          inputPricePer1M: z.number().positive().multipleOf(0.000001),
+          outputPricePer1M: z.number().positive().multipleOf(0.000001),
+          currency: z.enum(['USD', 'EUR', 'GBP']),
+          pricingValidFrom: z.string().optional(),
+          pricingValidTo: z.string().optional()
+        }).refine(date_validation)
+      </signature>
+      <path>apps/web/src/schemas/modelSchema.ts (Story 2.4 creates this)</path>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>
+      Component tests use Vitest + React Testing Library + MSW for API mocking. Test files colocated with components in __tests__ directories. Forms tested with user event simulation (typing, clicking). Validation tested by attempting invalid submissions. Mutations tested by mocking API responses (success/error). Test structure follows Arrange-Act-Assert pattern with descriptive test names (should_X_when_Y). MSW handlers mock POST /api/admin/models endpoint with various responses (201 Created, 400 Validation Error, 401 Unauthorized). Form tests verify both happy path (successful submission) and error paths (validation errors, network errors, authentication errors).
+    </standards>
+    <locations>
+      <location>apps/web/src/pages/admin/__tests__/AddModelPage.test.tsx</location>
+      <location>apps/web/src/components/admin/__tests__/ModelForm.test.tsx</location>
+      <location>apps/web/src/hooks/__tests__/useCreateModel.test.tsx</location>
+      <location>apps/web/src/schemas/__tests__/modelSchema.test.ts</location>
+    </locations>
+    <ideas>
+      <test ac="AC-2.4.1">Verify AddModelPage renders with page header, breadcrumb "Dashboard &gt; Models &gt; Add New Model", and ModelForm component</test>
+      <test ac="AC-2.4.1">Verify ModelForm displays all required fields: Basic Info section (Name, Provider, Version, Release Date, Status dropdown) and Pricing section (Input Price, Output Price, Currency dropdown, Valid From, Valid To)</test>
+      <test ac="AC-2.4.1">Verify required fields show red asterisk (*) next to label (name, provider, status, inputPricePer1M, outputPricePer1M, currency)</test>
+      <test ac="AC-2.4.1">Verify Status dropdown has options: active (default), deprecated, beta</test>
+      <test ac="AC-2.4.1">Verify Currency dropdown has options: USD (default), EUR, GBP</test>
+      <test ac="AC-2.4.2">Verify submitting empty form shows validation errors for required fields (name, provider, status, inputPricePer1M, outputPricePer1M, currency)</test>
+      <test ac="AC-2.4.2">Verify validation error "Name is required" displays below name field when name is empty</test>
+      <test ac="AC-2.4.2">Verify submit button is disabled when form has validation errors</test>
+      <test ac="AC-2.4.3">Verify entering negative price (-1) shows error "Must be greater than 0"</test>
+      <test ac="AC-2.4.3">Verify entering price with 7 decimal places (0.1234567) shows error about decimal precision</test>
+      <test ac="AC-2.4.3">Verify entering valid price (0.003000) passes validation</test>
+      <test ac="AC-2.4.3">Verify helper text displays format example "$0.003000 per 1M tokens"</test>
+      <test ac="AC-2.4.3">Verify date validation: pricingValidFrom (2025-01-01) &lt; pricingValidTo (2024-01-01) shows error "Valid From date must be before Valid To date"</test>
+      <test ac="AC-2.4.4">Verify clicking Save button with valid data calls useMutation with correct payload matching CreateModelRequest structure</test>
+      <test ac="AC-2.4.4">Verify mutation calls POST /api/admin/models endpoint via createModel API function</test>
+      <test ac="AC-2.4.4">Verify Save button shows loading spinner and is disabled during mutation (isPending state)</test>
+      <test ac="AC-2.4.5">Verify successful mutation (201 Created response) navigates to /admin/models route</test>
+      <test ac="AC-2.4.5">Verify success shows toast/confirmation message "Model '{name}' created successfully"</test>
+      <test ac="AC-2.4.5">Verify success invalidates ['admin', 'models'] query key to refresh models list cache</test>
+      <test ac="AC-2.4.6">Verify server validation error (400 Bad Request) displays field-specific error messages inline</test>
+      <test ac="AC-2.4.6">Verify parsing server error response { error: { details: [{ field: "inputPricePer1M", message: "..." }] } } and showing message below correct field</test>
+      <test ac="AC-2.4.6">Verify authentication error (401 Unauthorized) redirects to /admin/login</test>
+      <test>Verify Cancel button navigates back to /admin/models without submitting form</test>
+      <test>Verify unsaved changes warning: navigating away with dirty form shows confirmation dialog</test>
+      <test>Verify Reset Form button clears all field values and resets to defaults (status: active, currency: USD)</test>
+      <test>Verify form field styling matches TailwindCSS admin UI patterns (gray-700 labels, border-gray-300 inputs, red-600 errors)</test>
+    </ideas>
+  </tests>
+</story-context>
