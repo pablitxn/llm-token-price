@@ -46,16 +46,12 @@ public class AdminModelsApiTests : IClassFixture<WebApplicationFactory<LlmTokenP
 
     /// <summary>
     /// AC 2.3.1: GET /api/admin/models returns 200 with all models (including inactive) when authenticated.
-    /// NOTE: This test requires authentication to be implemented first (Story 2.1).
-    /// Currently disabled until admin login is functional.
     /// </summary>
-    [Fact(Skip = "Requires admin authentication to be functional (Story 2.1)")]
+    [Fact]
     public async Task GetAdminModels_WithAuthentication_Should_Return_200_With_All_Models()
     {
-        // Arrange - Login as admin to get JWT token
-        // TODO: Implement admin login helper method
-        // var token = await LoginAsAdminAsync();
-        // _client.DefaultRequestHeaders.Add("Cookie", $"admin_token={token}");
+        // Arrange - Login as admin (cookie is automatically stored by HttpClient)
+        await LoginAsAdminAsync();
 
         // Act
         var response = await _client.GetAsync("/api/admin/models");
@@ -84,11 +80,11 @@ public class AdminModelsApiTests : IClassFixture<WebApplicationFactory<LlmTokenP
     /// AC 2.3.2: Validates that admin models endpoint returns all required fields.
     /// Unlike public API, admin API includes isActive, createdAt, and updatedAt fields.
     /// </summary>
-    [Fact(Skip = "Requires admin authentication and seeded test data")]
+    [Fact]
     public async Task GetAdminModels_Should_Return_Models_With_All_Admin_Fields()
     {
         // Arrange - Login as admin
-        // var token = await LoginAsAdminAsync();
+        await LoginAsAdminAsync();
 
         // Act
         var response = await _client.GetAsync("/api/admin/models");
@@ -122,11 +118,11 @@ public class AdminModelsApiTests : IClassFixture<WebApplicationFactory<LlmTokenP
     /// AC 2.3.3: Validates search functionality filters models by name or provider.
     /// Search should be case-insensitive and match partial strings.
     /// </summary>
-    [Fact(Skip = "Requires admin authentication and seeded test data")]
+    [Fact]
     public async Task GetAdminModels_WithSearchTerm_Should_Filter_Results()
     {
         // Arrange - Login as admin
-        // var token = await LoginAsAdminAsync();
+        await LoginAsAdminAsync();
 
         // Act - Search for "GPT" (should match "GPT-4", "GPT-3.5", etc.)
         var response = await _client.GetAsync("/api/admin/models?searchTerm=GPT");
@@ -156,11 +152,11 @@ public class AdminModelsApiTests : IClassFixture<WebApplicationFactory<LlmTokenP
     /// AC 2.3.1: Validates admin endpoint returns inactive models (unlike public API).
     /// This is critical for admin CRUD operations - must see all models regardless of status.
     /// </summary>
-    [Fact(Skip = "Requires admin authentication and seeded test data with inactive models")]
+    [Fact]
     public async Task GetAdminModels_Should_Include_Inactive_Models()
     {
         // Arrange - Login as admin
-        // Ensure test database has at least one inactive model (isActive = false)
+        await LoginAsAdminAsync();
 
         // Act
         var response = await _client.GetAsync("/api/admin/models");
@@ -186,10 +182,11 @@ public class AdminModelsApiTests : IClassFixture<WebApplicationFactory<LlmTokenP
     /// AC 2.3.1: Validates admin endpoint orders models by updatedAt DESC.
     /// Most recently updated models should appear first for admin convenience.
     /// </summary>
-    [Fact(Skip = "Requires admin authentication and seeded test data")]
+    [Fact]
     public async Task GetAdminModels_Should_Order_By_UpdatedAt_Descending()
     {
         // Arrange - Login as admin
+        await LoginAsAdminAsync();
 
         // Act
         var response = await _client.GetAsync("/api/admin/models");
@@ -218,7 +215,7 @@ public class AdminModelsApiTests : IClassFixture<WebApplicationFactory<LlmTokenP
 
     /// <summary>
     /// Helper method to login as admin and get JWT token.
-    /// TODO: Implement once admin authentication is functional (Story 2.1).
+    /// The HttpClient automatically stores the cookie, so subsequent requests will be authenticated.
     /// </summary>
     private async Task<string> LoginAsAdminAsync()
     {
