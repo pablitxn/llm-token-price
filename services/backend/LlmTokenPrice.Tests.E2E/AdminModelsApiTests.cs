@@ -214,6 +214,85 @@ public class AdminModelsApiTests : IClassFixture<WebApplicationFactory<LlmTokenP
     }
 
     /// <summary>
+    /// AC 2.3.6: Validates DELETE endpoint soft deletes model (sets IsActive = false).
+    /// </summary>
+    [Fact]
+    public async Task DeleteModel_WithValidId_Should_Return_204_And_SoftDelete()
+    {
+        // Arrange - Login as admin
+        await LoginAsAdminAsync();
+
+        // First, get all models to find one to delete
+        var getResponse = await _client.GetAsync("/api/admin/models");
+        var responseBody = await getResponse.Content.ReadAsStringAsync();
+        var adminResponse = JsonSerializer.Deserialize<AdminApiResponse>(
+            responseBody,
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+        var models = adminResponse!.Data;
+        models.Should().NotBeEmpty("Need at least one model to test deletion");
+
+        var modelToDelete = models![0];
+
+        // Act - Delete the model
+        var deleteResponse = await _client.DeleteAsync($"/api/admin/models/{modelToDelete.Id}");
+
+        // Assert - Should return 204 No Content
+        deleteResponse.StatusCode.Should().Be(HttpStatusCode.NoContent,
+            "DELETE endpoint should return 204 on successful soft delete");
+
+        // Verify model is soft deleted (should still appear in admin API but with IsActive = false)
+        var verifyResponse = await _client.GetAsync($"/api/admin/models/{modelToDelete.Id}");
+        verifyResponse.StatusCode.Should().Be(HttpStatusCode.OK,
+            "Should still be able to retrieve soft-deleted model in admin API");
+
+        var verifyBody = await verifyResponse.Content.ReadAsStringAsync();
+
+        // Parse the JSON to check IsActive status
+        using var jsonDoc = JsonDocument.Parse(verifyBody);
+        var dataElement = jsonDoc.RootElement.GetProperty("data");
+        var isActive = dataElement.GetProperty("isActive").GetBoolean();
+
+        isActive.Should().BeFalse("Model should be soft deleted (IsActive = false)");
+    }
+
+    /// <summary>
+    /// AC 2.3.6: Validates DELETE endpoint returns 404 for non-existent model.
+    /// </summary>
+    [Fact]
+    public async Task DeleteModel_WithInvalidId_Should_Return_404()
+    {
+        // Arrange - Login as admin
+        await LoginAsAdminAsync();
+
+        var nonExistentId = Guid.NewGuid();
+
+        // Act
+        var response = await _client.DeleteAsync($"/api/admin/models/{nonExistentId}");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound,
+            "DELETE endpoint should return 404 for non-existent model");
+    }
+
+    /// <summary>
+    /// AC 2.3.6: Validates DELETE endpoint requires authentication.
+    /// </summary>
+    [Fact]
+    public async Task DeleteModel_WithoutAuthentication_Should_Return_401()
+    {
+        // Arrange - No login (no JWT token)
+        var modelId = Guid.NewGuid();
+
+        // Act
+        var response = await _client.DeleteAsync($"/api/admin/models/{modelId}");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized,
+            "DELETE endpoint must require JWT authentication");
+    }
+
+    /// <summary>
     /// Helper method to login as admin and get JWT token.
     /// The HttpClient automatically stores the cookie, so subsequent requests will be authenticated.
     /// </summary>
