@@ -1,0 +1,268 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>2.5</storyId>
+    <title>Create Backend API for Adding Models</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-19</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-2.5.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>an administrator</asA>
+    <iWant>backend API to persist new models</iWant>
+    <soThat>added models are saved to database</soThat>
+    <tasks>
+      <task id="1" ac="1">Create POST models endpoint - Add POST action to AdminModelsController.cs with [Authorize] attribute, accept CreateModelRequest from body, call AdminModelService.CreateModelAsync(), return 201 Created with Location header, add Swagger/OpenAPI documentation</task>
+      <task id="2" ac="2">Create DTOs for model creation - CreateModelDto.cs in Application/DTOs (name, provider, version, releaseDate, status, pricing fields), ModelResponseDto.cs for response, AutoMapper mapping profile</task>
+      <task id="3" ac="2,6">Implement FluentValidation validator - CreateModelValidator.cs validating name (required, max 255), provider (required, max 100), prices (positive, max 6 decimals), currency (USD/EUR/GBP), status (active/deprecated/beta), date range (validFrom before validTo), register in DI</task>
+      <task id="4" ac="3,4">Create AdminModelService - Implement CreateModelAsync() in AdminModelService.cs, inject IModelRepository and IUnitOfWork, create Model entity from DTO, set timestamps (CreatedAt, UpdatedAt), set IsActive=true, save model, create ModelCapabilities with defaults, link to model, commit transaction, return model ID</task>
+      <task id="5" ac="4">Implement default capabilities creation - Create ModelCapabilities entity with model_id FK, set defaults (contextWindow=0, all booleans=false), ensure one-to-one constraint</task>
+      <task id="6" ac="6">Add error handling and validation - Catch validation exceptions return 400, format errors as JSON with field names/messages, catch duplicate name+provider return 400, catch DB exceptions return 500, log all errors with Serilog, use global exception handler</task>
+      <task id="7">Invalidate cache after model creation - Inject ICacheService, invalidate cache:models:list:* and cache:bestvalue:* patterns, consider ModelCreatedEvent for decoupling</task>
+      <task id="8">Add audit logging - Create audit log entry after model creation, log admin username from JWT claims, log action=CREATE entity_type=MODEL entity_id, log changes_json with model data, save to admin_audit_log table</task>
+      <task id="9">Add testing - Unit tests for CreateModelValidator (all validation rules), unit tests for AdminModelService (model+capabilities creation), integration tests for POST endpoint (201 with valid data, 400 with invalid data, 401 without JWT, 400 for duplicate, verify DB persistence, verify audit log)</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1">POST /api/admin/models endpoint created with [Authorize] attribute and Swagger documentation</criterion>
+    <criterion id="2">Endpoint accepts JSON model data with comprehensive FluentValidation (required fields, positive prices, valid currency/status, date range validation)</criterion>
+    <criterion id="3">Model entity created and saved to database with CreatedAt and UpdatedAt timestamps set to DateTime.UtcNow, IsActive=true by default</criterion>
+    <criterion id="4">ModelCapabilities entity created with default values (ContextWindow=0, all boolean flags=false except SupportsStreaming=true) and linked via ModelId foreign key with one-to-one constraint</criterion>
+    <criterion id="5">API returns 201 Created with Location header pointing to GET /api/admin/models/{id} and AdminModelDto response containing new model ID, all fields, and audit timestamps</criterion>
+    <criterion id="6">Validation errors return 400 Bad Request with structured JSON error details (code=VALIDATION_ERROR, array of field-specific errors with field names and messages), duplicate model name+provider returns 400 with specific error message</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/tech-spec-epic-2.md</path>
+        <title>Technical Specification: Epic 2 - Model Data Management &amp; Admin CRUD</title>
+        <section>Data Models and Contracts - C# Backend DTOs</section>
+        <snippet>Defines CreateModelDto record with all required fields (Name, Provider, Version, ReleaseDate, Status, pricing fields with decimal(10,6) precision, Currency, PricingValidFrom/To), AdminAuthResponseDto for JWT token responses, complete validation rules (positive prices, valid currency codes, date range constraints)</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-2.md</path>
+        <title>Technical Specification: Epic 2</title>
+        <section>API Specifications - Model Management Endpoints</section>
+        <snippet>POST /api/admin/models endpoint specification with request/response schemas, authentication requirements ([Authorize] JWT), validation error formats (400 Bad Request with field-level details), cache invalidation patterns (cache:models:*, cache:bestvalue:*), audit logging requirements</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-2.md</path>
+        <title>Technical Specification: Epic 2</title>
+        <section>Services and Modules - AdminModelService</section>
+        <snippet>AdminModelService responsibilities: orchestrate model CRUD operations, coordinate validation (FluentValidation + DataValidator domain service), cache invalidation via domain events, audit logging integration. Inputs: CreateModelDto, UpdateModelDto. Outputs: ModelDto, operation results</snippet>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture Document</title>
+        <section>Hexagonal Architecture (Ports &amp; Adapters) - Application Layer</section>
+        <snippet>Application Services pattern: AdminModelManagementService uses IModelRepository port for data access, DataValidator domain service for business rules, returns DTOs for API consumption. Clear layer boundaries: Controllers → Application Services → Domain Services → Repositories (Infrastructure)</snippet>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture Document</title>
+        <section>API Contract Format - Success Response and Error Response</section>
+        <snippet>Standard API response format with data wrapper and meta object. Error response format: {error: {code: "VALIDATION_ERROR", message: "...", details: [{field, message}]}}. Admin endpoints always return cached=false in meta for real-time data</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-2.5.md</path>
+        <title>Story 2.5: Create Backend API for Adding Models</title>
+        <section>Dev Notes - Implementation Details</section>
+        <snippet>Complete controller action code example with [HttpPost] [Authorize] [ProducesResponseType] attributes, AdminModelService.CreateModelAsync() call pattern, CreatedAtAction response with Location header. Service method implementation showing duplicate check, entity creation, capabilities creation with defaults, EF Core transaction, cache invalidation, audit logging</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>services/backend/LlmTokenPrice.API/Controllers/Admin/AdminModelsController.cs</path>
+        <kind>controller</kind>
+        <symbol>AdminModelsController</symbol>
+        <lines>1-296</lines>
+        <reason>Existing admin controller with GET and DELETE endpoints - provides pattern for implementing POST /api/admin/models. Shows [Authorize] attribute usage, AdminApiResponse wrapper pattern, structured logging with _logger, error handling with try-catch blocks, HTTP status code patterns (201 Created, 400 Bad Request, 401 Unauthorized, 500 Internal Server Error)</reason>
+      </artifact>
+      <artifact>
+        <path>services/backend/LlmTokenPrice.API/Controllers/Admin/AdminModelsController.cs</path>
+        <kind>controller</kind>
+        <symbol>Create</symbol>
+        <lines>212-238</lines>
+        <reason>PLACEHOLDER POST endpoint returning 501 Not Implemented - this is exactly where Story 2.5 implementation will go. Contains TODO comments outlining implementation steps: validate with FluentValidation, call IAdminModelService.CreateModelAsync, invalidate cache patterns, return 201 Created with AdminModelDto</reason>
+      </artifact>
+      <artifact>
+        <path>services/backend/LlmTokenPrice.Application/DTOs/CreateModelRequest.cs</path>
+        <kind>dto</kind>
+        <symbol>CreateModelRequest</symbol>
+        <lines>1-73</lines>
+        <reason>Already defined DTO for model creation with all required fields (Name, Provider, Version, ReleaseDate, Status, InputPricePer1M, OutputPricePer1M, Currency, PricingValidFrom, PricingValidTo). Contains XML documentation with validation rules that need FluentValidation implementation</reason>
+      </artifact>
+      <artifact>
+        <path>services/backend/LlmTokenPrice.Application/Services/IAdminModelService.cs</path>
+        <kind>interface</kind>
+        <symbol>IAdminModelService</symbol>
+        <lines>1-61</lines>
+        <reason>Admin service interface defining contract for GetAllModelsAsync, GetModelByIdAsync, DeleteModelAsync. Story 2.5 needs to add CreateModelAsync(CreateModelRequest) method to this interface with returns Task&lt;Guid&gt; (new model ID)</reason>
+      </artifact>
+      <artifact>
+        <path>services/backend/LlmTokenPrice.Application/Services/AdminModelService.cs</path>
+        <kind>service</kind>
+        <symbol>AdminModelService</symbol>
+        <lines>1-125</lines>
+        <reason>Existing admin service implementation showing pattern for entity-to-DTO mapping (MapToAdminDto, MapCapabilityToDto, MapBenchmarkScoreToDto). Story 2.5 implementation of CreateModelAsync() will follow same patterns: inject repository, perform operations, return mapped result</reason>
+      </artifact>
+      <artifact>
+        <path>services/backend/LlmTokenPrice.Domain/Repositories/IAdminModelRepository.cs</path>
+        <kind>interface</kind>
+        <symbol>IAdminModelRepository</symbol>
+        <lines>1-67</lines>
+        <reason>Admin repository port interface with GetAllModelsAsync, GetByIdAsync, DeleteModelAsync. Story 2.5 needs to add CreateModelAsync(Model) and CreateCapabilitiesAsync(Capability) methods, plus GetByNameAndProviderAsync(name, provider) for duplicate detection</reason>
+      </artifact>
+      <artifact>
+        <path>services/backend/LlmTokenPrice.Infrastructure/Repositories/AdminModelRepository.cs</path>
+        <kind>repository</kind>
+        <symbol>AdminModelRepository</symbol>
+        <lines>1-110</lines>
+        <reason>Existing admin repository implementation using EF Core AppDbContext with Include() for eager loading, AsNoTracking() for read-only queries, SaveChangesAsync() for writes. Shows pattern for implementing new CreateModelAsync and GetByNameAndProviderAsync methods with proper EF Core usage</reason>
+      </artifact>
+      <artifact>
+        <path>services/backend/LlmTokenPrice.Domain/Entities/Model.cs</path>
+        <kind>entity</kind>
+        <symbol>Model</symbol>
+        <lines>1-112</lines>
+        <reason>Pure domain entity defining Model structure with all properties (Id, Name, Provider, Version, Status, pricing fields, timestamps, IsActive soft delete flag). Navigation properties: Capability (one-to-one), BenchmarkScores (one-to-many). Required for CreateModelAsync implementation - shows which fields to map from CreateModelRequest</reason>
+      </artifact>
+      <artifact>
+        <path>services/backend/LlmTokenPrice.Domain/Entities/Capability.cs</path>
+        <kind>entity</kind>
+        <symbol>Capability</symbol>
+        <lines>1-80</lines>
+        <reason>Pure domain entity defining Capability structure with ModelId foreign key, ContextWindow, MaxOutputTokens, feature flags (SupportsFunctionCalling, SupportsVision, audio, streaming, JSON mode). Required for default capability creation in Story 2.5 - shows which defaults to set (ContextWindow=0, all flags=false except SupportsStreaming=true)</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <backend>
+        <package name="FluentValidation.AspNetCore" version="11.3.0" reason="Required for CreateModelValidator implementation with automatic validation pipeline integration, FluentValidation decorators on controller actions" />
+        <package name="FluentValidation.DependencyInjectionExtensions" version="11.3.0" reason="Required for registering validators in dependency injection (services.AddValidatorsFromAssemblyContaining)" />
+        <package name="Microsoft.EntityFrameworkCore" version="9.0.10" reason="Already installed - required for EF Core SaveChangesAsync, DbContext operations in repository" />
+        <package name="Microsoft.AspNetCore.Authentication.JwtBearer" version="9.0.10" reason="Already installed - required for [Authorize] attribute JWT authentication on POST endpoint" />
+        <package name="Serilog.AspNetCore" version="8.0.0" reason="Already installed - required for structured logging (_logger.LogInformation, LogError) in controller and service" />
+      </backend>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <architectural>
+      <constraint>Hexagonal Architecture: AdminModelService (Application layer) must call IAdminModelRepository port (Domain layer), NOT directly use EF Core DbContext. Repository adapter pattern enforces testability without database dependencies</constraint>
+      <constraint>Transaction Boundary: Create Model + Create Capabilities must execute in single EF Core transaction using SaveChangesAsync(). If either operation fails, entire transaction rolls back. No manual transaction management needed (implicit EF Core transaction)</constraint>
+      <constraint>Domain Purity: Model and Capability entities in Domain layer have NO EF Core attributes, data annotations, or infrastructure dependencies. Entity configuration via Fluent API in Infrastructure layer (ModelConfiguration.cs, CapabilityConfiguration.cs)</constraint>
+      <constraint>Service Layer Pattern: Controller delegates to AdminModelService, which orchestrates domain logic. Controller responsible ONLY for HTTP concerns (request parsing, response formatting, status codes), NOT business logic</constraint>
+    </architectural>
+    <validation>
+      <constraint>Double-Layer Validation: Client-side Zod validation in ModelForm.tsx (Story 2.4) + Server-side FluentValidation in CreateModelValidator.cs. Server validation is authoritative - never trust client input</constraint>
+      <constraint>Required Fields: Name, Provider, Status, InputPricePer1M, OutputPricePer1M, Currency are required. Version, ReleaseDate, PricingValidFrom, PricingValidTo are optional (nullable)</constraint>
+      <constraint>Pricing Validation: InputPricePer1M and OutputPricePer1M must be greater than 0, stored as decimal(10,6) with max 6 decimal places. Use FluentValidation ScalePrecision(6, 10) rule</constraint>
+      <constraint>String Length Limits: Name max 255 characters, Provider max 100 characters, Version max 50 characters, Currency exactly 3 characters (ISO 4217 code)</constraint>
+      <constraint>Enum Validation: Status must be one of ["active", "deprecated", "beta"]. Currency must be one of ["USD", "EUR", "GBP"]. Use FluentValidation Must() with Contains check</constraint>
+      <constraint>Date Range Validation: If both PricingValidFrom and PricingValidTo are provided, ValidFrom must be less than ValidTo. Use FluentValidation When() conditional rule</constraint>
+      <constraint>Duplicate Detection: Before creating model, check for existing model with same Name + Provider combination (case-insensitive). Return 400 Bad Request with specific error message if duplicate found</constraint>
+    </validation>
+    <api-contract>
+      <constraint>Response Format: Success responses wrap data in AdminApiResponse&lt;AdminModelDto&gt; with Data and Meta properties. Meta includes TotalCount (null for single item), Cached (always false for admin), Timestamp (DateTime.UtcNow)</constraint>
+      <constraint>HTTP Status Codes: 201 Created (success with Location header), 400 Bad Request (validation errors or duplicate), 401 Unauthorized (missing/invalid JWT), 500 Internal Server Error (unexpected exceptions)</constraint>
+      <constraint>Location Header: 201 Created response must include Location header with URI to GET /api/admin/models/{id} using CreatedAtAction(nameof(GetById), new {id = modelId}, responseDto)</constraint>
+      <constraint>Error Response Format: {error: {code: "VALIDATION_ERROR"|"DUPLICATE_MODEL"|"INTERNAL_ERROR", message: "Human-readable message", details: [{field: "fieldName", message: "Field-specific error"}] | "exception details"}}</constraint>
+      <constraint>JWT Authentication: All admin endpoints require [Authorize] attribute. Extract admin username from JWT claims (ClaimTypes.Name) for audit logging. Return 401 if token missing/expired/invalid</constraint>
+      <constraint>Cache Invalidation: After successful model creation, invalidate Redis cache patterns: cache:models:list:*, cache:models:{id}:*, cache:bestvalue:* (future Epic 6). Use ICacheRepository.RemovePatternAsync() or domain event pattern</constraint>
+    </api-contract>
+    <database>
+      <constraint>Soft Delete: Models use IsActive flag for soft delete. New models always created with IsActive=true. Physical deletion never allowed (preserves audit trail)</constraint>
+      <constraint>Timestamp Management: CreatedAt and UpdatedAt set to DateTime.UtcNow on model creation. UpdatedAt updated on every modification. Always use UTC to avoid timezone issues</constraint>
+      <constraint>One-to-One Relationship: Each Model has exactly one Capability record. Capability.ModelId has unique constraint. Both entities must be created together in same transaction</constraint>
+      <constraint>Default Capability Values: ContextWindow=0 (unknown), MaxOutputTokens=null (unknown), all boolean flags=false EXCEPT SupportsStreaming=true (default for modern LLMs). Admin updates via Story 2.6</constraint>
+      <constraint>Cascade Delete: Deleting Model cascades to Capability and BenchmarkScores. Configured in ModelConfiguration.cs Fluent API (OnDelete.Cascade)</constraint>
+    </database>
+    <testing>
+      <constraint>Test Pyramid: 70% unit tests (CreateModelValidator, AdminModelService logic), 25% integration tests (full API endpoint with TestContainers), 5% E2E (Playwright admin form submission)</constraint>
+      <constraint>TestContainers: Integration tests use TestContainers for PostgreSQL 16 + Redis 7.2 isolation. Use Respawn for database cleanup between tests (&lt;100ms reset)</constraint>
+      <constraint>Validation Testing: Unit tests must cover ALL FluentValidation rules (required fields, positive prices, string lengths, enum values, date range). Use Theory tests for data-driven scenarios</constraint>
+      <constraint>Repository Mocking: AdminModelService unit tests mock IAdminModelRepository with Moq. Test business logic without database dependencies (fast, isolated)</constraint>
+      <constraint>JWT Test Auth: Integration tests use WebApplicationFactory with test JWT token generation. Test 401 Unauthorized scenarios with missing/invalid tokens</constraint>
+    </testing>
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>POST /api/admin/models</name>
+      <kind>REST endpoint</kind>
+      <signature>[HttpPost] [Authorize] Task&lt;IActionResult&gt; Create([FromBody] CreateModelRequest request, CancellationToken cancellationToken)</signature>
+      <path>services/backend/LlmTokenPrice.API/Controllers/Admin/AdminModelsController.cs:212-238 (placeholder to replace)</path>
+      <description>Creates new LLM model with validation, persists to database with default capabilities, returns 201 Created with Location header and AdminModelDto response. Requires JWT authentication. Validates all fields with FluentValidation, checks for duplicates, invalidates cache, logs audit trail</description>
+    </interface>
+    <interface>
+      <name>IAdminModelService.CreateModelAsync</name>
+      <kind>Application service method</kind>
+      <signature>Task&lt;Guid&gt; CreateModelAsync(CreateModelRequest request, CancellationToken cancellationToken)</signature>
+      <path>services/backend/LlmTokenPrice.Application/Services/IAdminModelService.cs (method to add)</path>
+      <description>Application layer service method to orchestrate model creation. Validates request, checks for duplicates via repository, creates Model entity, creates default Capability, persists both in transaction, invalidates cache, returns new model GUID. Called by AdminModelsController.Create()</description>
+    </interface>
+    <interface>
+      <name>IAdminModelRepository.CreateModelAsync</name>
+      <kind>Repository method (port)</kind>
+      <signature>Task&lt;Guid&gt; CreateModelAsync(Model model, CancellationToken cancellationToken)</signature>
+      <path>services/backend/LlmTokenPrice.Domain/Repositories/IAdminModelRepository.cs (method to add)</path>
+      <description>Repository port method to persist Model entity to database. Adds model to DbContext, calls SaveChangesAsync, returns model.Id. Implemented by AdminModelRepository in Infrastructure layer using EF Core</description>
+    </interface>
+    <interface>
+      <name>IAdminModelRepository.CreateCapabilityAsync</name>
+      <kind>Repository method (port)</kind>
+      <signature>Task CreateCapabilityAsync(Capability capability, CancellationToken cancellationToken)</signature>
+      <path>services/backend/LlmTokenPrice.Domain/Repositories/IAdminModelRepository.cs (method to add)</path>
+      <description>Repository port method to persist Capability entity to database. Adds capability to DbContext linked to model via ModelId foreign key. Must be called in same transaction as CreateModelAsync</description>
+    </interface>
+    <interface>
+      <name>IAdminModelRepository.GetByNameAndProviderAsync</name>
+      <kind>Repository method (port)</kind>
+      <signature>Task&lt;Model?&gt; GetByNameAndProviderAsync(string name, string provider, CancellationToken cancellationToken)</signature>
+      <path>services/backend/LlmTokenPrice.Domain/Repositories/IAdminModelRepository.cs (method to add)</path>
+      <description>Repository port method to check for existing model with same Name + Provider combination (case-insensitive). Returns Model if duplicate found, null otherwise. Used by AdminModelService for duplicate detection before creating new model</description>
+    </interface>
+    <interface>
+      <name>CreateModelValidator</name>
+      <kind>FluentValidation validator</kind>
+      <signature>public class CreateModelValidator : AbstractValidator&lt;CreateModelRequest&gt;</signature>
+      <path>services/backend/LlmTokenPrice.Application/Validators/CreateModelValidator.cs (new file to create)</path>
+      <description>FluentValidation validator for CreateModelRequest DTO. Validates Name (NotEmpty, MaxLength 255), Provider (NotEmpty, MaxLength 100), InputPricePer1M and OutputPricePer1M (GreaterThan 0, ScalePrecision 6,10), Currency (NotEmpty, Must be USD/EUR/GBP), Status (NotEmpty, Must be active/deprecated/beta), conditional date range (ValidFrom &lt; ValidTo). Registered in DI via AddValidatorsFromAssemblyContaining</description>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>Testing follows established patterns from Epic 1 Story 1.11 (Test Infrastructure): xUnit for unit tests with FluentAssertions, TestContainers (PostgreSQL 16 + Redis 7.2) for integration tests with Respawn database cleanup, WebApplicationFactory for API endpoint testing with test JWT authentication, ArchUnitNET for hexagonal architecture validation (Domain layer has zero infrastructure dependencies). Test naming: MethodName_Scenario_ExpectedBehavior (e.g., CreateModelAsync_WithValidData_Returns201Created). Given-When-Then structure for readability. Parallel test execution enabled (collection-per-class for database tests). Code coverage target: 70%+ overall, 90%+ for validation logic</standards>
+    <locations>
+      <location>services/backend/LlmTokenPrice.Application.Tests/Validators/CreateModelValidatorTests.cs (unit tests for FluentValidation rules)</location>
+      <location>services/backend/LlmTokenPrice.Application.Tests/Services/AdminModelServiceTests.cs (unit tests for service logic with mocked repository)</location>
+      <location>services/backend/LlmTokenPrice.Infrastructure.Tests/Integration/AdminModelsControllerTests.cs (integration tests for POST endpoint with TestContainers)</location>
+      <location>services/backend/LlmTokenPrice.Infrastructure.Tests/Integration/AdminModelRepositoryTests.cs (integration tests for new repository methods)</location>
+    </locations>
+    <ideas>
+      <test ac="1" type="integration">POST /api/admin/models endpoint exists and requires JWT authentication - test returns 401 Unauthorized when JWT token missing or invalid, returns 201 Created when valid token provided</test>
+      <test ac="1" type="unit">AdminModelsController.Create action has [HttpPost] and [Authorize] attributes - verify via reflection or integration test with authentication challenge</test>
+      <test ac="2" type="unit">CreateModelValidator validates required fields - Name, Provider, Status, InputPricePer1M, OutputPricePer1M, Currency required, validation fails with empty values</test>
+      <test ac="2" type="unit">CreateModelValidator validates positive prices - InputPricePer1M and OutputPricePer1M must be greater than 0, validation fails for 0 or negative values</test>
+      <test ac="2" type="unit">CreateModelValidator validates decimal precision - prices can have max 6 decimal places, validation fails for 1.1234567 (7 decimals)</test>
+      <test ac="2" type="unit">CreateModelValidator validates string lengths - Name max 255, Provider max 100, validation fails when exceeded</test>
+      <test ac="2" type="unit">CreateModelValidator validates enum values - Status must be active/deprecated/beta, Currency must be USD/EUR/GBP, validation fails for invalid values</test>
+      <test ac="2" type="unit">CreateModelValidator validates date range - PricingValidFrom must be less than PricingValidTo when both provided, validation fails when ValidFrom &gt;= ValidTo</test>
+      <test ac="2" type="integration">POST /api/admin/models with invalid data returns 400 Bad Request with field-specific validation errors in JSON format</test>
+      <test ac="3" type="unit">AdminModelService.CreateModelAsync creates Model entity with all fields from CreateModelRequest - verify entity properties match DTO, CreatedAt and UpdatedAt set to DateTime.UtcNow, IsActive=true</test>
+      <test ac="3" type="integration">POST /api/admin/models with valid data persists model to database - verify model record exists in database with correct values after API call</test>
+      <test ac="4" type="unit">AdminModelService.CreateModelAsync creates Capability entity with default values - ContextWindow=0, all flags=false except SupportsStreaming=true, ModelId foreign key set</test>
+      <test ac="4" type="integration">POST /api/admin/models creates both Model and Capability in database - verify both records exist and are linked via ModelId after API call</test>
+      <test ac="4" type="unit">AdminModelService.CreateModelAsync creates Model and Capability in single transaction - if Capability creation fails, Model creation rolls back (test with mocked repository throwing exception)</test>
+      <test ac="5" type="integration">POST /api/admin/models with valid data returns 201 Created status code and Location header - verify response status and Location header points to /api/admin/models/{id}</test>
+      <test ac="5" type="integration">POST /api/admin/models response includes AdminModelDto with new model ID and all fields - verify response body contains model data with GUID id, all input fields, timestamps, capabilities</test>
+      <test ac="6" type="integration">POST /api/admin/models with duplicate Name + Provider returns 400 Bad Request - create model with Name="GPT-4" Provider="OpenAI", attempt to create duplicate, verify 400 response with specific error message</test>
+      <test ac="6" type="unit">CreateModelValidator duplicate check is case-insensitive - GetByNameAndProviderAsync("gpt-4", "openai") matches existing ("GPT-4", "OpenAI")</test>
+      <test ac="1-6" type="integration">Full end-to-end model creation flow - authenticate with JWT, POST valid model data, verify 201 response, GET created model by ID, verify all fields persisted correctly</test>
+      <test type="unit">AdminModelService.CreateModelAsync invalidates cache after model creation - verify ICacheRepository.RemovePatternAsync called with "cache:models:*" pattern</test>
+      <test type="integration">Concurrent model creation requests handled correctly - send multiple POST requests simultaneously, verify all succeed or fail appropriately (no race conditions)</test>
+    </ideas>
+  </tests>
+</story-context>

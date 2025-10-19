@@ -2,16 +2,16 @@
 
 **Project:** llm-token-price
 **Created:** 2025-10-16
-**Last Updated:** 2025-10-19 (Story 2.4 Ready for Implementation)
+**Last Updated:** 2025-10-19 (Story 2.4 Approved and Complete, Story 2.5 In Progress)
 
 ---
 
 ## Current Status
 
 **Current Phase:** 4-Implementation → Epic 1 Complete, Epic 2 In Progress
-**Current Workflow:** Story 2.4 Implementation Starting
-**Current Story:** 2.4 - Create Add New Model Form (Context Ready ✓)
-**Overall Progress:** 100% (Epic 1) + 4% (Epic 2: Stories 2.1-2.3 Done, 2.4 In Progress)
+**Current Workflow:** Story 2.5 Implementation Ready
+**Current Story:** 2.5 - Create Backend API for Adding Models (Ready ✓)
+**Overall Progress:** 100% (Epic 1: 37 points) + 33% (Epic 2: 16/~50 points - Stories 2.1-2.4 Done, 2.5 In Progress)
 
 **🎉 EPIC 1 COMPLETE!** All 11 foundational stories delivered (37/37 points)
 
@@ -227,23 +227,23 @@
 
 ### IN PROGRESS (Approved for Development)
 
-**Story 2.4: Create Add New Model Form** (Epic 2 - Admin Panel)
-- **Status:** Context Ready - Ready for Implementation
-- **File:** `docs/stories/story-2.4.md`
-- **Context:** `docs/stories/story-context-2.4.xml` ✓
-- **Story Points:** 3 (estimated)
+**Story 2.5: Create Backend API for Adding Models** (Epic 2 - Admin Panel)
+- **Status:** Ready - Ready for Implementation
+- **File:** `docs/stories/story-2.5.md`
+- **Context:** `docs/stories/story-context-2.5.xml` (needs generation)
+- **Story Points:** 5 (estimated)
 - **Dependencies:**
-  - Story 2.3 ✓ (Admin Models List Page provides routing context)
-  - Story 2.5 (Backend API - can be implemented in parallel, endpoint returns 501 until 2.5)
+  - Story 2.4 ✓ (Frontend form complete, awaiting backend implementation)
+  - Story 2.3 ✓ (Admin Models List for cache invalidation)
 - **Implementation Scope:**
-  - Frontend: AddModelPage, ModelForm component with React Hook Form + Zod validation
-  - API Client: createModel function in admin.ts
-  - Types: CreateModelRequest interface in types/admin.ts
-  - Hook: useCreateModel mutation hook with TanStack Query
-  - Validation: createModelSchema with Zod (client-side)
-  - Testing: Vitest component tests for form validation and submission
-- **Acceptance Criteria:** 6 criteria covering form creation, validation (required fields, positive prices), submission, success redirect, and error handling
-- **Next Action:** Load DEV agent and run `/dev-story 2.4` to begin implementation
+  - Backend: POST /api/admin/models endpoint in AdminModelsController
+  - Application: AdminModelService with CreateModelAsync method
+  - DTOs: CreateModelDto, ModelResponseDto
+  - Validation: CreateModelValidator with FluentValidation
+  - Infrastructure: ModelRepository.AddAsync, cache invalidation
+  - Testing: xUnit unit tests (validator, service), integration tests (endpoint, database persistence, auth)
+- **Acceptance Criteria:** 6 criteria covering POST endpoint creation, JSON validation, model+capabilities persistence with timestamps, 201 Created response, 400 Bad Request for validation errors
+- **Next Action:** Load DEV agent and run `/dev-story 2.5` to begin implementation
 
 **🎉 Epic 1 (Project Foundation & Data Infrastructure) is 100% COMPLETE!**
 
@@ -257,6 +257,10 @@ All 11 Epic 1 stories delivered (37 points):
 
 | Story ID | File | Completed Date | Points |
 | -------- | ---- | -------------- | ------ |
+| 2.4 | docs/stories/story-2.4.md | 2025-10-19 | 3 |
+| 2.3 | docs/stories/story-2.3.md | 2025-10-17 | 5 |
+| 2.2 | docs/stories/story-2.2.md | 2025-10-17 | 3 |
+| 2.1 | docs/stories/story-2.1.md | 2025-10-17 | 5 |
 | 1.11 | docs/stories/epic_1/story-1.11.md | 2025-10-17 | 5 |
 | 1.10 | docs/stories/story-1.10.md | 2025-10-16 | 2 |
 | 1.9 | docs/stories/story-1.9.md | 2025-10-16 | 2 |
@@ -269,8 +273,8 @@ All 11 Epic 1 stories delivered (37 points):
 | 1.2 | docs/stories/story-1.2.md | 2025-10-16 | 3 |
 | 1.7 | docs/stories/story-1.7.md | 2025-10-16 | 5 |
 
-**Total completed:** 11 stories
-**Total points completed:** 37 points
+**Total completed:** 15 stories
+**Total points completed:** 53 points
 
 ---
 
@@ -305,6 +309,7 @@ LLM Pricing Calculator - A comprehensive web application for comparing LLM model
 
 ## Decisions Log
 
+- **2025-10-19**: Story 2.4 (Create Add New Model Form) approved and marked done by Test Architect (Murat) and DEV agent (Amelia). All 6 acceptance criteria met with comprehensive test coverage (15/15 tests passing - 100% pass rate). Implementation complete: Frontend form with React Hook Form + Zod validation, ModelForm component with basic info section (name, provider, version, releaseDate, status) and pricing section (inputPricePer1M, outputPricePer1M, currency, pricingValidFrom, pricingValidTo), createModel API client function, useCreateModel mutation hook with TanStack Query, comprehensive Vitest component tests covering all major acceptance criteria (form rendering, required field validation, positive price validation, max length validation, date range validation, decimal precision validation, form submission, loading states, API error handling). Test improvements applied: Fixed failing price validation test (changed getByText to getAllByText pattern), added 7 new P0 tests (date range validation, decimal precision validation, max length validation for name/provider, form submission with correct payload, loading state display, server error handling), refactored mock architecture with centralized mockMutate and mockUseCreateModel pattern. Quality metrics: Frontend build under <15s, bundle size under <500KB, zero TypeScript/ESLint errors. Story moved from IN PROGRESS → DONE. Story 2.5 (Backend API) moved from BACKLOG → IN PROGRESS. Total completed: 12 stories + Story 2.4 (not reflected in totals yet). Next: Implement Story 2.5 backend API to connect with frontend form.
 - **2025-10-19**: Story 2.4 (Create Add New Model Form) marked ready for implementation. Comprehensive story context generated at docs/stories/story-context-2.4.xml with 5 documentation artifacts (tech-spec-epic-2.md sections for CreateModelDto/CreateModelRequest/ModelForm component, solution-architecture.md for admin API contracts, story-2.3.md for admin page patterns), 6 code artifacts (AdminModelsPage.tsx for page structure reference, api/admin.ts for API client patterns, types/admin.ts for type definitions, hooks/useAdminModels.ts for TanStack Query patterns, useAuth.ts for authentication, AdminLayout.tsx for routing context), 12 dependencies (9 frontend: React 19, React Router 7, TanStack Query 5, React Hook Form 7, Zod 3, Axios, Lucide React, date-fns; 3 backend: JWT Bearer, FluentValidation), 25+ constraints across 5 categories (architectural: uncontrolled forms with React Hook Form, double-layer validation Zod+FluentValidation, TanStack Query mutations; design: TailwindCSS styling, inline errors, 6 decimal price format; validation: required fields, positive prices, string length limits, date validation; api-integration: POST /api/admin/models endpoint contract, 401→login redirect, query invalidation; routing: /admin/models/new protected route, cancel/success navigation), 5 interface definitions (POST endpoint, createModel API function, CreateModelRequest type, useCreateModel hook, createModelSchema Zod schema), and 26 test ideas mapped to 6 acceptance criteria. Context documents frontend form implementation: AddModelPage with React Hook Form + Zod validation, ModelForm component with basic info (name/provider/version/releaseDate/status) + pricing sections (inputPricePer1M/outputPricePer1M/currency/validFrom/validTo), createModel API client function, useCreateModel mutation hook with query invalidation, comprehensive Vitest component tests. Story 2.4 can be implemented in parallel with Story 2.5 (backend API returns 501 until implemented). Status moved from BACKLOG to IN PROGRESS. Next: Load DEV agent and run dev-story workflow to implement frontend form with validation and submission logic.
 - **2025-10-17**: Completed story-context for Story 2.3 (Build Models List View in Admin Panel). Context file: docs/stories/story-context-2.3.xml. Comprehensive context generated with 5 documentation artifacts (tech-spec-epic-2.md sections for API endpoints, acceptance criteria, AdminModelRepository; solution-architecture.md for admin panel patterns; story-2.2.md for AdminLayout integration), 6 code artifacts (AdminLayout.tsx wrapper from Story 2.2, admin.ts and models.ts API client patterns, ModelRepository.cs for query patterns, ModelsController.cs for controller structure, authStore.ts for JWT auth), 9 frontend + 3 backend dependencies (TanStack Query/Table for data/table management, React Router for navigation, date-fns for timestamps, Lucide for icons, EF Core for queries, JWT Bearer for auth), 4 constraint categories covering 13 specific constraints (hexagonal architecture flow, no caching for admin endpoints, JWT authorization requirements, MSW/TestContainers testing approach), 4 interface specifications (GET /api/admin/models REST endpoint with search/filter params, AdminModelDto with status/timestamps, useAdminModels React hook, AdminModelService.GetAllModelsAsync method), and 20 test ideas mapped to 6 acceptance criteria covering integration tests (auth + all models query), component tests (table rendering, search with debounce, action buttons), and E2E scenarios. Context documents full-stack admin models list implementation: backend AdminModelsController with JWT auth → AdminModelService → AdminModelRepository (no IsActive filter, UpdatedAt DESC ordering), frontend AdminModelsPage inside AdminLayout with search (300ms debounce), table with 6 columns (name, provider, input/output price, status badges, relative timestamps), and action buttons (Add New, Edit per row, Delete with confirmation). All existing auth infrastructure from Stories 2.1-2.2 identified and ready for integration. Next: DEV agent should run dev-story to implement GET /api/admin/models endpoint, AdminModelsPage with ModelList table, search functionality, and comprehensive test coverage.
 - **2025-10-17**: Completed story-context for Story 2.2 (Admin Dashboard Layout). Context file: docs/stories/story-context-2.2.xml. Comprehensive context generated with 5 documentation artifacts (tech-spec-epic-2.md, solution-architecture.md, ux-specification.md, story-2.1.md, story-2.2.md), 6 code artifacts (existing Layout.tsx, ProtectedRoute.tsx, authStore.ts, useAuth hook, AdminDashboardPage placeholder, App.tsx routing), 4 dependencies (React 19, React Router 7, TailwindCSS 4, Lucide React icons), 4 constraint categories (architectural, design, routing, testing), 4 interface specifications (AdminLayout props, admin routes config, useAuth hook, nav items structure), and 10 test ideas mapped to 5 acceptance criteria. Context documents master-detail layout pattern with sidebar navigation (Dashboard, Models, Benchmarks), responsive behavior (desktop always-visible, tablet/mobile drawer), admin header with username display and logout button, and Outlet-based nested routing. All existing auth infrastructure from Story 2.1 identified and ready for integration. Next: DEV agent should run dev-story to implement AdminLayout, AdminSidebar, AdminHeader components with nested routing and responsive design.
@@ -356,15 +361,15 @@ LLM Pricing Calculator - A comprehensive web application for comparing LLM model
 
 ## What to do next
 
-**What to do next:** 🚀 **Story 2.4 Ready for Implementation!**
+**What to do next:** 🚀 **Story 2.5 Ready for Implementation!**
 
-**Command to run:** Load DEV agent and run `/dev-story 2.4` to begin implementation
+**Command to run:** Load DEV agent and run `/dev-story 2.5` to begin implementation
 
-**Current Story:** Story 2.4 - Create Add New Model Form
-- **Status:** Context Ready ✓ (docs/stories/story-context-2.4.xml)
+**Current Story:** Story 2.5 - Create Backend API for Adding Models
+- **Status:** Ready ✓ (needs story-context-2.5.xml generation)
 - **Epic:** 2 - Model Data Management & Admin CRUD
-- **Story Points:** 3 (estimated)
-- **Implementation Scope:** Frontend form with React Hook Form + Zod validation, API client function, mutation hook, component tests
+- **Story Points:** 5 (estimated)
+- **Implementation Scope:** Backend POST /api/admin/models endpoint, AdminModelService, FluentValidation, integration tests
 
 **Context:**
 - **Epic 1 (Project Foundation & Data Infrastructure):** 100% COMPLETE ✅
