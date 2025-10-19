@@ -101,9 +101,11 @@ builder.Services.AddScoped<ICacheRepository, RedisCacheRepository>();
 
 // Domain repositories (scoped)
 builder.Services.AddScoped<IModelRepository, ModelRepository>();
+builder.Services.AddScoped<IAdminModelRepository, AdminModelRepository>();
 
 // Application services (scoped)
 builder.Services.AddScoped<IModelQueryService, ModelQueryService>();
+builder.Services.AddScoped<IAdminModelService, AdminModelService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
 // JWT Authentication configuration
