@@ -1,6 +1,6 @@
 # Story 2.3: Build Models List View in Admin Panel
 
-Status: Ready
+Status: Done
 
 ## Story
 
@@ -19,67 +19,67 @@ so that I can see current data and select models to edit.
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1: Create admin models list page** (AC: #1, #2)
-  - [ ] 1.1: Create `AdminModelsPage.tsx` in `/frontend/src/pages/admin`
-  - [ ] 1.2: Create `ModelList.tsx` component in `/frontend/src/components/admin`
-  - [ ] 1.3: Fetch models using `useQuery` hook from TanStack Query
-  - [ ] 1.4: Display models in HTML table with columns: name, provider, input price, output price, status, last updated
-  - [ ] 1.5: Add loading spinner while fetching data
-  - [ ] 1.6: Add error message display if fetch fails
-  - [ ] 1.7: Format prices with currency symbol and 6 decimal places
-  - [ ] 1.8: Format timestamps with "Updated X days ago" using date-fns
+- [x] **Task 1: Create admin models list page** (AC: #1, #2)
+  - [x] 1.1: Create `AdminModelsPage.tsx` in `/frontend/src/pages/admin`
+  - [x] 1.2: Create `ModelList.tsx` component in `/frontend/src/components/admin`
+  - [x] 1.3: Fetch models using `useQuery` hook from TanStack Query
+  - [x] 1.4: Display models in HTML table with columns: name, provider, input price, output price, status, last updated
+  - [x] 1.5: Add loading spinner while fetching data
+  - [x] 1.6: Add error message display if fetch fails
+  - [x] 1.7: Format prices with currency symbol and 6 decimal places
+  - [x] 1.8: Format timestamps with "Updated X days ago" using date-fns
 
-- [ ] **Task 2: Implement search functionality** (AC: #3)
-  - [ ] 2.1: Add search input field above table
-  - [ ] 2.2: Implement client-side filtering by model name or provider
-  - [ ] 2.3: Debounce search input (300ms) to avoid excessive re-renders
-  - [ ] 2.4: Show "No models found" message when search has no results
-  - [ ] 2.5: Add clear search button (X icon) to reset filter
-  - [ ] 2.6: Preserve search state in URL query params for shareability
+- [x] **Task 2: Implement search functionality** (AC: #3)
+  - [x] 2.1: Add search input field above table
+  - [x] 2.2: Implement client-side filtering by model name or provider
+  - [x] 2.3: Debounce search input (300ms) to avoid excessive re-renders
+  - [x] 2.4: Show "No models found" message when search has no results
+  - [x] 2.5: Add clear search button (X icon) to reset filter
+  - [x] 2.6: Preserve search state in URL query params for shareability
 
-- [ ] **Task 3: Add "Add New Model" button** (AC: #4)
-  - [ ] 3.1: Create "Add New Model" button in page header
-  - [ ] 3.2: Style button with primary color and plus icon
-  - [ ] 3.3: Navigate to `/admin/models/new` on click
-  - [ ] 3.4: Create placeholder route for new model form
+- [x] **Task 3: Add "Add New Model" button** (AC: #4)
+  - [x] 3.1: Create "Add New Model" button in page header
+  - [x] 3.2: Style button with primary color and plus icon
+  - [x] 3.3: Navigate to `/admin/models/new` on click
+  - [x] 3.4: Create placeholder route for new model form
 
-- [ ] **Task 4: Add action buttons to table rows** (AC: #5, #6)
-  - [ ] 4.1: Add "Actions" column to table
-  - [ ] 4.2: Create "Edit" button for each row (pencil icon)
-  - [ ] 4.3: Navigate to `/admin/models/{id}/edit` on edit button click
-  - [ ] 4.4: Create "Delete" button for each row (trash icon)
-  - [ ] 4.5: Trigger confirmation dialog on delete button click
-  - [ ] 4.6: Style action buttons with appropriate colors (blue for edit, red for delete)
+- [x] **Task 4: Add action buttons to table rows** (AC: #5, #6)
+  - [x] 4.1: Add "Actions" column to table
+  - [x] 4.2: Create "Edit" button for each row (pencil icon)
+  - [x] 4.3: Navigate to `/admin/models/{id}/edit` on edit button click
+  - [x] 4.4: Create "Delete" button for each row (trash icon)
+  - [x] 4.5: Trigger confirmation dialog on delete button click
+  - [x] 4.6: Style action buttons with appropriate colors (blue for edit, red for delete)
 
-- [ ] **Task 5: Create backend API endpoint for admin models list** (AC: #1)
-  - [ ] 5.1: Create `GET /api/admin/models` endpoint in `AdminModelsController.cs`
-  - [ ] 5.2: Return all models including inactive (unlike public API)
-  - [ ] 5.3: Include full model details, capabilities, and update timestamps
-  - [ ] 5.4: Add JWT authentication requirement to endpoint
-  - [ ] 5.5: Do NOT cache admin endpoint (needs real-time data)
-  - [ ] 5.6: Return models sorted by updated_at DESC (most recently updated first)
+- [x] **Task 5: Create backend API endpoint for admin models list** (AC: #1)
+  - [x] 5.1: Create `GET /api/admin/models` endpoint in `AdminModelsController.cs`
+  - [x] 5.2: Return all models including inactive (unlike public API)
+  - [x] 5.3: Include full model details, capabilities, and update timestamps
+  - [x] 5.4: Add JWT authentication requirement to endpoint
+  - [x] 5.5: Do NOT cache admin endpoint (needs real-time data)
+  - [x] 5.6: Return models sorted by updated_at DESC (most recently updated first)
 
-- [ ] **Task 6: Add table sorting**
-  - [ ] 6.1: Make table headers clickable for sorting
-  - [ ] 6.2: Implement client-side sorting by: name, provider, price, status, updated_at
-  - [ ] 6.3: Add sort indicator (up/down arrow) to active column
-  - [ ] 6.4: Toggle ascending/descending on header click
-  - [ ] 6.5: Preserve sort state in URL query params
+- [x] **Task 6: Add table sorting**
+  - [x] 6.1: Make table headers clickable for sorting
+  - [x] 6.2: Implement client-side sorting by: name, provider, price, status, updated_at
+  - [x] 6.3: Add sort indicator (up/down arrow) to active column
+  - [x] 6.4: Toggle ascending/descending on header click
+  - [x] 6.5: Preserve sort state in URL query params
 
-- [ ] **Task 7: Add pagination or virtual scrolling**
-  - [ ] 7.1: Decide on pagination (10/25/50 per page) or virtual scrolling
-  - [ ] 7.2: Implement chosen approach with client-side data
-  - [ ] 7.3: Add pagination controls if using pagination
-  - [ ] 7.4: Show "Showing X-Y of Z models" count
-  - [ ] 7.5: Preserve pagination state in URL query params
+- [x] **Task 7: Add pagination or virtual scrolling**
+  - [x] 7.1: Decide on pagination (10/25/50 per page) or virtual scrolling
+  - [x] 7.2: Implement chosen approach with client-side data
+  - [x] 7.3: Add pagination controls if using pagination
+  - [x] 7.4: Show "Showing X-Y of Z models" count
+  - [x] 7.5: Preserve pagination state in URL query params
 
-- [ ] **Task 8: Add testing**
-  - [ ] 8.1: Write component tests for ModelList (Vitest)
-  - [ ] 8.2: Test search filtering works correctly
-  - [ ] 8.3: Test sort functionality on all columns
-  - [ ] 8.4: Test action buttons navigate to correct routes
-  - [ ] 8.5: Write integration tests for admin models API endpoint (xUnit)
-  - [ ] 8.6: Test endpoint requires authentication
+- [x] **Task 8: Add testing**
+  - [x] 8.1: Write component tests for ModelList (Vitest)
+  - [x] 8.2: Test search filtering works correctly
+  - [x] 8.3: Test sort functionality on all columns
+  - [x] 8.4: Test action buttons navigate to correct routes
+  - [x] 8.5: Write integration tests for admin models API endpoint (xUnit)
+  - [x] 8.6: Test endpoint requires authentication
 
 ## Dev Notes
 
