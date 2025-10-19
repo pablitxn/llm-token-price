@@ -115,6 +115,7 @@ builder.Services.AddScoped<IBenchmarkRepository, BenchmarkRepository>();
 // Application services (scoped)
 builder.Services.AddScoped<IModelQueryService, ModelQueryService>();
 builder.Services.AddScoped<IAdminModelService, AdminModelService>();
+builder.Services.AddScoped<IAdminBenchmarkService, AdminBenchmarkService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
 // JWT Authentication configuration
