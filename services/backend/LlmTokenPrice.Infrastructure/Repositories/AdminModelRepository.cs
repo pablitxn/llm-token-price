@@ -84,4 +84,27 @@ public class AdminModelRepository : IAdminModelRepository
             .AsNoTracking() // Read-only query optimization
             .FirstOrDefaultAsync(cancellationToken);
     }
+
+    /// <inheritdoc />
+    public async Task<bool> DeleteModelAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        // Find the model (tracking enabled for updates)
+        var model = await _context.Models
+            .Where(m => m.Id == id)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (model == null)
+        {
+            return false; // Model not found
+        }
+
+        // Perform soft delete
+        model.IsActive = false;
+        model.UpdatedAt = DateTime.UtcNow;
+
+        // Save changes to database
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return true;
+    }
 }

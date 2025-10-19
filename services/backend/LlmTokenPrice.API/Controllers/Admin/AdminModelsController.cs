@@ -196,6 +196,102 @@ public class AdminModelsController : ControllerBase
             });
         }
     }
+
+    /// <summary>
+    /// Creates a new LLM model in the system.
+    /// PLACEHOLDER: Full implementation will be completed in Story 2.5.
+    /// Returns 501 Not Implemented until backend validation and service layer are ready.
+    /// </summary>
+    /// <param name="request">The create model request with all required fields.</param>
+    /// <param name="cancellationToken">Cancellation token for async operation.</param>
+    /// <returns>Created model with ID and audit timestamps.</returns>
+    /// <response code="201">Model successfully created.</response>
+    /// <response code="400">Validation failed (invalid data).</response>
+    /// <response code="401">If JWT token is missing, invalid, or expired.</response>
+    /// <response code="501">Not implemented yet (Story 2.5 will implement this).</response>
+    [HttpPost]
+    [ProducesResponseType(typeof(AdminApiResponse<AdminModelDto>), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status501NotImplemented)]
+    public async Task<IActionResult> Create(
+        [FromBody] CreateModelRequest request,
+        CancellationToken cancellationToken)
+    {
+        // TODO: Story 2.5 - Implement full model creation with FluentValidation
+        // - Validate request with FluentValidation
+        // - Call IAdminModelService.CreateModelAsync
+        // - Invalidate cache:models:* patterns
+        // - Return 201 Created with AdminModelDto response
+
+        _logger.LogWarning("POST /api/admin/models called but not yet implemented (Story 2.5)");
+
+        return StatusCode(StatusCodes.Status501NotImplemented, new
+        {
+            error = new
+            {
+                code = "NOT_IMPLEMENTED",
+                message = "Model creation endpoint will be implemented in Story 2.5",
+                details = "Frontend form is ready, but backend validation and service layer are pending"
+            }
+        });
+    }
+
+    /// <summary>
+    /// Deletes (soft delete) a model by setting isActive = false.
+    /// Model data is preserved for audit purposes but will no longer appear in public API.
+    /// </summary>
+    /// <param name="id">The unique identifier (GUID) of the model to delete.</param>
+    /// <param name="cancellationToken">Cancellation token for async operation.</param>
+    /// <returns>NoContent (204) on successful deletion.</returns>
+    /// <response code="204">Model successfully deleted (soft delete).</response>
+    /// <response code="404">Model not found.</response>
+    /// <response code="401">If JWT token is missing, invalid, or expired.</response>
+    /// <response code="500">If an unexpected error occurs during processing.</response>
+    [HttpDelete("{id}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
+    {
+        try
+        {
+            _logger.LogInformation("Admin deleting model with ID: {ModelId}", id);
+
+            var success = await _adminModelService.DeleteModelAsync(id, cancellationToken);
+
+            if (!success)
+            {
+                _logger.LogWarning("Model not found for deletion: {ModelId}", id);
+                return NotFound(new
+                {
+                    error = new
+                    {
+                        code = "NOT_FOUND",
+                        message = $"Model with ID {id} not found"
+                    }
+                });
+            }
+
+            _logger.LogInformation("Successfully deleted model: {ModelId}", id);
+
+            return NoContent(); // 204 No Content
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while deleting model {ModelId}", id);
+            return StatusCode(StatusCodes.Status500InternalServerError, new
+            {
+                error = new
+                {
+                    code = "INTERNAL_ERROR",
+                    message = "An error occurred while deleting the model",
+                    details = ex.Message
+                }
+            });
+        }
+    }
 }
 
 /// <summary>

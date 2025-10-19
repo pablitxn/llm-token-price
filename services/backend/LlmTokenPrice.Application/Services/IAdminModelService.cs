@@ -45,4 +45,17 @@ public interface IAdminModelService
     /// Unlike public GetModelByIdAsync, returns model even if IsActive = false.
     /// </remarks>
     Task<AdminModelDto?> GetModelByIdAsync(Guid id, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Deletes a model (soft delete - sets IsActive = false).
+    /// Model data is preserved for audit purposes.
+    /// </summary>
+    /// <param name="id">The unique identifier (GUID) of the model to delete.</param>
+    /// <param name="cancellationToken">Cancellation token for async operation.</param>
+    /// <returns>True if model was found and deleted, false if not found.</returns>
+    /// <remarks>
+    /// Performs soft delete by setting IsActive = false and updating UpdatedAt timestamp.
+    /// Model will no longer appear in public API but remains in database for audit trail.
+    /// </remarks>
+    Task<bool> DeleteModelAsync(Guid id, CancellationToken cancellationToken = default);
 }
