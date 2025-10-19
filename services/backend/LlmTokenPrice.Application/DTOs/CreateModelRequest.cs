@@ -70,4 +70,11 @@ public record CreateModelRequest
     /// Must be after PricingValidFrom if both are provided.
     /// </summary>
     public string? PricingValidTo { get; init; }
+
+    /// <summary>
+    /// Model capabilities specification.
+    /// Required, includes context window, max output tokens, and feature flags.
+    /// Story 2.6: Capabilities captured during creation instead of using defaults.
+    /// </summary>
+    public required CreateCapabilityRequest Capabilities { get; init; }
 }

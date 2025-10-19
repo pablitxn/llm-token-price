@@ -241,6 +241,7 @@ All 11 Epic 1 stories delivered (37 points):
 
 | Story ID | File | Completed Date | Points |
 | -------- | ---- | -------------- | ------ |
+| 2.6 | docs/stories/story-2.6.md | 2025-10-19 | 3 |
 | 2.5 | docs/stories/story-2.5.md | 2025-10-19 | 5 |
 | 2.4 | docs/stories/story-2.4.md | 2025-10-19 | 3 |
 | 2.3 | docs/stories/story-2.3.md | 2025-10-17 | 5 |
@@ -258,8 +259,8 @@ All 11 Epic 1 stories delivered (37 points):
 | 1.2 | docs/stories/story-1.2.md | 2025-10-16 | 3 |
 | 1.7 | docs/stories/story-1.7.md | 2025-10-16 | 5 |
 
-**Total completed:** 16 stories
-**Total points completed:** 58 points
+**Total completed:** 17 stories
+**Total points completed:** 61 points
 
 ---
 

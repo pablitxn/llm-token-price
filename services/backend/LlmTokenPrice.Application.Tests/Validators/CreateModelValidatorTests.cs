@@ -19,6 +19,22 @@ public class CreateModelValidatorTests
         _validator = new CreateModelValidator();
     }
 
+    /// <summary>
+    /// Helper method to create valid capabilities for test requests.
+    /// Story 2.6: All requests now require capabilities.
+    /// </summary>
+    private static CreateCapabilityRequest CreateValidCapabilities() => new()
+    {
+        ContextWindow = 128000,
+        MaxOutputTokens = 4096,
+        SupportsFunctionCalling = true,
+        SupportsVision = false,
+        SupportsAudioInput = false,
+        SupportsAudioOutput = false,
+        SupportsStreaming = true,
+        SupportsJsonMode = true
+    };
+
     #region Required Fields Validation
 
     /// <summary>
@@ -39,6 +55,7 @@ public class CreateModelValidatorTests
             InputPricePer1M = 10.50m,
             OutputPricePer1M = 30.00m,
             Currency = "USD"
+            , Capabilities = CreateValidCapabilities()
         };
 
         // WHEN: Validating the request
@@ -67,6 +84,7 @@ public class CreateModelValidatorTests
             InputPricePer1M = 10.50m,
             OutputPricePer1M = 30.00m,
             Currency = "USD"
+            , Capabilities = CreateValidCapabilities()
         };
 
         // WHEN: Validating the request
@@ -94,6 +112,7 @@ public class CreateModelValidatorTests
             InputPricePer1M = 10.50m,
             OutputPricePer1M = 30.00m,
             Currency = "USD"
+            , Capabilities = CreateValidCapabilities()
         };
 
         // WHEN: Validating the request
@@ -120,7 +139,8 @@ public class CreateModelValidatorTests
             Status = "active",
             InputPricePer1M = 10.50m,
             OutputPricePer1M = 30.00m,
-            Currency = currency!
+            Currency = currency!,
+            Capabilities = CreateValidCapabilities()
         };
 
         // WHEN: Validating the request
@@ -153,6 +173,7 @@ public class CreateModelValidatorTests
             InputPricePer1M = price,
             OutputPricePer1M = 30.00m,
             Currency = "USD"
+            , Capabilities = CreateValidCapabilities()
         };
 
         // WHEN: Validating the request
@@ -181,6 +202,7 @@ public class CreateModelValidatorTests
             InputPricePer1M = 10.50m,
             OutputPricePer1M = price,
             Currency = "USD"
+            , Capabilities = CreateValidCapabilities()
         };
 
         // WHEN: Validating the request
@@ -206,6 +228,7 @@ public class CreateModelValidatorTests
             InputPricePer1M = 10.50m,
             OutputPricePer1M = 30.00m,
             Currency = "USD"
+            , Capabilities = CreateValidCapabilities()
         };
 
         // WHEN: Validating the request
@@ -237,6 +260,7 @@ public class CreateModelValidatorTests
             InputPricePer1M = price,
             OutputPricePer1M = 30.00m,
             Currency = "USD"
+            , Capabilities = CreateValidCapabilities()
         };
 
         // WHEN: Validating the request
@@ -266,6 +290,7 @@ public class CreateModelValidatorTests
             InputPricePer1M = price,
             OutputPricePer1M = price,
             Currency = "USD"
+            , Capabilities = CreateValidCapabilities()
         };
 
         // WHEN: Validating the request
@@ -295,6 +320,7 @@ public class CreateModelValidatorTests
             InputPricePer1M = 10.50m,
             OutputPricePer1M = 30.00m,
             Currency = "USD"
+            , Capabilities = CreateValidCapabilities()
         };
 
         // WHEN: Validating the request
@@ -320,6 +346,7 @@ public class CreateModelValidatorTests
             InputPricePer1M = 10.50m,
             OutputPricePer1M = 30.00m,
             Currency = "USD"
+            , Capabilities = CreateValidCapabilities()
         };
 
         // WHEN: Validating the request
@@ -346,6 +373,7 @@ public class CreateModelValidatorTests
             InputPricePer1M = 10.50m,
             OutputPricePer1M = 30.00m,
             Currency = "USD"
+            , Capabilities = CreateValidCapabilities()
         };
 
         // WHEN: Validating the request
@@ -378,6 +406,7 @@ public class CreateModelValidatorTests
             InputPricePer1M = 10.50m,
             OutputPricePer1M = 30.00m,
             Currency = "USD"
+            , Capabilities = CreateValidCapabilities()
         };
 
         // WHEN: Validating the request
@@ -406,6 +435,7 @@ public class CreateModelValidatorTests
             InputPricePer1M = 10.50m,
             OutputPricePer1M = 30.00m,
             Currency = "USD"
+            , Capabilities = CreateValidCapabilities()
         };
 
         // WHEN: Validating the request
@@ -433,6 +463,7 @@ public class CreateModelValidatorTests
             InputPricePer1M = 10.50m,
             OutputPricePer1M = 30.00m,
             Currency = currency
+            , Capabilities = CreateValidCapabilities()
         };
 
         // WHEN: Validating the request
@@ -461,6 +492,7 @@ public class CreateModelValidatorTests
             InputPricePer1M = 10.50m,
             OutputPricePer1M = 30.00m,
             Currency = currency
+            , Capabilities = CreateValidCapabilities()
         };
 
         // WHEN: Validating the request
@@ -491,6 +523,7 @@ public class CreateModelValidatorTests
             Currency = "USD",
             PricingValidFrom = "2024-12-31",
             PricingValidTo = "2024-01-01"
+            , Capabilities = CreateValidCapabilities()
         };
 
         // WHEN: Validating the request
@@ -518,6 +551,7 @@ public class CreateModelValidatorTests
             Currency = "USD",
             PricingValidFrom = "2024-01-01",
             PricingValidTo = "2024-12-31"
+            , Capabilities = CreateValidCapabilities()
         };
 
         // WHEN: Validating the request
@@ -547,6 +581,7 @@ public class CreateModelValidatorTests
             Currency = "USD",
             PricingValidFrom = validFrom,
             PricingValidTo = validTo
+            , Capabilities = CreateValidCapabilities()
         };
 
         // WHEN: Validating the request
@@ -578,7 +613,8 @@ public class CreateModelValidatorTests
             Version = null,
             ReleaseDate = null,
             PricingValidFrom = null,
-            PricingValidTo = null
+            PricingValidTo = null,
+            Capabilities = CreateValidCapabilities()
         };
 
         // WHEN: Validating the request
@@ -613,7 +649,8 @@ public class CreateModelValidatorTests
             OutputPricePer1M = 30.00m,
             Currency = "USD",
             PricingValidFrom = "2024-01-01",
-            PricingValidTo = "2024-12-31"
+            PricingValidTo = "2024-12-31",
+            Capabilities = CreateValidCapabilities()
         };
 
         // WHEN: Validating the request

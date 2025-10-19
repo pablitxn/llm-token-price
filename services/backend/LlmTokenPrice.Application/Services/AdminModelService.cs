@@ -94,19 +94,19 @@ public class AdminModelService : IAdminModelService
             // Timestamps and IsActive set by repository
         };
 
-        // 3. Create Capability entity with default values
+        // 3. Create Capability entity from request (Story 2.6: using DTO values instead of defaults)
         var capability = new Capability
         {
             Id = Guid.NewGuid(),
             ModelId = model.Id,
-            ContextWindow = 0, // Unknown by default
-            MaxOutputTokens = null, // Unknown by default
-            SupportsFunctionCalling = false,
-            SupportsVision = false,
-            SupportsAudioInput = false,
-            SupportsAudioOutput = false,
-            SupportsStreaming = true, // Default for modern LLMs
-            SupportsJsonMode = false
+            ContextWindow = request.Capabilities.ContextWindow,
+            MaxOutputTokens = request.Capabilities.MaxOutputTokens,
+            SupportsFunctionCalling = request.Capabilities.SupportsFunctionCalling,
+            SupportsVision = request.Capabilities.SupportsVision,
+            SupportsAudioInput = request.Capabilities.SupportsAudioInput,
+            SupportsAudioOutput = request.Capabilities.SupportsAudioOutput,
+            SupportsStreaming = request.Capabilities.SupportsStreaming,
+            SupportsJsonMode = request.Capabilities.SupportsJsonMode
         };
 
         // 4. Persist model and capability in single transaction
