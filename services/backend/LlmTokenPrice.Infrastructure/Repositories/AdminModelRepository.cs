@@ -107,4 +107,44 @@ public class AdminModelRepository : IAdminModelRepository
 
         return true;
     }
+
+    /// <inheritdoc />
+    public async Task<Guid> CreateModelAsync(Model model, CancellationToken cancellationToken = default)
+    {
+        // Ensure timestamps are set
+        model.CreatedAt = DateTime.UtcNow;
+        model.UpdatedAt = DateTime.UtcNow;
+        model.IsActive = true;
+
+        // Add model to context
+        await _context.Models.AddAsync(model, cancellationToken);
+
+        // Save changes to database
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return model.Id;
+    }
+
+    /// <inheritdoc />
+    public async Task CreateCapabilityAsync(Capability capability, CancellationToken cancellationToken = default)
+    {
+        // Add capability to context
+        await _context.Capabilities.AddAsync(capability, cancellationToken);
+
+        // Save changes to database
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<Model?> GetByNameAndProviderAsync(string name, string provider, CancellationToken cancellationToken = default)
+    {
+        // Case-insensitive comparison for duplicate detection
+        // Returns model even if IsActive = false
+        // Does not include related entities for performance
+        return await _context.Models
+            .Where(m => m.Name.ToLower() == name.ToLower() &&
+                       m.Provider.ToLower() == provider.ToLower())
+            .AsNoTracking() // Read-only query optimization
+            .FirstOrDefaultAsync(cancellationToken);
+    }
 }

@@ -292,6 +292,354 @@ public class AdminModelsApiTests : IClassFixture<WebApplicationFactory<LlmTokenP
             "DELETE endpoint must require JWT authentication");
     }
 
+    #region POST /api/admin/models - Story 2.5
+
+    /// <summary>
+    /// [P0] AC 2.5.1: POST /api/admin/models returns 401 when JWT token is missing.
+    /// Critical security test - create endpoint must require authentication.
+    /// </summary>
+    [Fact]
+    public async Task CreateModel_WithoutAuthentication_Should_Return_401_Unauthorized()
+    {
+        // GIVEN: CreateModelRequest without JWT token
+        var request = new
+        {
+            name = "GPT-4 Test",
+            provider = "OpenAI",
+            status = "active",
+            inputPricePer1M = 10.00m,
+            outputPricePer1M = 30.00m,
+            currency = "USD"
+        };
+
+        // WHEN: Attempting to create model without authentication
+        var response = await _client.PostAsJsonAsync("/api/admin/models", request);
+
+        // THEN: Should return 401 Unauthorized
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized,
+            "POST /api/admin/models must require JWT authentication");
+    }
+
+    /// <summary>
+    /// [P0] AC 2.5.5: POST /api/admin/models with valid data returns 201 Created with Location header.
+    /// Tests successful model creation flow with authentication.
+    /// </summary>
+    [Fact]
+    public async Task CreateModel_WithValidData_Should_Return_201_Created_WithLocationHeader()
+    {
+        // GIVEN: Authenticated admin user
+        await LoginAsAdminAsync();
+
+        // GIVEN: Valid create model request
+        var request = new
+        {
+            name = $"Test Model {Guid.NewGuid()}",
+            provider = "Test Provider",
+            version = "v1.0",
+            releaseDate = "2024-01-01",
+            status = "active",
+            inputPricePer1M = 5.50m,
+            outputPricePer1M = 15.00m,
+            currency = "USD",
+            pricingValidFrom = "2024-01-01",
+            pricingValidTo = "2024-12-31"
+        };
+
+        // WHEN: Creating model via API
+        var response = await _client.PostAsJsonAsync("/api/admin/models", request);
+
+        // THEN: Should return 201 Created
+        response.StatusCode.Should().Be(HttpStatusCode.Created,
+            "Valid model creation should return 201 Created");
+
+        // THEN: Should include Location header
+        response.Headers.Location.Should().NotBeNull("Location header should be present");
+        response.Headers.Location!.ToString().Should().Contain("/api/admin/models/",
+            "Location header should point to created model endpoint");
+    }
+
+    /// <summary>
+    /// [P0] AC 2.5.3,4: POST /api/admin/models with valid data persists Model + Capability to database.
+    /// Verifies both entities are created and linked via ModelId foreign key.
+    /// </summary>
+    [Fact]
+    public async Task CreateModel_WithValidData_Should_PersistModelAndCapabilityToDatabase()
+    {
+        // GIVEN: Authenticated admin user
+        await LoginAsAdminAsync();
+
+        // GIVEN: Valid create model request with unique name
+        var uniqueName = $"Test Persistence Model {Guid.NewGuid()}";
+        var request = new
+        {
+            name = uniqueName,
+            provider = "Test Provider",
+            status = "active",
+            inputPricePer1M = 7.25m,
+            outputPricePer1M = 20.00m,
+            currency = "USD"
+        };
+
+        // WHEN: Creating model via API
+        var createResponse = await _client.PostAsJsonAsync("/api/admin/models", request);
+        createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
+
+        // Extract created model ID from Location header
+        var locationHeader = createResponse.Headers.Location!.ToString();
+        var modelId = locationHeader.Split('/').Last();
+
+        // THEN: Model should be retrievable from database
+        var getResponse = await _client.GetAsync($"/api/admin/models/{modelId}");
+        getResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var responseBody = await getResponse.Content.ReadAsStringAsync();
+        var adminResponse = JsonSerializer.Deserialize<SingleAdminApiResponse>(
+            responseBody,
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+        adminResponse.Should().NotBeNull();
+        adminResponse!.Data.Should().NotBeNull();
+        adminResponse.Data!.Name.Should().Be(uniqueName);
+        adminResponse.Data.Provider.Should().Be("Test Provider");
+        adminResponse.Data.Status.Should().Be("active");
+        adminResponse.Data.InputPricePer1M.Should().Be(7.25m);
+        adminResponse.Data.OutputPricePer1M.Should().Be(20.00m);
+        adminResponse.Data.Currency.Should().Be("USD");
+        adminResponse.Data.IsActive.Should().BeTrue("New models should be active by default");
+        adminResponse.Data.CreatedAt.Should().NotBeNullOrEmpty("CreatedAt timestamp should be set");
+        adminResponse.Data.UpdatedAt.Should().NotBeNullOrEmpty("UpdatedAt timestamp should be set");
+    }
+
+    /// <summary>
+    /// [P1] AC 2.5.6: POST /api/admin/models with invalid data returns 400 Bad Request with validation errors.
+    /// Tests FluentValidation error response format.
+    /// </summary>
+    [Fact]
+    public async Task CreateModel_WithInvalidData_Should_Return_400_WithValidationErrors()
+    {
+        // GIVEN: Authenticated admin user
+        await LoginAsAdminAsync();
+
+        // GIVEN: Invalid create model request (missing required fields, negative prices)
+        var request = new
+        {
+            name = "", // Empty name (invalid)
+            provider = "", // Empty provider (invalid)
+            status = "invalid_status", // Invalid enum (invalid)
+            inputPricePer1M = -5.00m, // Negative price (invalid)
+            outputPricePer1M = 0m, // Zero price (invalid)
+            currency = "ARS" // Invalid currency (invalid)
+        };
+
+        // WHEN: Attempting to create model with invalid data
+        var response = await _client.PostAsJsonAsync("/api/admin/models", request);
+
+        // THEN: Should return 400 Bad Request
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest,
+            "Invalid model data should return 400 Bad Request");
+
+        // THEN: Response should contain validation error details
+        var responseBody = await response.Content.ReadAsStringAsync();
+        responseBody.Should().Contain("error", "Response should contain error object");
+    }
+
+    /// <summary>
+    /// [P1] AC 2.5.2: POST /api/admin/models validates positive prices - zero/negative should fail.
+    /// </summary>
+    [Theory]
+    [InlineData(0, 30.00)]
+    [InlineData(-1, 30.00)]
+    [InlineData(10.00, 0)]
+    [InlineData(10.00, -5.00)]
+    public async Task CreateModel_WithNonPositivePrices_Should_Return_400(decimal inputPrice, decimal outputPrice)
+    {
+        // GIVEN: Authenticated admin user
+        await LoginAsAdminAsync();
+
+        // GIVEN: Request with zero or negative prices
+        var request = new
+        {
+            name = $"Test Model {Guid.NewGuid()}",
+            provider = "Test Provider",
+            status = "active",
+            inputPricePer1M = inputPrice,
+            outputPricePer1M = outputPrice,
+            currency = "USD"
+        };
+
+        // WHEN: Attempting to create model with invalid prices
+        var response = await _client.PostAsJsonAsync("/api/admin/models", request);
+
+        // THEN: Should return 400 Bad Request
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest,
+            "Prices must be greater than 0");
+    }
+
+    /// <summary>
+    /// [P1] AC 2.5.6: POST /api/admin/models with duplicate Name+Provider returns 400 with specific error.
+    /// Tests duplicate detection logic.
+    /// </summary>
+    [Fact]
+    public async Task CreateModel_WithDuplicateNameAndProvider_Should_Return_400()
+    {
+        // GIVEN: Authenticated admin user
+        await LoginAsAdminAsync();
+
+        // GIVEN: Create first model
+        var uniqueName = $"Duplicate Test {Guid.NewGuid()}";
+        var firstRequest = new
+        {
+            name = uniqueName,
+            provider = "Test Provider",
+            status = "active",
+            inputPricePer1M = 10.00m,
+            outputPricePer1M = 30.00m,
+            currency = "USD"
+        };
+
+        var firstResponse = await _client.PostAsJsonAsync("/api/admin/models", firstRequest);
+        firstResponse.StatusCode.Should().Be(HttpStatusCode.Created);
+
+        // WHEN: Attempting to create duplicate model (same name + provider)
+        var duplicateRequest = new
+        {
+            name = uniqueName, // Same name
+            provider = "Test Provider", // Same provider
+            status = "active",
+            inputPricePer1M = 15.00m, // Different price (but duplicate by name+provider)
+            outputPricePer1M = 45.00m,
+            currency = "USD"
+        };
+
+        var duplicateResponse = await _client.PostAsJsonAsync("/api/admin/models", duplicateRequest);
+
+        // THEN: Should return 400 Bad Request for duplicate
+        duplicateResponse.StatusCode.Should().Be(HttpStatusCode.BadRequest,
+            "Duplicate model (same name + provider) should return 400");
+
+        var responseBody = await duplicateResponse.Content.ReadAsStringAsync();
+        responseBody.Should().Contain("already exists", "Error message should indicate duplicate");
+    }
+
+    /// <summary>
+    /// [P1] AC 2.5.2: POST /api/admin/models validates enum values - invalid Status should fail.
+    /// </summary>
+    [Theory]
+    [InlineData("invalid")]
+    [InlineData("ACTIVE")] // Case-sensitive
+    [InlineData("beta-test")]
+    public async Task CreateModel_WithInvalidStatus_Should_Return_400(string invalidStatus)
+    {
+        // GIVEN: Authenticated admin user
+        await LoginAsAdminAsync();
+
+        // GIVEN: Request with invalid Status enum
+        var request = new
+        {
+            name = $"Test Model {Guid.NewGuid()}",
+            provider = "Test Provider",
+            status = invalidStatus,
+            inputPricePer1M = 10.00m,
+            outputPricePer1M = 30.00m,
+            currency = "USD"
+        };
+
+        // WHEN: Attempting to create model with invalid status
+        var response = await _client.PostAsJsonAsync("/api/admin/models", request);
+
+        // THEN: Should return 400 Bad Request
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest,
+            "Invalid Status enum should return 400");
+    }
+
+    /// <summary>
+    /// [P1] AC 2.5.2: POST /api/admin/models validates enum values - invalid Currency should fail.
+    /// </summary>
+    [Theory]
+    [InlineData("ARS")]
+    [InlineData("JPY")]
+    [InlineData("usd")] // Case-sensitive
+    public async Task CreateModel_WithInvalidCurrency_Should_Return_400(string invalidCurrency)
+    {
+        // GIVEN: Authenticated admin user
+        await LoginAsAdminAsync();
+
+        // GIVEN: Request with invalid Currency enum
+        var request = new
+        {
+            name = $"Test Model {Guid.NewGuid()}",
+            provider = "Test Provider",
+            status = "active",
+            inputPricePer1M = 10.00m,
+            outputPricePer1M = 30.00m,
+            currency = invalidCurrency
+        };
+
+        // WHEN: Attempting to create model with invalid currency
+        var response = await _client.PostAsJsonAsync("/api/admin/models", request);
+
+        // THEN: Should return 400 Bad Request
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest,
+            "Invalid Currency enum should return 400");
+    }
+
+    /// <summary>
+    /// [P2] AC 2.5.5: POST /api/admin/models response includes full AdminModelDto with new model data.
+    /// </summary>
+    [Fact]
+    public async Task CreateModel_WithValidData_Should_ReturnFullAdminModelDto()
+    {
+        // GIVEN: Authenticated admin user
+        await LoginAsAdminAsync();
+
+        // GIVEN: Valid create model request
+        var uniqueName = $"Full DTO Test {Guid.NewGuid()}";
+        var request = new
+        {
+            name = uniqueName,
+            provider = "Test Provider",
+            version = "v2.0",
+            releaseDate = "2024-06-15",
+            status = "beta",
+            inputPricePer1M = 12.75m,
+            outputPricePer1M = 35.50m,
+            currency = "EUR",
+            pricingValidFrom = "2024-06-01",
+            pricingValidTo = "2024-12-31"
+        };
+
+        // WHEN: Creating model via API
+        var response = await _client.PostAsJsonAsync("/api/admin/models", request);
+
+        // THEN: Response should include full AdminModelDto
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+
+        var responseBody = await response.Content.ReadAsStringAsync();
+        var adminResponse = JsonSerializer.Deserialize<SingleAdminApiResponse>(
+            responseBody,
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+        adminResponse.Should().NotBeNull();
+        adminResponse!.Data.Should().NotBeNull();
+        adminResponse.Data!.Id.Should().NotBeNullOrEmpty("Response should include model ID");
+        adminResponse.Data.Name.Should().Be(uniqueName);
+        adminResponse.Data.Provider.Should().Be("Test Provider");
+        adminResponse.Data.Version.Should().Be("v2.0");
+        adminResponse.Data.Status.Should().Be("beta");
+        adminResponse.Data.InputPricePer1M.Should().Be(12.75m);
+        adminResponse.Data.OutputPricePer1M.Should().Be(35.50m);
+        adminResponse.Data.Currency.Should().Be("EUR");
+        adminResponse.Data.IsActive.Should().BeTrue();
+        adminResponse.Data.CreatedAt.Should().NotBeNullOrEmpty();
+        adminResponse.Data.UpdatedAt.Should().NotBeNullOrEmpty();
+
+        // THEN: Meta should indicate not cached
+        adminResponse.Meta.Should().NotBeNull();
+        adminResponse.Meta!.Cached.Should().BeFalse("Admin endpoints should never be cached");
+    }
+
+    #endregion
+
     /// <summary>
     /// Helper method to login as admin and get JWT token.
     /// The HttpClient automatically stores the cookie, so subsequent requests will be authenticated.
@@ -357,4 +705,13 @@ internal class AdminModelDto
     public bool IsActive { get; set; }
     public string CreatedAt { get; set; } = null!;
     public string UpdatedAt { get; set; } = null!;
+}
+
+/// <summary>
+/// Response structure for single admin model API (matches backend AdminApiResponse for single item)
+/// </summary>
+internal class SingleAdminApiResponse
+{
+    public AdminModelDto? Data { get; set; }
+    public AdminApiResponseMeta? Meta { get; set; }
 }

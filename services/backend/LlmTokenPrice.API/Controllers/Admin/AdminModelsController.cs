@@ -218,23 +218,92 @@ public class AdminModelsController : ControllerBase
         [FromBody] CreateModelRequest request,
         CancellationToken cancellationToken)
     {
-        // TODO: Story 2.5 - Implement full model creation with FluentValidation
-        // - Validate request with FluentValidation
-        // - Call IAdminModelService.CreateModelAsync
-        // - Invalidate cache:models:* patterns
-        // - Return 201 Created with AdminModelDto response
-
-        _logger.LogWarning("POST /api/admin/models called but not yet implemented (Story 2.5)");
-
-        return StatusCode(StatusCodes.Status501NotImplemented, new
+        try
         {
-            error = new
+            _logger.LogInformation(
+                "Creating new model: {ModelName} by {Provider}",
+                request.Name,
+                request.Provider);
+
+            // Create model (FluentValidation runs automatically via middleware)
+            var modelId = await _adminModelService.CreateModelAsync(request, cancellationToken);
+
+            // Fetch created model for response
+            var createdModel = await _adminModelService.GetModelByIdAsync(modelId, cancellationToken);
+
+            if (createdModel == null)
             {
-                code = "NOT_IMPLEMENTED",
-                message = "Model creation endpoint will be implemented in Story 2.5",
-                details = "Frontend form is ready, but backend validation and service layer are pending"
+                _logger.LogError("Model was created but could not be retrieved: {ModelId}", modelId);
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    error = new
+                    {
+                        code = "INTERNAL_ERROR",
+                        message = "Model was created but could not be retrieved",
+                        details = "Please contact administrator"
+                    }
+                });
             }
-        });
+
+            _logger.LogInformation(
+                "Model created successfully: {ModelId} - {ModelName}",
+                modelId,
+                createdModel.Name);
+
+            // Return 201 Created with Location header
+            return CreatedAtAction(
+                nameof(GetById),
+                new { id = modelId },
+                new AdminApiResponse<AdminModelDto>
+                {
+                    Data = createdModel,
+                    Meta = new AdminApiResponseMeta
+                    {
+                        TotalCount = null,
+                        Cached = false,
+                        Timestamp = DateTime.UtcNow
+                    }
+                });
+        }
+        catch (InvalidOperationException ex) when (ex.Message.Contains("already exists"))
+        {
+            _logger.LogWarning(
+                "Duplicate model creation attempted: {ModelName} by {Provider}",
+                request.Name,
+                request.Provider);
+
+            return BadRequest(new
+            {
+                error = new
+                {
+                    code = "DUPLICATE_MODEL",
+                    message = ex.Message,
+                    details = new[]
+                    {
+                        new { field = "name", message = "Model with this name and provider already exists" },
+                        new { field = "provider", message = "Model with this name and provider already exists" }
+                    }
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Error creating model: {ModelName} by {Provider}",
+                request.Name,
+                request.Provider);
+
+            return StatusCode(StatusCodes.Status500InternalServerError, new
+            {
+                error = new
+                {
+                    code = "INTERNAL_ERROR",
+                    message = "An unexpected error occurred while creating the model",
+                    details = ex.Message
+                }
+            });
+        }
     }
 
     /// <summary>

@@ -64,4 +64,50 @@ public interface IAdminModelRepository
     /// Model is NOT physically removed from database, preserving audit trail.
     /// </remarks>
     Task<bool> DeleteModelAsync(Guid id, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Creates a new model in the database.
+    /// Sets CreatedAt and UpdatedAt to DateTime.UtcNow, IsActive to true.
+    /// </summary>
+    /// <param name="model">The model entity to create.</param>
+    /// <param name="cancellationToken">Cancellation token for async operation.</param>
+    /// <returns>The unique identifier (GUID) of the created model.</returns>
+    /// <remarks>
+    /// This method:
+    /// 1. Adds the model to the DbContext
+    /// 2. Calls SaveChangesAsync to persist to database
+    /// 3. Returns the generated GUID
+    /// Must be called within same transaction as CreateCapabilityAsync.
+    /// </remarks>
+    Task<Guid> CreateModelAsync(Model model, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Creates a new capability record linked to a model.
+    /// Must be called after CreateModelAsync in the same transaction.
+    /// </summary>
+    /// <param name="capability">The capability entity to create with ModelId set.</param>
+    /// <param name="cancellationToken">Cancellation token for async operation.</param>
+    /// <remarks>
+    /// This method:
+    /// 1. Adds the capability to the DbContext
+    /// 2. Calls SaveChangesAsync to persist to database
+    /// Capability.ModelId must reference a valid model created in same transaction.
+    /// One-to-one relationship enforced via unique constraint on ModelId.
+    /// </remarks>
+    Task CreateCapabilityAsync(Capability capability, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Retrieves a model by its name and provider combination (case-insensitive).
+    /// Used for duplicate detection before creating a new model.
+    /// </summary>
+    /// <param name="name">The model name to search for (case-insensitive).</param>
+    /// <param name="provider">The provider name to search for (case-insensitive).</param>
+    /// <param name="cancellationToken">Cancellation token for async operation.</param>
+    /// <returns>Model if found with matching name and provider, null otherwise.</returns>
+    /// <remarks>
+    /// Case-insensitive comparison for duplicate detection.
+    /// Returns model even if IsActive = false (duplicates not allowed regardless of status).
+    /// Does not include related entities (Capability, BenchmarkScores) for performance.
+    /// </remarks>
+    Task<Model?> GetByNameAndProviderAsync(string name, string provider, CancellationToken cancellationToken = default);
 }
