@@ -1,0 +1,567 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>2.10</storyId>
+    <title>Create Benchmark Score Entry Form</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-19</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-2.10.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>administrator</asA>
+    <iWant>to add benchmark scores for models</iWant>
+    <soThat>performance data is captured for comparisons</soThat>
+    <tasks>
+## Tasks (11 total)
+
+**Task 1: Create benchmark score entry form** (AC: #1, #2)
+- Create BenchmarkScoreForm.tsx component with model/benchmark selectors
+- Group benchmarks by category in dropdown
+- Display typical range and interpretation as helper text
+
+**Task 2: Add score input fields** (AC: #3, #4)
+- Score (required number), MaxScore (optional), TestDate (optional date picker)
+- SourceUrl (optional URL), Verified checkbox, Notes textarea
+- Format score input with appropriate decimal places
+
+**Task 3: Implement score validation** (AC: #3)
+- Zod schema: score required, within typical range (warn, don't block)
+- Validate maxScore >= score if provided, sourceUrl is valid URL format
+- Show warning icon for out-of-range scores, allow admin override
+
+**Task 4: Create POST benchmark score endpoint** (AC: #5)
+- POST /api/admin/models/{id}/benchmarks in AdminModelsController
+- Accept CreateBenchmarkScoreDto, return 201 Created
+- Return 400 if model/benchmark doesn't exist or score already exists (duplicate prevention)
+
+**Task 5: Implement add score service method** (AC: #5)
+- AddScoreAsync in AdminBenchmarkService or new service
+- Validate model/benchmark exist, check for existing score (unique constraint)
+- Calculate normalized_score: (score - min) / (max - min)
+- Save ModelBenchmarkScore entity, invalidate caches, recalculate QAPS
+
+**Task 6: Display benchmark scores list** (AC: #6)
+- BenchmarkScoresList.tsx component in model detail/edit page
+- Table with columns: benchmark name, score, max score, test date, verified badge
+- Group by category, edit/delete buttons, "No scores yet" message
+
+**Task 7: Add benchmark score to model edit page**
+- Add "Benchmark Scores" section to EditModelPage
+- Display existing scores list, "Add New Score" button
+- Open BenchmarkScoreForm in modal or inline, pre-select current model
+
+**Task 8: Create DTOs and validators**
+- CreateBenchmarkScoreDto, BenchmarkScoreResponseDto
+- CreateBenchmarkScoreValidator with FluentValidation
+- Warn (not error) if score outside typical range, validate maxScore >= score
+
+**Task 9: Implement score normalization**
+- Create BenchmarkNormalizer domain service
+- Normalize: (score - min) / (max - min), handle edge cases
+- Store normalized_score for QAPS calculation
+
+**Task 10: Add edit/delete score functionality**
+- PUT/DELETE /api/admin/models/{modelId}/benchmarks/{scoreId} endpoints
+- UpdateScoreAsync and DeleteScoreAsync service methods
+- Recalculate normalized score and QAPS on update, invalidate cache
+
+**Task 11: Add testing**
+- Component tests for BenchmarkScoreForm (validation, out-of-range warning)
+- Unit tests for BenchmarkNormalizer normalization formula
+- Integration tests for POST endpoint (duplicate prevention, cache invalidation)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. ✅ Benchmark scores section added to model form (or separate page)
+2. ✅ Form allows selecting model and benchmark from dropdowns
+3. ✅ Score input field with validation (number within typical range)
+4. ✅ Test date picker and source URL input
+5. ✅ POST `/api/admin/models/{id}/benchmarks` endpoint saves score
+6. ✅ Benchmark scores list displayed for each model
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+<!-- Documentation artifacts with project-relative paths -->
+<doc>
+  <path>docs/PRD.md</path>
+  <title>Product Requirements Document</title>
+  <section>FR023 - Benchmark Score Management</section>
+  <snippet>Admins can add performance scores for models across multiple benchmarks. Scores are normalized for QAPS calculation. Duplicate model+benchmark combinations prevented by unique constraint.</snippet>
+</doc>
+
+<doc>
+  <path>docs/tech-spec-epic-2.md</path>
+  <title>Epic 2 Technical Specification</title>
+  <section>Story 2.10 - Benchmark Score Entry</section>
+  <snippet>CreateBenchmarkScoreDto structure: BenchmarkId (Guid), Score (decimal), MaxScore (optional decimal), TestDate (optional DateTime), SourceUrl (optional string), Verified (bool, default false), Notes (optional string). Normalized score calculated using BenchmarkNormalizer domain service. Unique constraint on (ModelId, BenchmarkId) prevents duplicate scores.</snippet>
+</doc>
+
+<doc>
+  <path>docs/solution-architecture.md</path>
+  <title>Solution Architecture</title>
+  <section>3.1 Database Schema - model_benchmark_scores table</section>
+  <snippet>Table: model_benchmark_scores. Columns: id (uuid PK), model_id (uuid FK), benchmark_id (uuid FK), score (decimal 6,2), max_score (decimal 6,2 nullable), normalized_score (decimal 5,4 nullable), test_date (timestamp nullable), source_url (text nullable), verified (boolean default false), notes (text nullable), created_at (timestamp). Unique constraint: (model_id, benchmark_id). Cascade delete from models and benchmarks.</snippet>
+</doc>
+
+<doc>
+  <path>docs/solution-architecture.md</path>
+  <title>Solution Architecture</title>
+  <section>5.3 Benchmark Normalization Algorithm</section>
+  <snippet>Normalization formula: normalized_score = (score - typical_range_min) / (typical_range_max - typical_range_min). Result clamped to [0, 1] range. Handles edge cases: min=max returns 1.0, scores outside typical range are extrapolated or capped. Domain service BenchmarkNormalizer implements pure business logic without infrastructure dependencies.</snippet>
+</doc>
+
+<doc>
+  <path>docs/stories/story-2.9.md</path>
+  <title>Story 2.9 - Benchmark Definitions Management</title>
+  <section>Implementation Complete</section>
+  <snippet>Benchmark CRUD fully functional. BenchmarkCategory enum (Reasoning, Code, Math, Language, Multimodal), BenchmarkInterpretation enum (HigherBetter, LowerBetter), WeightInQaps field (decimal 3,2 range 0-1), IsActive soft-delete. Frontend: useBenchmarks hook with 5min cache, BenchmarkForm with dual-mode create/edit, AdminBenchmarksPage with table view and category filter. Backend: AdminBenchmarksController (GET/POST/PUT/DELETE), AdminBenchmarkService with validation, FluentValidation validators, EF Core migration applied.</snippet>
+</doc>
+
+<doc>
+  <path>docs/CLAUDE.md</path>
+  <title>CLAUDE.md Project Instructions</title>
+  <section>QAPS Algorithm</section>
+  <snippet>QAPS = Composite Quality Score / Total Price. Composite Quality Score = Σ (Normalized Benchmark Score × Weight). Normalized scores stored in database for performance. Cache invalidation required after adding/updating scores to recalculate QAPS rankings.</snippet>
+</doc>
+    </docs>
+
+    <code>
+<!-- Existing code artifacts with project-relative paths -->
+
+<!-- Domain Layer Entities (Pure business logic) -->
+<artifact>
+  <path>services/backend/LlmTokenPrice.Domain/Entities/BenchmarkScore.cs</path>
+  <kind>domain-entity</kind>
+  <symbol>BenchmarkScore</symbol>
+  <lines>1-97</lines>
+  <reason>Complete entity definition for benchmark scores. Join entity between Model and Benchmark. Properties: Id, ModelId (FK), BenchmarkId (FK), Score (decimal 6,2), MaxScore (optional decimal 6,2), NormalizedScore (optional decimal 5,4 for QAPS), TestDate, SourceUrl, Verified (bool default false), Notes, CreatedAt. Navigation properties to Model and Benchmark. Composite unique constraint (ModelId, BenchmarkId). Use as reference for DTO field mapping and repository interface design.</reason>
+</artifact>
+
+<artifact>
+  <path>services/backend/LlmTokenPrice.Domain/Entities/Model.cs</path>
+  <kind>domain-entity</kind>
+  <symbol>Model</symbol>
+  <lines>99-111</lines>
+  <reason>Navigation property BenchmarkScores (ICollection&lt;BenchmarkScore&gt;) establishes one-to-many relationship. Cascade delete: deleting Model deletes all associated BenchmarkScores. Relevant for understanding data model and query patterns (eager/lazy loading).</reason>
+</artifact>
+
+<artifact>
+  <path>services/backend/LlmTokenPrice.Domain/Entities/Benchmark.cs</path>
+  <kind>domain-entity</kind>
+  <symbol>Benchmark</symbol>
+  <lines>40-78</lines>
+  <reason>BenchmarkCategory enum, BenchmarkInterpretation enum, TypicalRangeMin/Max (decimal 5,2 nullable), WeightInQaps (decimal 3,2) fields. Navigation property Scores (ICollection&lt;BenchmarkScore&gt;). Used for normalization: normalized_score = (score - TypicalRangeMin) / (TypicalRangeMax - TypicalRangeMin). Interpretation determines ranking order (HigherBetter vs LowerBetter).</reason>
+</artifact>
+
+<!-- API Layer Controllers -->
+<artifact>
+  <path>services/backend/LlmTokenPrice.API/Controllers/Admin/AdminModelsController.cs</path>
+  <kind>controller</kind>
+  <symbol>AdminModelsController</symbol>
+  <lines>1-471</lines>
+  <reason>Existing controller for model CRUD operations. Pattern reference for adding POST /api/admin/models/{modelId}/benchmarks endpoint. Shows [Authorize] attribute usage, AdminApiResponse wrapper structure, structured logging patterns (_logger.LogInformation), error handling (try-catch with 404/400/500 responses), CreatedAtAction for 201 responses. Lines 212-307 show POST Create pattern to mirror for AddBenchmarkScore endpoint.</reason>
+</artifact>
+
+<!-- Application Layer Services -->
+<artifact>
+  <path>services/backend/LlmTokenPrice.Application/Services/AdminBenchmarkService.cs</path>
+  <kind>service</kind>
+  <symbol>AdminBenchmarkService</symbol>
+  <lines>1-191</lines>
+  <reason>Service pattern for benchmark management. Shows repository injection pattern, entity-to-DTO mapping (MapToDto method), duplicate detection (GetByNameAsync check), enum parsing (Enum.TryParse), SaveChangesAsync transaction pattern. Lines 54-101 CreateBenchmarkAsync shows async creation workflow. Can extend with AddScoreAsync method or create separate AdminBenchmarkScoreService. TODO comments at lines 97, 142, 164 indicate cache invalidation needs implementation.</reason>
+</artifact>
+
+<!-- Frontend - TanStack Query Hooks -->
+<artifact>
+  <path>apps/web/src/hooks/useBenchmarks.ts</path>
+  <kind>custom-hook</kind>
+  <symbol>useBenchmarks, useCreateBenchmark, useUpdateBenchmark, useDeleteBenchmark</symbol>
+  <lines>1-118</lines>
+  <reason>Query key factory pattern (benchmarkKeys), useBenchmarks hook with 5min staleTime, mutation hooks with automatic cache invalidation (queryClient.invalidateQueries). Pattern to mirror for useAddBenchmarkScore hook: mutationFn calls API client, onSuccess invalidates model detail cache and benchmark scores list cache. Shows TanStack Query v5 usage with @tanstack/react-query imports.</reason>
+</artifact>
+
+<!-- Frontend - API Client -->
+<artifact>
+  <path>apps/web/src/api/admin.ts</path>
+  <kind>api-client</kind>
+  <symbol>getAdminModels, createModel, updateModel</symbol>
+  <lines>1-150</lines>
+  <reason>API client functions using axios apiClient. Pattern for adding addBenchmarkScore function: async function accepting (modelId: string, score: CreateBenchmarkScoreRequest), returns Promise&lt;BenchmarkScoreResponseDto&gt;, uses apiClient.post with URL template /admin/models/${modelId}/benchmarks. Shows TypeScript typing, JSDoc documentation, error propagation pattern.</reason>
+</artifact>
+
+<!-- Frontend - Validation Schemas -->
+<artifact>
+  <path>apps/web/src/schemas/benchmarkSchema.ts</path>
+  <kind>validation-schema</kind>
+  <symbol>createBenchmarkSchema, benchmarkCategories, benchmarkInterpretations</symbol>
+  <lines>1-157</lines>
+  <reason>Zod validation pattern: z.object with field rules, .refine for cross-field validation (typicalRangeMin &lt; typicalRangeMax), enum arrays matching backend, TypeScript type inference (z.infer). Pattern for createBenchmarkScoreSchema: score z.number().finite(), maxScore optional with .refine(maxScore &gt;= score), sourceUrl z.string().url().optional(), verified z.boolean().default(false), testDate z.string() (ISO format). BenchmarkResponseDto interface shows backend DTO shape.</reason>
+</artifact>
+
+<!-- Infrastructure - Database Configuration (Reference) -->
+<artifact>
+  <path>services/backend/LlmTokenPrice.Infrastructure/Data/Configurations/BenchmarkScoreConfiguration.cs</path>
+  <kind>ef-configuration</kind>
+  <symbol>BenchmarkScoreConfiguration</symbol>
+  <lines>ENTIRE_FILE</lines>
+  <reason>EF Core Fluent API configuration for BenchmarkScore entity. Defines table name (model_benchmark_scores), primary key, decimal precision (Score/MaxScore 6,2, NormalizedScore 5,4), unique constraint (ModelId, BenchmarkId), foreign key relationships with cascade delete. Read to understand existing configuration before implementing repository methods.</reason>
+</artifact>
+    </code>
+
+    <dependencies>
+<!-- All dependencies already installed from Stories 2.1-2.9 -->
+<backend>
+  <package name="FluentValidation.AspNetCore" version="11.3.0" />
+  <package name="FluentValidation.DependencyInjectionExtensions" version="11.5.1" />
+  <package name="Microsoft.EntityFrameworkCore" version="9.0.10" />
+  <package name="Npgsql.EntityFrameworkCore.PostgreSQL" version="9.0.10" />
+  <package name="Serilog.AspNetCore" version="8.0.0" />
+  <package name="Microsoft.AspNetCore.Authentication.JwtBearer" version="9.0.10" />
+</backend>
+
+<frontend>
+  <package name="react" version="19.x" />
+  <package name="react-hook-form" version="7.x" />
+  <package name="zod" version="3.x" />
+  <package name="@hookform/resolvers" version="3.x" />
+  <package name="@tanstack/react-query" version="5.x" />
+  <package name="axios" version="1.x" />
+  <package name="date-fns" version="3.x (for date formatting)" />
+</frontend>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+<!-- 32 constraints across 6 categories -->
+
+## Architectural Constraints (Hexagonal Architecture)
+
+1. **Domain Purity**: BenchmarkNormalizer domain service MUST have zero infrastructure dependencies (no EF, no HTTP, no framework-specific code). Pure calculation logic only.
+
+2. **Service Layer Orchestration**: AddScoreAsync method orchestrates workflow: validate entities exist → check duplicate → normalize score → create entity → save → invalidate cache → audit log. Keep each step explicit.
+
+3. **Repository Pattern**: Repository methods (GetScoreAsync, AddScoreAsync on IBenchmarkRepository or new IModelBenchmarkScoreRepository) handle data access only. No business logic in repositories.
+
+4. **Dependency Flow**: Dependencies point inward: API → Application → Domain. AdminModelsController depends on IAdminBenchmarkService (or IModelBenchmarkScoreService), service depends on IBenchmarkRepository and IModelRepository, not the reverse.
+
+5. **Transaction Boundaries**: SaveChangesAsync commits the transaction. All entity modifications within single transaction. No partial saves.
+
+## Validation Constraints (Double-Layer Validation)
+
+6. **Client-Side Zod**: createBenchmarkScoreSchema validates score (required number), maxScore optional >= score, sourceUrl optional URL format, testDate optional string, verified boolean, notes optional max 500 chars.
+
+7. **Server-Side FluentValidation**: CreateBenchmarkScoreValidator validates same rules as Zod. BenchmarkId required, Score required, maxScore >= score when provided, sourceUrl Must(BeValidUrl) when provided.
+
+8. **Out-of-Range Warning (NOT Error)**: If score < TypicalRangeMin or score > TypicalRangeMax, show warning icon/message but ALLOW submission. Admin can override. Business rule: trust admin input even if unusual.
+
+9. **Duplicate Prevention**: Check for existing score with (ModelId, BenchmarkId) combination BEFORE insert. Throw InvalidOperationException "Score already exists for {benchmarkName}" if found. Controller returns 400 Bad Request.
+
+10. **Nullable Field Handling**: TestDate, SourceUrl, MaxScore, Notes are optional. Use null coalescing: TestDate ?? DateTime.UtcNow for default. Empty strings converted to null.
+
+11. **Normalized Score Validation**: NormalizedScore calculated by BenchmarkNormalizer, not user input. Always between 0.0 and 1.0 (clamped). If TypicalRangeMin = TypicalRangeMax, return 1.0 to avoid division by zero.
+
+## API Contract Constraints (REST Endpoints)
+
+12. **POST Endpoint**: POST /api/admin/models/{modelId}/benchmarks. Request body: CreateBenchmarkScoreDto. Response: 201 Created with BenchmarkScoreResponseDto, Location header pointing to GET endpoint.
+
+13. **HTTP Status Codes**: 201 Created on success, 400 Bad Request if model/benchmark not found OR duplicate score OR validation failure, 401 Unauthorized if no JWT, 500 Internal Server Error for unexpected errors.
+
+14. **AdminApiResponse Wrapper**: Response format: { "data": BenchmarkScoreResponseDto, "meta": { "cached": false, "timestamp": "..." } }. Consistent with other admin endpoints.
+
+15. **Error Details Format**: 400 responses include: { "error": { "code": "DUPLICATE_SCORE" | "VALIDATION_ERROR" | "NOT_FOUND", "message": "...", "details": [ { "field": "...", "message": "..." } ] } }
+
+16. **JWT Authentication**: All admin endpoints require [Authorize] attribute. JWT token validated by middleware. Controller assumes authenticated user if middleware passes.
+
+17. **Cache Invalidation**: After adding score, invalidate: (1) model detail cache for specific model, (2) best value cache (cache:bestvalue:*), (3) QAPS cache if implemented. Use ICacheRepository.RemoveAsync and RemoveByPatternAsync.
+
+## Database Constraints (PostgreSQL Schema)
+
+18. **Unique Constraint**: Composite unique index on (model_id, benchmark_id). PostgreSQL enforces at database level. Service layer check prevents round-trip for duplicate detection.
+
+19. **Decimal Precision**: Score and MaxScore stored as decimal(6,2) allowing values like 87.50, 0.95. NormalizedScore stored as decimal(5,4) allowing 0.8750 precision for QAPS calculation.
+
+20. **Foreign Key Cascade**: ON DELETE CASCADE for both model_id and benchmark_id foreign keys. Deleting model deletes all its scores. Deleting benchmark deletes all scores for that benchmark.
+
+21. **CreatedAt Timestamp**: Set to DateTime.UtcNow on insert. Never updated. Required audit field. Use DateTime.SpecifyKind(..., DateTimeKind.Utc) for PostgreSQL compatibility.
+
+22. **Navigation Properties**: BenchmarkScore.Model and BenchmarkScore.Benchmark required navigation properties (null-forgiving operator !). Use for eager loading in queries: .Include(s => s.Benchmark).ThenInclude(b => b.Category).
+
+## UI/UX Constraints (Frontend Forms)
+
+23. **Model Selector**: Dropdown populated with all active models. Searchable/filterable (React Select or similar). Pre-selected if adding from EditModelPage context.
+
+24. **Benchmark Selector**: Dropdown grouped by category (Reasoning, Code, Math, Language, Multimodal). Shows benchmarkName (fullName). Disable benchmarks that already have scores for selected model.
+
+25. **Typical Range Display**: Below benchmark selector, show: "Typical Range: {min} - {max}" and "Interpretation: {Higher|Lower} is better". Updates reactively when benchmark selection changes.
+
+26. **Score Input**: Number input with step="0.01" for decimal precision. Show warning icon if value outside typical range. Warning message: "Score is outside typical range ({min}-{max}). Verify accuracy before submitting."
+
+27. **Test Date Picker**: Date input (HTML5 type="date" or date-fns DatePicker). Optional field. Defaults to today's date if left empty on submission.
+
+28. **Verified Checkbox**: Boolean toggle. Default unchecked (false). Label: "Mark as verified" with tooltip explaining verified vs community-submitted distinction.
+
+29. **Form Submission**: On success, show toast "Benchmark score added successfully", reset form (or close modal if in modal), invalidate model detail cache to refresh scores list. On error, display field-specific errors below inputs.
+
+## Testing Constraints (70/25/5 Pyramid)
+
+30. **Unit Test Coverage**: BenchmarkNormalizer.Normalize() tests: typical case (score=75, min=0, max=100 → 0.75), edge cases (min=max → 1.0, score=min → 0.0, score=max → 1.0), outliers (score < min or > max clamped to [0,1]).
+
+31. **Integration Test Coverage**: POST endpoint tests: (1) success flow persists score with normalized value, (2) duplicate returns 400, (3) non-existent model returns 400, (4) non-existent benchmark returns 400, (5) cache invalidated after success, (6) audit log created.
+
+32. **Component Test Coverage**: BenchmarkScoreForm tests: (1) renders all input fields, (2) typical range displayed when benchmark selected, (3) score validation maxScore >= score error shown, (4) out-of-range warning shown but form submittable, (5) form submission calls mutation hook.
+  </constraints>
+
+  <interfaces>
+<!-- 8 interfaces to implement -->
+
+## REST API Endpoint
+
+**POST /api/admin/models/{modelId}/benchmarks**
+- Controller: AdminModelsController (add new action)
+- Request: CreateBenchmarkScoreDto in request body
+- Response: 201 Created with BenchmarkScoreResponseDto, Location header
+- Auth: [Authorize] attribute (JWT required)
+- Errors: 400 (validation/duplicate/not found), 401 (unauthorized), 500 (server error)
+
+## Backend Service Interface
+
+**IAdminBenchmarkService.AddScoreAsync** (or new IModelBenchmarkScoreService)
+```csharp
+Task<BenchmarkScoreResponseDto> AddScoreAsync(
+    Guid modelId,
+    CreateBenchmarkScoreDto dto,
+    CancellationToken cancellationToken = default);
+```
+- Validates model and benchmark exist (throw NotFoundException if not)
+- Checks for duplicate score (throw InvalidOperationException if exists)
+- Calls BenchmarkNormalizer.Normalize() to calculate normalized_score
+- Creates BenchmarkScore entity with all fields
+- Saves to database via repository
+- Invalidates caches: model detail, best value, QAPS
+- Creates audit log entry
+- Returns BenchmarkScoreResponseDto with isOutOfRange flag
+
+## Domain Service Interface
+
+**BenchmarkNormalizer** (pure domain service, no dependencies)
+```csharp
+public class BenchmarkNormalizer
+{
+    decimal Normalize(decimal score, decimal min, decimal max);
+    bool IsWithinTypicalRange(decimal score, decimal min, decimal max);
+}
+```
+- Normalize: (score - min) / (max - min), clamp to [0, 1]
+- Edge case: if min = max, return 1.0
+- IsWithinTypicalRange: score >= min && score <= max
+
+## Repository Interface Extension
+
+**IBenchmarkRepository** (add new methods, or create IBenchmarkScoreRepository)
+```csharp
+Task<BenchmarkScore?> GetScoreAsync(Guid modelId, Guid benchmarkId, CancellationToken cancellationToken = default);
+Task AddScoreAsync(BenchmarkScore score, CancellationToken cancellationToken = default);
+Task<List<BenchmarkScore>> GetScoresByModelIdAsync(Guid modelId, CancellationToken cancellationToken = default);
+```
+- GetScoreAsync: Find existing score for duplicate check
+- AddScoreAsync: Insert new score
+- GetScoresByModelIdAsync: Fetch all scores for model (for scores list display)
+
+## Frontend API Client Function
+
+**addBenchmarkScore**
+```typescript
+async function addBenchmarkScore(
+  modelId: string,
+  score: CreateBenchmarkScoreRequest
+): Promise<BenchmarkScoreResponseDto>
+```
+- URL: POST /api/admin/models/${modelId}/benchmarks
+- Request: apiClient.post with score object
+- Response: BenchmarkScoreResponseDto
+- Error handling: Axios error propagation to mutation hook
+
+## Frontend Custom Hook
+
+**useAddBenchmarkScore**
+```typescript
+function useAddBenchmarkScore() {
+  return useMutation({
+    mutationFn: ({ modelId, data }) => addBenchmarkScore(modelId, data),
+    onSuccess: (_data, variables) => {
+      // Invalidate model detail cache
+      queryClient.invalidateQueries({ queryKey: modelKeys.detail(variables.modelId) })
+      // Invalidate benchmark scores list if separate query
+      // Show success toast
+    }
+  })
+}
+```
+
+## React Component Interface
+
+**BenchmarkScoreForm**
+```typescript
+interface BenchmarkScoreFormProps {
+  modelId: string // Pre-selected model
+  onSuccess?: () => void // Callback after successful submission
+  onCancel?: () => void // Callback for cancel button
+}
+```
+- Uses React Hook Form + Zod resolver
+- Model selector (if modelId not provided) or hidden input
+- Benchmark selector with category grouping
+- Score inputs, test date picker, source URL, verified checkbox, notes
+- Displays typical range and interpretation for selected benchmark
+- Shows out-of-range warning without blocking submission
+
+## Data Transfer Objects
+
+**CreateBenchmarkScoreDto** (C# backend)
+```csharp
+public class CreateBenchmarkScoreDto
+{
+    public Guid BenchmarkId { get; set; }
+    public decimal Score { get; set; }
+    public decimal? MaxScore { get; set; }
+    public DateTime? TestDate { get; set; }
+    public string? SourceUrl { get; set; }
+    public bool Verified { get; set; } = false;
+    public string? Notes { get; set; }
+}
+```
+
+**BenchmarkScoreResponseDto** (C# backend, TypeScript frontend)
+```csharp
+public class BenchmarkScoreResponseDto
+{
+    public Guid Id { get; set; }
+    public Guid ModelId { get; set; }
+    public Guid BenchmarkId { get; set; }
+    public string BenchmarkName { get; set; } // Denormalized for display
+    public decimal Score { get; set; }
+    public decimal? MaxScore { get; set; }
+    public decimal NormalizedScore { get; set; }
+    public DateTime? TestDate { get; set; }
+    public string? SourceUrl { get; set; }
+    public bool Verified { get; set; }
+    public string? Notes { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public bool IsOutOfRange { get; set; } // Computed field for UI warning
+}
+```
+  </interfaces>
+
+  <tests>
+    <standards>
+**Backend Testing (xUnit + FluentAssertions + Moq):**
+- Unit tests for BenchmarkNormalizer normalization logic (edge cases, outliers, typical values)
+- Unit tests for CreateBenchmarkScoreValidator rules (required fields, maxScore >= score, URL format)
+- Unit tests for AddScoreAsync service method with mocked repositories (duplicate detection, entity creation, cache invalidation)
+- Integration tests using TestContainers (PostgreSQL + Redis) for POST endpoint (201/400/404 responses, database persistence, unique constraint enforcement)
+- E2E tests with Playwright for full admin workflow (login → edit model → add score → verify in list)
+
+**Frontend Testing (Vitest + Testing Library + MSW):**
+- Component tests for BenchmarkScoreForm (field rendering, validation errors, typical range display, out-of-range warning)
+- Hook tests for useAddBenchmarkScore (mutation success/error states, cache invalidation)
+- Integration tests with MSW mocking API (form submission flow, error handling)
+
+**Coverage Targets:**
+- Overall: 70%+ coverage
+- Domain layer (BenchmarkNormalizer): 90%+ coverage
+- Critical paths (AddScoreAsync, duplicate prevention): 85%+ coverage
+    </standards>
+
+    <locations>
+**Backend Test Files:**
+- services/backend/LlmTokenPrice.Domain.Tests/Services/BenchmarkNormalizerTests.cs (NEW - unit tests for normalization)
+- services/backend/LlmTokenPrice.Application.Tests/Validators/CreateBenchmarkScoreValidatorTests.cs (NEW)
+- services/backend/LlmTokenPrice.Application.Tests/Services/AdminBenchmarkServiceTests.cs (EXTEND - add AddScoreAsync tests)
+- services/backend/LlmTokenPrice.API.Tests/Controllers/AdminModelsControllerTests.cs (EXTEND - add POST benchmark score tests)
+- services/backend/LlmTokenPrice.Infrastructure.Tests/Repositories/BenchmarkRepositoryTests.cs (EXTEND - add GetScoreAsync, AddScoreAsync tests)
+
+**Frontend Test Files:**
+- apps/web/src/components/admin/__tests__/BenchmarkScoreForm.test.tsx (NEW)
+- apps/web/src/hooks/__tests__/useAddBenchmarkScore.test.ts (NEW)
+- apps/web/src/schemas/__tests__/benchmarkScoreSchema.test.ts (NEW - Zod schema validation tests)
+
+**E2E Test Files:**
+- tests/e2e/admin/benchmark-scores.spec.ts (NEW - Playwright E2E test for full workflow)
+    </locations>
+
+    <ideas>
+<!-- 34 test ideas mapped to acceptance criteria -->
+
+**AC #1, #2 - Benchmark Scores Section and Form (12 tests)**
+
+1. BenchmarkScoreForm renders all input fields (benchmark selector, score, maxScore, testDate, sourceUrl, verified, notes)
+2. Model selector populated with active models (or hidden if modelId prop provided)
+3. Benchmark selector grouped by category (5 groups: Reasoning, Code, Math, Language, Multimodal)
+4. Benchmark selector disables benchmarks that already have scores for selected model (duplicate prevention)
+5. Typical range displayed below benchmark selector ("Typical Range: 0 - 100")
+6. Interpretation displayed ("Interpretation: Higher is better" or "Lower is better")
+7. Selecting different benchmark updates typical range and interpretation reactively
+8. Component tests: form renders in create mode, modelId pre-selected
+9. Component tests: benchmark dropdown shows grouped options
+10. Component tests: typical range helper text updates on benchmark change
+11. Integration test: BenchmarkScoresList component displays existing scores in table
+12. E2E test: Navigate to EditModelPage → Benchmark Scores section → Add New Score button opens form
+
+**AC #3, #4 - Score Input and Validation (10 tests)**
+
+13. Zod schema: score field required, shows error "Score is required" when empty
+14. Zod schema: maxScore >= score validation, shows error "Score cannot exceed max score" when violated
+15. Zod schema: sourceUrl must be valid URL format (or empty), shows error "Must be a valid URL" for invalid input
+16. Zod schema: testDate accepts ISO date string, optional field
+17. Zod schema: notes max 500 characters, shows error "Maximum 500 characters" when exceeded
+18. Out-of-range warning: score < TypicalRangeMin shows warning icon and message "Score is outside typical range"
+19. Out-of-range warning: score > TypicalRangeMax shows warning icon and message
+20. Out-of-range warning: form submission ALLOWED (warning doesn't block), admin can override
+21. FluentValidation unit test: CreateBenchmarkScoreValidator validates BenchmarkId required
+22. FluentValidation unit test: Score required, maxScore >= score when provided, sourceUrl BeValidUrl when provided
+
+**AC #5 - POST Endpoint Implementation (12 tests)**
+
+23. Unit test: AddScoreAsync creates BenchmarkScore entity with correct Score, BenchmarkId, ModelId
+24. Unit test: AddScoreAsync calls BenchmarkNormalizer.Normalize with score, TypicalRangeMin, TypicalRangeMax
+25. Unit test: AddScoreAsync sets NormalizedScore to result of Normalize (e.g., 0.75 for score=75, min=0, max=100)
+26. Unit test: AddScoreAsync sets TestDate to UtcNow if dto.TestDate is null
+27. Unit test: AddScoreAsync throws NotFoundException if model doesn't exist
+28. Unit test: AddScoreAsync throws NotFoundException if benchmark doesn't exist
+29. Unit test: AddScoreAsync throws InvalidOperationException "Score already exists" if duplicate (ModelId, BenchmarkId) found
+30. Integration test: POST /api/admin/models/{id}/benchmarks with valid data returns 201 Created
+31. Integration test: Response includes BenchmarkScoreResponseDto with normalized score
+32. Integration test: BenchmarkScore persisted to database with correct normalized_score value
+33. Integration test: Duplicate score (same ModelId + BenchmarkId) returns 400 Bad Request with error code "DUPLICATE_SCORE"
+34. Integration test: Non-existent model returns 400 Bad Request with error code "NOT_FOUND"
+35. Integration test: Non-existent benchmark returns 400 Bad Request
+36. Integration test: Cache invalidated after adding score (model detail cache, best value cache)
+37. Unit test: BenchmarkNormalizer.Normalize calculates correctly: (75 - 0) / (100 - 0) = 0.75
+38. Unit test: BenchmarkNormalizer edge case: min=max returns 1.0
+39. Unit test: BenchmarkNormalizer edge case: score=min returns 0.0
+40. Unit test: BenchmarkNormalizer edge case: score=max returns 1.0
+41. Unit test: BenchmarkNormalizer outlier: score < min clamped to 0.0
+42. Unit test: BenchmarkNormalizer outlier: score > max clamped to 1.0
+
+**AC #6 - Benchmark Scores List Display (4 tests)**
+
+43. Component test: BenchmarkScoresList renders table with columns (benchmark name, score, max score, test date, verified)
+44. Component test: Verified scores show badge icon
+45. Component test: Scores grouped by benchmark category (5 groups)
+46. Component test: "No scores yet" message displayed when scores list empty
+
+**Additional Integration Tests (6 tests)**
+
+47. E2E test: Full workflow - login as admin → edit model → add benchmark score → see score in list → score appears in public model detail
+48. Integration test: Audit log entry created after adding score (EntityType="BENCHMARK_SCORE", Action="CREATE")
+49. Integration test: GetScoresByModelIdAsync repository method returns all scores for model with eager-loaded Benchmark navigation
+50. Integration test: Unique constraint enforced at database level (insert duplicate raises PostgreSQL unique violation exception)
+51. Component test: Form submission calls useAddBenchmarkScore mutation hook with correct payload
+52. Component test: On success, form resets or modal closes, toast notification shown "Benchmark score added successfully"
+    </ideas>
+  </tests>
+</story-context>

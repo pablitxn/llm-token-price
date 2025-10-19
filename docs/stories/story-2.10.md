@@ -1,6 +1,6 @@
 # Story 2.10: Create Benchmark Score Entry Form
 
-Status: Ready
+Status: ContextReadyDraft
 
 ## Story
 
@@ -521,7 +521,7 @@ export function BenchmarkScoreForm({ modelId }: { modelId: string }) {
 
 ### Context Reference
 
-<!-- Path(s) to story context XML will be added here by context workflow -->
+- `docs/stories/story-context-2.10.xml` (Generated: 2025-10-19)
 
 ### Agent Model Used
 
