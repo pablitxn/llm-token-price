@@ -1,6 +1,6 @@
 # Story 2.8: Create Delete Model Functionality
 
-Status: Ready
+Status: ContextReadyDraft
 
 ## Story
 
@@ -397,7 +397,7 @@ public async Task<IActionResult> RecoverModel(Guid id)
 
 ### Context Reference
 
-<!-- Path(s) to story context XML will be added here by context workflow -->
+- `docs/stories/story-context-2.8.xml` (Generated: 2025-10-19)
 
 ### Agent Model Used
 
