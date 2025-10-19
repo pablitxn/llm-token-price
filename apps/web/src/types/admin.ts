@@ -56,3 +56,21 @@ export type AdminModelsResponse = AdminApiResponse<AdminModelDto[]>
  * Single admin model API response type
  */
 export type AdminModelResponse = AdminApiResponse<AdminModelDto>
+
+/**
+ * Create model request payload
+ * Matches backend CreateModelDto structure
+ * Used for POST /api/admin/models
+ */
+export interface CreateModelRequest {
+  name: string
+  provider: string
+  version?: string
+  releaseDate?: string // ISO 8601 date string
+  status: 'active' | 'deprecated' | 'beta'
+  inputPricePer1M: number
+  outputPricePer1M: number
+  currency: string
+  pricingValidFrom?: string // ISO 8601 date string
+  pricingValidTo?: string // ISO 8601 date string
+}

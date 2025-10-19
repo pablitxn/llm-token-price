@@ -1,5 +1,9 @@
 import { apiClient } from './client'
-import type { AdminModelsResponse, AdminModelResponse } from '@/types/admin'
+import type {
+  AdminModelsResponse,
+  AdminModelResponse,
+  CreateModelRequest,
+} from '@/types/admin'
 
 /**
  * Authentication API response structure
@@ -100,4 +104,31 @@ export const getAdminModels = async (
 export const getAdminModelById = async (id: string): Promise<AdminModelResponse> => {
   const response = await apiClient.get<AdminModelResponse>(`/admin/models/${id}`)
   return response.data
+}
+
+/**
+ * Creates a new model in the admin panel
+ * Posts model data to backend API which validates and stores in database.
+ * On success, cache:models:* patterns are invalidated server-side.
+ *
+ * @param model - Create model request payload with all required fields
+ * @returns Promise resolving to created model with ID and audit timestamps
+ * @throws Error if validation fails (400 Bad Request with field details), unauthorized (401), or server error (500)
+ */
+export const createModel = async (
+  model: CreateModelRequest
+): Promise<AdminModelResponse> => {
+  const response = await apiClient.post<AdminModelResponse>('/admin/models', model)
+  return response.data
+}
+
+/**
+ * Deletes a model from the system (soft delete - sets isActive = false)
+ *
+ * @param id - Model unique identifier (GUID)
+ * @returns Promise resolving when deletion is successful
+ * @throws Error if model not found (404), unauthorized (401), or request fails (500)
+ */
+export const deleteAdminModel = async (id: string): Promise<void> => {
+  await apiClient.delete(`/admin/models/${id}`)
 }

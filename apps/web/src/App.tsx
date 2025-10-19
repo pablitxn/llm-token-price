@@ -7,6 +7,7 @@ import NotFoundPage from './pages/NotFoundPage'
 import AdminLoginPage from './pages/admin/AdminLoginPage'
 import AdminDashboardPage from './pages/admin/AdminDashboardPage'
 import AdminModelsPage from './pages/admin/AdminModelsPage'
+import { AddModelPage } from './pages/admin/AddModelPage'
 import AdminBenchmarksPage from './pages/admin/AdminBenchmarksPage'
 import AdminLayout from './components/layout/AdminLayout'
 import ProtectedRoute from './components/auth/ProtectedRoute'
@@ -35,6 +36,7 @@ export default function App() {
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<AdminDashboardPage />} />
         <Route path="models" element={<AdminModelsPage />} />
+        <Route path="models/new" element={<AddModelPage />} />
         <Route path="benchmarks" element={<AdminBenchmarksPage />} />
       </Route>
 
