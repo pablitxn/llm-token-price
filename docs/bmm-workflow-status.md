@@ -2,16 +2,16 @@
 
 **Project:** llm-token-price
 **Created:** 2025-10-16
-**Last Updated:** 2025-10-19 (Story 2.5 Complete with 137/137 Tests Passing)
+**Last Updated:** 2025-10-19 (Story 2.6 Complete with 259/259 Tests Passing)
 
 ---
 
 ## Current Status
 
 **Current Phase:** 4-Implementation → Epic 1 Complete, Epic 2 In Progress
-**Current Workflow:** None - Ready for next story
-**Current Story:** Ready to start Story 2.6 (Context Ready ✓)
-**Overall Progress:** 100% (Epic 1: 37 points) + 40% (Epic 2: 21/~50 points - Stories 2.1-2.5 Done, 2.6 Context Ready)
+**Current Workflow:** story-approved (Story 2.6)
+**Current Story:** Story 2.7 in progress (needs context generation)
+**Overall Progress:** 100% (Epic 1: 37 points) + 48% (Epic 2: 24/~50 points - Stories 2.1-2.6 Done, 2.7 In Progress)
 
 **🎉 EPIC 1 COMPLETE!** All 11 foundational stories delivered (37/37 points)
 
@@ -131,7 +131,6 @@
 | 2    | 3     | 2.3 | Build Models List View in Admin Panel | story-2.3.md |
 | 2    | 4     | 2.4 | Create Add New Model Form | story-2.4.md |
 | 2    | 5     | 2.5 | Create Backend API for Adding Models | story-2.5.md |
-| 2    | 6     | 2.6 | Add Capabilities Section to Model Form | story-2.6.md |
 | 2    | 7     | 2.7 | Create Edit Model Functionality | story-2.7.md |
 | 2    | 8     | 2.8 | Create Delete Model Functionality | story-2.8.md |
 | 2    | 9     | 2.9 | Create Benchmark Definitions Management | story-2.9.md |
@@ -195,7 +194,7 @@
 | 8    | 9     | 8.9 | Optimize Performance for Mobile Networks | story-8.9.md |
 | 8    | 10    | 8.10 | Add Progressive Web App (PWA) Features | story-8.10.md |
 
-**Total in backlog:** 68 stories (Epic 3 moved to DRAFTED)
+**Total in backlog:** 67 stories (Epic 3 moved to DRAFTED)
 
 ### TODO (Needs Drafting)
 
@@ -227,7 +226,12 @@
 
 ### IN PROGRESS (Approved for Development)
 
-No stories currently in progress - ready to start Story 2.6
+- **Story ID:** 2.7
+- **Story Title:** Create Edit Model Functionality
+- **Story File:** `docs/stories/story-2.7.md`
+- **Story Status:** Draft (needs context generation and review)
+- **Context File:** Context not yet generated
+- **Action:** SM should run `story-context` workflow to generate context, then DEV runs `dev-story` to implement
 
 **🎉 Epic 1 (Project Foundation & Data Infrastructure) is 100% COMPLETE!**
 
@@ -295,6 +299,7 @@ LLM Pricing Calculator - A comprehensive web application for comparing LLM model
 
 ## Decisions Log
 
+- **2025-10-19**: Story 2.6 (Add Capabilities Section to Model Form) approved and marked done by DEV agent. All 6 acceptance criteria met with comprehensive test coverage (259/259 tests passing - 100% pass rate). Implementation complete: Frontend CapabilitiesSection component with React Hook Form + Zod validation (2 number inputs for contextWindow 1K-2M range and maxOutputTokens, 6 capability checkboxes), extended Zod schema with cross-field validation (maxOutput ≤ contextWindow), backend CreateCapabilityRequest DTO with CreateCapabilityValidator using FluentValidation, AdminModelService updated to map capabilities from DTO to entity. Test coverage: 26 component tests in CapabilitiesSection.test.tsx covering rendering/interaction/accessibility, 10 integration tests in ModelForm.test.tsx covering form submission/validation/capabilities payload, all backend tests updated with CreateValidCapabilities() helper. Story moved from BACKLOG → DONE. Story 2.7 (Edit Model Functionality) moved from BACKLOG → IN PROGRESS. Total completed: 17 stories, 61 points (Epic 1: 37 pts + Epic 2: 24 pts). Epic 2 progress: 48% (6/12+ stories). Next: Generate context for Story 2.7 or choose different story.
 - **2025-10-19**: Story 2.5 (Create Backend API for Adding Models) marked DONE. Implementation complete with 73 new tests (137/137 total tests passing). Backend POST /api/admin/models endpoint fully implemented with FluentValidation (CreateModelValidator with 8 validation rules), AdminModelService.CreateModelAsync with duplicate detection and UTC date parsing, repository methods (CreateModelAsync, CreateCapabilityAsync, GetByNameAndProviderAsync), and comprehensive test coverage. Test breakdown: 55 unit tests for CreateModelValidator covering all validation rules (required fields, positive prices, decimal precision 6 max, string lengths Name 255/Provider 100, enum validation Status/Currency, date range ValidFrom<ValidTo, optional fields), 8 unit tests for AdminModelService with Moq covering business logic (model creation with correct properties/timestamps/IsActive, capability defaults ContextWindow=0/SupportsStreaming=true, duplicate detection case-insensitive, date parsing with UTC DateTimeKind), 10 integration tests for POST endpoint covering full API flow (401 without JWT, 201 Created with Location header, Model+Capability database persistence, 400 for invalid data/non-positive prices/duplicate name+provider/invalid Status enum/invalid Currency enum, full AdminModelDto response). Bug fixed during implementation: PostgreSQL DateTime UTC requirement resolved with DateTime.SpecifyKind(..., DateTimeKind.Utc) for parsed date fields (ReleaseDate, PricingValidFrom, PricingValidTo). Quality metrics achieved: Build time <30s, test pyramid 70% unit/25% integration/5% E2E, test-to-code ratio 2.6:1 (650 test lines / 250 production lines). Files created: CreateModelValidator.cs (FluentValidation validator), CreateModelValidatorTests.cs (55 tests), AdminModelServiceTests.cs (8 tests). Files modified: IAdminModelRepository.cs (3 new methods), AdminModelRepository.cs (implementations), IAdminModelService.cs (CreateModelAsync signature), AdminModelService.cs (CreateModelAsync implementation with duplicate check + UTC dates), AdminModelsController.cs (POST endpoint replacing placeholder), Program.cs (FluentValidation DI registration), LlmTokenPrice.Application.csproj (FluentValidation packages 11.3.0/11.5.1), AdminModelsApiTests.cs (10 integration tests + SingleAdminApiResponse type). Story 2.5 connects with Story 2.4 frontend form - full create model flow now operational. Progress: 34% → 40% (21/~50 points Epic 2). Next: Choose to implement Story 2.6 (Add Capabilities Section) or move to different Epic 2 story.
 - **2025-10-19**: Completed story-context for Story 2.6 (Add Capabilities Section to Model Form). Context file: docs/stories/story-context-2.6.xml. Comprehensive context generated extending Story 2.4 frontend form and Story 2.5 backend API with capabilities support. Documentation artifacts (6): tech-spec-epic-2.md defining CreateCapabilityDto with 8 fields (ContextWindow int, MaxOutputTokens int?, 6 bool flags), AdminModelService orchestration pattern, solution-architecture.md model_capabilities table schema (one-to-one with models via unique model_id FK), story-2.4.md ModelForm.tsx structure (BasicInfo + Pricing sections, CapabilitiesSection to add), story-2.5.md default capabilities creation pattern (to change from defaults to DTO mapping), story-2.6.md complete Zod/FluentValidation examples. Code artifacts (5): ModelForm.tsx current implementation (lines 187-291 Pricing section, insert Capabilities section before line 293), modelSchema.ts Zod schema to extend with capabilities object (shows refine() pattern lines 63-75 for cross-field validation), useCreateModel.ts mutation hook (no changes needed, accepts extended CreateModelRequest), CreateModelRequest.cs backend DTO (add Capabilities property), Capability.cs domain entity (field names, types, defaults, one-to-one relationship). Dependencies: All already installed (React Hook Form 7, Zod 3, @hookform/resolvers 3 for frontend; FluentValidation.AspNetCore 11.3.0 for backend). Constraints (21 across 5 categories): architectural (form component architecture with useFormContext, nested object validation with dot notation register paths, transaction boundary maintained, domain purity with separate Zod/FluentValidation layers), validation (context window required int min 1000 max 2M both client/server, max output optional &lt;= context window cross-field validation, boolean defaults streaming=true others=false, double-layer consistency), ui-ux (visual section separation with border-t/pt-6/mt-6, field organization grid-cols-2 for context fields and checkboxes, input formatting with placeholders 128000/4096, checkbox labels with tooltips explaining capabilities, inline error display), api-integration (request payload extension with nested capabilities object, response format with AdminCapabilityDto, backward compatibility with Story 2.5 default capabilities models), testing (component coverage for CapabilitiesSection 8 fields rendering/validation/toggles/tooltips, integration test extension for POST with capabilities payload/validation/persistence, form submission test with all 3 sections). Interfaces (6): CapabilitiesSection component using useFormContext, extended createModelSchema with capabilities z.object and refine, CreateCapabilityDto C# record (8 properties), extended CreateModelRequest with Capabilities property, CapabilitiesValidator with range/conditional rules, extended AdminModelService.CreateModelAsync mapping DTO to entity. Testing standards: Vitest + Testing Library for frontend, xUnit + FluentAssertions for backend, TestContainers for integration, Given-When-Then structure. Test locations (6): CapabilitiesSection.test.tsx (new), ModelForm.test.tsx (extend), modelSchema.test.ts (extend), CapabilitiesValidatorTests.cs (new), AdminModelServiceTests.cs (extend), AdminModelsControllerTests.cs (extend POST tests). Test ideas (25 tests): 14 component/unit tests for CapabilitiesSection rendering/validation/defaults/tooltips, 8 Zod schema unit tests for context window/max output validation rules, 7 backend unit tests for CapabilitiesValidator/AdminModelService, 6 integration tests for POST with capabilities payload/persistence/validation/GET response, 1 E2E full creation flow. Story 2.6 extends Stories 2.4 (frontend form) and 2.5 (backend API) to capture admin-specified capabilities instead of defaults: frontend adds CapabilitiesSection with 2 number inputs (contextWindow required 1K-2M, maxOutputTokens optional &lt;=contextWindow) and 6 checkboxes (function calling, vision, audio input/output, streaming default checked, JSON mode), backend extends CreateModelRequest with CreateCapabilityDto nested object validated by CapabilitiesValidator, AdminModelService.CreateModelAsync maps dto.Capabilities to Capability entity in same transaction. Both client Zod and server FluentValidation enforce matching rules. Backward compatible with Story 2.5 models (contextWindow=0 defaults). Edit form pre-population prepared for Story 2.7. Progress: 34% → 35%. Next: Load DEV agent and run dev-story workflow to implement CapabilitiesSection component, extend Zod schema, create CreateCapabilityDto/CapabilitiesValidator, modify AdminModelService mapping, and comprehensive test coverage.
 - **2025-10-19**: Completed story-context for Story 2.5 (Create Backend API for Adding Models). Context file: docs/stories/story-context-2.5.xml. Comprehensive context generated with 6 documentation artifacts (tech-spec-epic-2.md sections for DTOs/validation/API specs/AdminModelService, solution-architecture.md for hexagonal architecture and API contracts, story-2.5.md implementation details), 9 code artifacts (AdminModelsController.cs existing pattern with POST placeholder lines 212-238, CreateModelRequest.cs DTO already defined, IAdminModelService/AdminModelService for service patterns, IAdminModelRepository/AdminModelRepository for repository patterns, Model.cs and Capability.cs entities for field mapping), 5 backend dependencies (FluentValidation.AspNetCore 11.3.0 + DI Extensions 11.5.1 already installed, EF Core 9.0.10, JWT Bearer 9.0.10, Serilog 8.0.0), 24 constraints across 5 categories (architectural: hexagonal boundaries/transaction management/domain purity/service layer pattern; validation: double-layer Zod+FluentValidation/required fields/pricing rules/string lengths/enum validation/date range/duplicate detection; api-contract: AdminApiResponse wrapper/HTTP status codes/Location header/error format/JWT auth/cache invalidation; database: soft delete with IsActive/UTC timestamps/one-to-one relationship/default capability values/cascade delete; testing: 70/25/5 test pyramid/TestContainers/validation coverage/repository mocking/JWT test auth), 6 interface definitions (POST /api/admin/models endpoint, IAdminModelService.CreateModelAsync, IAdminModelRepository.CreateModelAsync/CreateCapabilityAsync/GetByNameAndProviderAsync, CreateModelValidator FluentValidation class), testing standards from Epic 1 Story 1.11 (xUnit + FluentAssertions, TestContainers, WebApplicationFactory, ArchUnitNET, Given-When-Then), 4 test locations, and 22 test ideas mapped to 6 acceptance criteria covering unit tests (CreateModelValidator with 8 validation rule tests, AdminModelService with 4 business logic tests), integration tests (API endpoint with 7 scenarios including auth/valid data/invalid data/duplicates/persistence, repository with 2 tests), and 1 E2E full creation flow test. Context documents complete backend implementation: AdminModelsController POST action with [Authorize] JWT auth → AdminModelService.CreateModelAsync orchestration → IAdminModelRepository port for persistence, FluentValidation with CreateModelValidator (required fields, positive prices with 6 decimal max, enum validation for Status/Currency, conditional date range), Model + Capability creation in single EF Core transaction, duplicate detection via GetByNameAndProviderAsync, cache invalidation (cache:models:*, cache:bestvalue:*), audit logging, 201 Created response with Location header and AdminModelDto, comprehensive error handling (400 validation errors, 401 unauthorized, 500 internal errors). Story moved from BACKLOG → IN PROGRESS with context file. Progress: 33% → 34%. Next: Load DEV agent and run dev-story workflow to implement POST /api/admin/models endpoint, CreateModelValidator, AdminModelService.CreateModelAsync, repository methods, and comprehensive test coverage.
@@ -350,15 +355,15 @@ LLM Pricing Calculator - A comprehensive web application for comparing LLM model
 
 ## What to do next
 
-**What to do next:** 🚀 **Story 2.5 Ready for Implementation!**
+**What to do next:** 🚀 **Story 2.7 Moved to IN PROGRESS!**
 
-**Command to run:** Load DEV agent and run `/dev-story 2.5` to begin implementation
+**Command to run:** Load SM agent and run `story-context 2.7` to generate context, then load DEV agent for implementation
 
-**Current Story:** Story 2.5 - Create Backend API for Adding Models
-- **Status:** Ready ✓ (needs story-context-2.5.xml generation)
+**Current Story:** Story 2.7 - Create Edit Model Functionality
+- **Status:** Draft (needs context generation)
 - **Epic:** 2 - Model Data Management & Admin CRUD
-- **Story Points:** 5 (estimated)
-- **Implementation Scope:** Backend POST /api/admin/models endpoint, AdminModelService, FluentValidation, integration tests
+- **Story Points:** 3 (estimated)
+- **Implementation Scope:** Edit model form, GET /api/admin/models/{id}, PUT /api/admin/models/{id}, update validation, integration tests
 
 **Context:**
 - **Epic 1 (Project Foundation & Data Infrastructure):** 100% COMPLETE ✅

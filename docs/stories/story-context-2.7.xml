@@ -1,0 +1,52 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>2.7</storyId>
+    <title>Create Edit Model Functionality</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-19</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-2.7.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>an administrator</asA>
+    <iWant>to edit existing models</iWant>
+    <soThat>I can update pricing or correct information</soThat>
+    <tasks>
+      <task id="1" ac="1,2">Create edit model page (EditModelPage.tsx) with route /admin/models/:id/edit, fetch model data via useQuery, show loading/error states, reuse ModelForm component with mode prop</task>
+      <task id="2" ac="2">Pre-populate form with existing data by passing fetched model to ModelForm as defaultValues, handle date field conversion from ISO strings</task>
+      <task id="3" ac="2">Update ModelForm to support edit mode: add mode prop ('create'|'edit'), conditional title/button text, disable immutable fields (name, provider), use appropriate mutation hook</task>
+      <task id="4" ac="3">Create PUT /api/admin/models/{id} endpoint in AdminModelsController with [Authorize], accept UpdateModelDto, return 200 OK or 404</task>
+      <task id="5" ac="4,5">Implement UpdateModelAsync in AdminModelService: fetch existing model, validate, update model+capabilities in transaction, set updated_at timestamp, invalidate cache</task>
+      <task id="6" ac="3">Create UpdateModelDto and UpdateModelValidator with same validation rules as Create, register in DI</task>
+      <task id="7" ac="6">Implement frontend useUpdateModel hook with TanStack Query mutation, invalidate cache, navigate on success, show toast confirmation</task>
+      <task id="8">Add optimistic updates (optional enhancement - defer to post-MVP)</task>
+      <task id="9" ac="4">Add audit logging for updates with before/after diff in changes_json field</task>
+      <task id="10">Add comprehensive testing: component tests (form pre-population, submission), unit tests (validator, service), integration tests (PUT endpoint with valid/invalid/404 cases), verify updated_at changes</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">Edit model form loads existing model data</criterion>
+    <criterion id="AC2">Form pre-populated with all current values (basic info, pricing, capabilities)</criterion>
+    <criterion id="AC3">PUT /api/admin/models/{id} endpoint created</criterion>
+    <criterion id="AC4">Endpoint updates model and capabilities in database</criterion>
+    <criterion id="AC5">Updated_at timestamp refreshed on save</criterion>
+    <criterion id="AC6">Success redirects to models list with confirmation</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>{{docs_artifacts}}</docs>
+    <code>{{code_artifacts}}</code>
+    <dependencies>{{dependencies_artifacts}}</dependencies>
+  </artifacts>
+
+  <constraints>{{constraints}}</constraints>
+  <interfaces>{{interfaces}}</interfaces>
+  <tests>
+    <standards>{{test_standards}}</standards>
+    <locations>{{test_locations}}</locations>
+    <ideas>{{test_ideas}}</ideas>
+  </tests>
+</story-context>
