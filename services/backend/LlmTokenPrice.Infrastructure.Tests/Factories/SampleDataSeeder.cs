@@ -1,5 +1,6 @@
 using Bogus;
 using LlmTokenPrice.Domain.Entities;
+using LlmTokenPrice.Domain.Enums;
 
 namespace LlmTokenPrice.Infrastructure.Tests.Factories;
 
@@ -62,29 +63,29 @@ public static class SampleDataSeeder
     /// <param name="benchmarkName">Optional benchmark name (e.g., "MMLU", "HumanEval")</param>
     /// <param name="category">Optional category (e.g., "Reasoning", "Code", "Math")</param>
     /// <returns>A Benchmark entity with description and category</returns>
-    public static Benchmark CreateBenchmark(string? benchmarkName = null, string? category = null)
+    public static Benchmark CreateBenchmark(string? benchmarkName = null, BenchmarkCategory? category = null)
     {
-        var standardBenchmarks = new Dictionary<string, string>
+        var standardBenchmarks = new Dictionary<string, BenchmarkCategory>
         {
-            { "MMLU", "Reasoning" },
-            { "HumanEval", "Code" },
-            { "GSM8K", "Math" },
-            { "HELM", "Language" },
-            { "MT-Bench", "Language" },
-            { "Big-Bench Hard", "Reasoning" },
-            { "MBPP", "Code" },
-            { "TruthfulQA", "Language" },
-            { "HellaSwag", "Language" },
-            { "MATH", "Math" }
+            { "MMLU", BenchmarkCategory.Reasoning },
+            { "HumanEval", BenchmarkCategory.Code },
+            { "GSM8K", BenchmarkCategory.Math },
+            { "HELM", BenchmarkCategory.Language },
+            { "MT-Bench", BenchmarkCategory.Language },
+            { "Big-Bench Hard", BenchmarkCategory.Reasoning },
+            { "MBPP", BenchmarkCategory.Code },
+            { "TruthfulQA", BenchmarkCategory.Language },
+            { "HellaSwag", BenchmarkCategory.Language },
+            { "MATH", BenchmarkCategory.Math }
         };
 
         string name;
-        string benchmarkCategory;
+        BenchmarkCategory benchmarkCategory;
 
         if (benchmarkName != null)
         {
             name = benchmarkName;
-            benchmarkCategory = category ?? standardBenchmarks.GetValueOrDefault(benchmarkName, "General");
+            benchmarkCategory = category ?? standardBenchmarks.GetValueOrDefault(benchmarkName, BenchmarkCategory.Reasoning);
         }
         else
         {
@@ -97,8 +98,10 @@ public static class SampleDataSeeder
         {
             Id = Guid.NewGuid(),
             BenchmarkName = name,
-            Description = $"Measures {benchmarkCategory.ToLower()} capabilities using {name} dataset",
+            Description = $"Measures {benchmarkCategory.ToString().ToLower()} capabilities using {name} dataset",
             Category = benchmarkCategory,
+            Interpretation = BenchmarkInterpretation.HigherBetter,
+            WeightInQaps = 0.30m,
             CreatedAt = DateTime.UtcNow
         };
     }
@@ -174,11 +177,11 @@ public static class SampleDataSeeder
     {
         return new List<Benchmark>
         {
-            CreateBenchmark("MMLU", "Reasoning"),
-            CreateBenchmark("HumanEval", "Code"),
-            CreateBenchmark("GSM8K", "Math"),
-            CreateBenchmark("HELM", "Language"),
-            CreateBenchmark("MT-Bench", "Language")
+            CreateBenchmark("MMLU", BenchmarkCategory.Reasoning),
+            CreateBenchmark("HumanEval", BenchmarkCategory.Code),
+            CreateBenchmark("GSM8K", BenchmarkCategory.Math),
+            CreateBenchmark("HELM", BenchmarkCategory.Language),
+            CreateBenchmark("MT-Bench", BenchmarkCategory.Language)
         };
     }
 

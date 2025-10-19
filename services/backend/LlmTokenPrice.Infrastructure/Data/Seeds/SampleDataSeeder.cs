@@ -1,4 +1,5 @@
 using LlmTokenPrice.Domain.Entities;
+using LlmTokenPrice.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -74,8 +75,9 @@ public static class SampleDataSeeder
                 BenchmarkName = "MMLU",
                 FullName = "Massive Multitask Language Understanding",
                 Description = "Measures general knowledge and reasoning across 57 academic subjects including STEM, humanities, and social sciences.",
-                Category = "reasoning",
-                Interpretation = "higher_better",
+                Category = BenchmarkCategory.Reasoning,
+                Interpretation = BenchmarkInterpretation.HigherBetter,
+                WeightInQaps = 0.30m,
                 TypicalRangeMin = 0,
                 TypicalRangeMax = 100,
                 CreatedAt = now
@@ -86,8 +88,9 @@ public static class SampleDataSeeder
                 BenchmarkName = "HumanEval",
                 FullName = "HumanEval Code Generation",
                 Description = "Evaluates code generation capability using 164 handwritten programming problems with unit tests.",
-                Category = "code",
-                Interpretation = "higher_better",
+                Category = BenchmarkCategory.Code,
+                Interpretation = BenchmarkInterpretation.HigherBetter,
+                WeightInQaps = 0.25m,
                 TypicalRangeMin = 0,
                 TypicalRangeMax = 100,
                 CreatedAt = now
@@ -98,8 +101,9 @@ public static class SampleDataSeeder
                 BenchmarkName = "GSM8K",
                 FullName = "Grade School Math 8K",
                 Description = "Tests mathematical reasoning with 8,500 grade school math word problems requiring multi-step solutions.",
-                Category = "math",
-                Interpretation = "higher_better",
+                Category = BenchmarkCategory.Math,
+                Interpretation = BenchmarkInterpretation.HigherBetter,
+                WeightInQaps = 0.20m,
                 TypicalRangeMin = 0,
                 TypicalRangeMax = 100,
                 CreatedAt = now
@@ -110,8 +114,9 @@ public static class SampleDataSeeder
                 BenchmarkName = "HELM",
                 FullName = "Holistic Evaluation of Language Models",
                 Description = "Comprehensive evaluation framework measuring accuracy, calibration, robustness, fairness, and efficiency.",
-                Category = "language",
-                Interpretation = "higher_better",
+                Category = BenchmarkCategory.Language,
+                Interpretation = BenchmarkInterpretation.HigherBetter,
+                WeightInQaps = 0.15m,
                 TypicalRangeMin = 0,
                 TypicalRangeMax = 100,
                 CreatedAt = now
@@ -122,8 +127,9 @@ public static class SampleDataSeeder
                 BenchmarkName = "MT-Bench",
                 FullName = "Multi-Turn Benchmark",
                 Description = "Evaluates conversational and instruction-following capabilities through multi-turn dialogues.",
-                Category = "reasoning",
-                Interpretation = "higher_better",
+                Category = BenchmarkCategory.Reasoning,
+                Interpretation = BenchmarkInterpretation.HigherBetter,
+                WeightInQaps = 0.30m,
                 TypicalRangeMin = 0,
                 TypicalRangeMax = 10,
                 CreatedAt = now

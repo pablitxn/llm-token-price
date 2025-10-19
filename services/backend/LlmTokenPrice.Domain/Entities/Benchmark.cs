@@ -1,3 +1,5 @@
+using LlmTokenPrice.Domain.Enums;
+
 namespace LlmTokenPrice.Domain.Entities;
 
 /// <summary>
@@ -37,17 +39,17 @@ public class Benchmark
 
     /// <summary>
     /// Category classification for benchmark grouping and QAPS weighting.
-    /// Valid values: "reasoning", "code", "math", "language", "multimodal".
-    /// Optional field allowing null for uncategorized benchmarks.
+    /// Valid values: Reasoning, Code, Math, Language, Multimodal.
+    /// Required field for proper QAPS calculation and benchmark organization.
     /// </summary>
-    public string? Category { get; set; }
+    public BenchmarkCategory Category { get; set; }
 
     /// <summary>
-    /// Interpretation rule for score comparison ("higher_better" or "lower_better").
+    /// Interpretation rule for score comparison (HigherBetter or LowerBetter).
     /// Used to normalize scores for QAPS calculation and ranking.
-    /// Optional field (defaults to "higher_better" if not specified).
+    /// Required field (defaults to HigherBetter if not specified).
     /// </summary>
-    public string? Interpretation { get; set; }
+    public BenchmarkInterpretation Interpretation { get; set; }
 
     /// <summary>
     /// Minimum value in typical score range (e.g., 0 for percentages, 1 for rankings).
@@ -64,9 +66,27 @@ public class Benchmark
     public decimal? TypicalRangeMax { get; set; }
 
     /// <summary>
+    /// Weight assigned to this benchmark in QAPS calculation (0.00 to 1.00).
+    /// Determines the contribution of this benchmark to the composite quality score.
+    /// Stored as decimal(3,2) for precision. Default: 0.00
+    /// </summary>
+    /// <remarks>
+    /// Typical weights by category:
+    /// - Reasoning: 0.30, Code: 0.25, Math: 0.20, Language: 0.15, Multimodal: 0.10
+    /// Admin can customize per benchmark for fine-tuned quality calculations.
+    /// </remarks>
+    public decimal WeightInQaps { get; set; }
+
+    /// <summary>
     /// Timestamp when benchmark definition was created. Required audit field.
     /// </summary>
     public DateTime CreatedAt { get; set; }
+
+    /// <summary>
+    /// Soft-delete flag. When false, benchmark is hidden from public queries but preserved for audit trail.
+    /// Default: true (active). Set to false instead of hard-deleting for data integrity.
+    /// </summary>
+    public bool IsActive { get; set; } = true;
 
     // Navigation Properties
 

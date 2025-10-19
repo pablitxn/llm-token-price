@@ -110,6 +110,7 @@ builder.Services.AddScoped<ICacheRepository, RedisCacheRepository>();
 // Domain repositories (scoped)
 builder.Services.AddScoped<IModelRepository, ModelRepository>();
 builder.Services.AddScoped<IAdminModelRepository, AdminModelRepository>();
+builder.Services.AddScoped<IBenchmarkRepository, BenchmarkRepository>();
 
 // Application services (scoped)
 builder.Services.AddScoped<IModelQueryService, ModelQueryService>();
