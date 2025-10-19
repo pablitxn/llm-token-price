@@ -346,7 +346,7 @@ public class CreateModelValidator : AbstractValidator<CreateModelDto>
 
 ### Context Reference
 
-<!-- Path(s) to story context XML will be added here by context workflow -->
+- docs/stories/story-context-2.5.xml (✅ Generated: 2025-10-19)
 
 ### Agent Model Used
 

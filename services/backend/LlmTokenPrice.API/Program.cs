@@ -1,5 +1,8 @@
 using System.Text;
+using FluentValidation;
+using FluentValidation.AspNetCore;
 using LlmTokenPrice.Application.Services;
+using LlmTokenPrice.Application.Validators;
 using LlmTokenPrice.Domain.Repositories;
 using LlmTokenPrice.Infrastructure.Auth;
 using LlmTokenPrice.Infrastructure.Caching;
@@ -19,6 +22,11 @@ builder.Services.AddControllers().AddJsonOptions(options =>
     options.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
     options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
 });
+
+// FluentValidation configuration
+builder.Services.AddValidatorsFromAssemblyContaining<CreateModelValidator>();
+builder.Services.AddFluentValidationAutoValidation();
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {

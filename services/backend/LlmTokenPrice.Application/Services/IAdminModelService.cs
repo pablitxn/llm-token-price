@@ -58,4 +58,23 @@ public interface IAdminModelService
     /// Model will no longer appear in public API but remains in database for audit trail.
     /// </remarks>
     Task<bool> DeleteModelAsync(Guid id, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Creates a new model with default capabilities in the database.
+    /// Validates request, checks for duplicates, and persists model + capabilities in single transaction.
+    /// </summary>
+    /// <param name="request">The model creation request with all required fields.</param>
+    /// <param name="cancellationToken">Cancellation token for async operation.</param>
+    /// <returns>The unique identifier (GUID) of the created model.</returns>
+    /// <exception cref="InvalidOperationException">Thrown when duplicate model (same name + provider) exists.</exception>
+    /// <remarks>
+    /// This method:
+    /// 1. Validates request using FluentValidation (automatically via middleware)
+    /// 2. Checks for duplicate model (case-insensitive name + provider)
+    /// 3. Creates Model entity with timestamps (CreatedAt, UpdatedAt = DateTime.UtcNow, IsActive = true)
+    /// 4. Creates Capability entity with default values (ContextWindow=0, all flags=false except SupportsStreaming=true)
+    /// 5. Persists both entities in single EF Core transaction
+    /// 6. Returns new model GUID for Location header in controller
+    /// </remarks>
+    Task<Guid> CreateModelAsync(CreateModelRequest request, CancellationToken cancellationToken = default);
 }

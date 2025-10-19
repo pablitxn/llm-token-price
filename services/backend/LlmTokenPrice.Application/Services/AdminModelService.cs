@@ -56,6 +56,66 @@ public class AdminModelService : IAdminModelService
         return await _adminRepository.DeleteModelAsync(id, cancellationToken);
     }
 
+    /// <inheritdoc />
+    public async Task<Guid> CreateModelAsync(CreateModelRequest request, CancellationToken cancellationToken = default)
+    {
+        // 1. Check for duplicate model (case-insensitive name + provider)
+        var existingModel = await _adminRepository.GetByNameAndProviderAsync(
+            request.Name,
+            request.Provider,
+            cancellationToken);
+
+        if (existingModel != null)
+        {
+            throw new InvalidOperationException(
+                $"A model with name '{request.Name}' and provider '{request.Provider}' already exists.");
+        }
+
+        // 2. Create Model entity from request
+        var model = new Model
+        {
+            Id = Guid.NewGuid(),
+            Name = request.Name,
+            Provider = request.Provider,
+            Version = request.Version,
+            ReleaseDate = !string.IsNullOrEmpty(request.ReleaseDate)
+                ? DateTime.SpecifyKind(DateTime.Parse(request.ReleaseDate), DateTimeKind.Utc)
+                : null,
+            Status = request.Status,
+            InputPricePer1M = request.InputPricePer1M,
+            OutputPricePer1M = request.OutputPricePer1M,
+            Currency = request.Currency,
+            PricingValidFrom = !string.IsNullOrEmpty(request.PricingValidFrom)
+                ? DateTime.SpecifyKind(DateTime.Parse(request.PricingValidFrom), DateTimeKind.Utc)
+                : null,
+            PricingValidTo = !string.IsNullOrEmpty(request.PricingValidTo)
+                ? DateTime.SpecifyKind(DateTime.Parse(request.PricingValidTo), DateTimeKind.Utc)
+                : null,
+            // Timestamps and IsActive set by repository
+        };
+
+        // 3. Create Capability entity with default values
+        var capability = new Capability
+        {
+            Id = Guid.NewGuid(),
+            ModelId = model.Id,
+            ContextWindow = 0, // Unknown by default
+            MaxOutputTokens = null, // Unknown by default
+            SupportsFunctionCalling = false,
+            SupportsVision = false,
+            SupportsAudioInput = false,
+            SupportsAudioOutput = false,
+            SupportsStreaming = true, // Default for modern LLMs
+            SupportsJsonMode = false
+        };
+
+        // 4. Persist model and capability in single transaction
+        var modelId = await _adminRepository.CreateModelAsync(model, cancellationToken);
+        await _adminRepository.CreateCapabilityAsync(capability, cancellationToken);
+
+        return modelId;
+    }
+
     /// <summary>
     /// Maps a Model entity to an AdminModelDto for admin API response.
     /// Includes all fields including CreatedAt, IsActive, and nested data.
