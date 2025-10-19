@@ -36,7 +36,7 @@ describe('AdminLayout', () => {
           <Route index element={<div>Test Content</div>} />
         </Route>
       </Routes>,
-      { initialRoute: '/admin' }
+      { initialEntries: ['/admin'] }
     )
 
     expect(screen.getByTestId('admin-sidebar')).toBeInTheDocument()
@@ -50,7 +50,7 @@ describe('AdminLayout', () => {
           <Route index element={<div>Dashboard Content</div>} />
         </Route>
       </Routes>,
-      { initialRoute: '/admin' }
+      { initialEntries: ['/admin'] }
     )
 
     expect(screen.getByText('Dashboard Content')).toBeInTheDocument()
@@ -63,7 +63,7 @@ describe('AdminLayout', () => {
           <Route index element={<div>Test</div>} />
         </Route>
       </Routes>,
-      { initialRoute: '/admin' }
+      { initialEntries: ['/admin'] }
     )
 
     const sidebar = screen.getByTestId('admin-sidebar')
@@ -78,7 +78,7 @@ describe('AdminLayout', () => {
           <Route index element={<div>Test</div>} />
         </Route>
       </Routes>,
-      { initialRoute: '/admin' }
+      { initialEntries: ['/admin'] }
     )
 
     const menuButton = screen.getByTestId('menu-button')
@@ -96,7 +96,7 @@ describe('AdminLayout', () => {
           <Route index element={<div>Test</div>} />
         </Route>
       </Routes>,
-      { initialRoute: '/admin' }
+      { initialEntries: ['/admin'] }
     )
 
     // Open sidebar
@@ -119,7 +119,7 @@ describe('AdminLayout', () => {
           <Route index element={<div>Test</div>} />
         </Route>
       </Routes>,
-      { initialRoute: '/admin' }
+      { initialEntries: ['/admin'] }
     )
 
     // Initially no overlay
@@ -141,7 +141,7 @@ describe('AdminLayout', () => {
           <Route index element={<div>Test</div>} />
         </Route>
       </Routes>,
-      { initialRoute: '/admin' }
+      { initialEntries: ['/admin'] }
     )
 
     // Open sidebar
@@ -167,7 +167,7 @@ describe('AdminLayout', () => {
           <Route index element={<div>Test</div>} />
         </Route>
       </Routes>,
-      { initialRoute: '/admin' }
+      { initialEntries: ['/admin'] }
     )
 
     const layout = container.querySelector('.min-h-screen.bg-slate-50.flex')

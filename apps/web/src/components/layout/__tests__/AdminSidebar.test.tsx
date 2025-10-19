@@ -35,7 +35,7 @@ describe('AdminSidebar', () => {
 
   it('highlights active navigation item', () => {
     renderWithProviders(<AdminSidebar isOpen={true} onClose={onClose} />, {
-      initialRoute: '/admin/dashboard',
+      initialEntries: ['/admin/dashboard'],
     })
 
     const dashboardLink = screen.getByText('Dashboard').closest('a')
@@ -45,7 +45,7 @@ describe('AdminSidebar', () => {
 
   it('does not highlight inactive navigation items', () => {
     renderWithProviders(<AdminSidebar isOpen={true} onClose={onClose} />, {
-      initialRoute: '/admin/dashboard',
+      initialEntries: ['/admin/dashboard'],
     })
 
     const modelsLink = screen.getByText('Models').closest('a')

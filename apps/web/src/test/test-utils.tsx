@@ -5,7 +5,7 @@
 
 import { type ReactElement, type ReactNode } from 'react'
 import { render, type RenderOptions } from '@testing-library/react'
-import { BrowserRouter } from 'react-router-dom'
+import { MemoryRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 /**
@@ -30,9 +30,9 @@ function createTestQueryClient() {
  */
 interface CustomRenderOptions extends Omit<RenderOptions, 'wrapper'> {
   /**
-   * Initial route for react-router (default: '/')
+   * Initial route for react-router (default: ['/'])
    */
-  initialRoute?: string
+  initialEntries?: string[]
 
   /**
    * Custom QueryClient instance (creates new one if not provided)
@@ -46,20 +46,17 @@ interface CustomRenderOptions extends Omit<RenderOptions, 'wrapper'> {
 function AllTheProviders({
   children,
   queryClient,
-  initialRoute = '/',
+  initialEntries = ['/'],
 }: {
   children: ReactNode
   queryClient: QueryClient
-  initialRoute?: string
+  initialEntries?: string[]
 }) {
-  // Set initial route if provided
-  if (initialRoute !== '/') {
-    window.history.pushState({}, 'Test page', initialRoute)
-  }
-
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>{children}</BrowserRouter>
+      <MemoryRouter initialEntries={initialEntries}>
+        {children}
+      </MemoryRouter>
     </QueryClientProvider>
   )
 }
@@ -74,7 +71,7 @@ function AllTheProviders({
  *
  * test('renders login page', () => {
  *   const { getByRole } = renderWithProviders(<AdminLoginPage />, {
- *     initialRoute: '/admin/login'
+ *     initialEntries: ['/admin/login']
  *   })
  *   expect(getByRole('button', { name: /sign in/i })).toBeInTheDocument()
  * })
@@ -83,14 +80,14 @@ function AllTheProviders({
 export function renderWithProviders(
   ui: ReactElement,
   {
-    initialRoute = '/',
+    initialEntries = ['/'],
     queryClient = createTestQueryClient(),
     ...renderOptions
   }: CustomRenderOptions = {}
 ) {
   function Wrapper({ children }: { children: ReactNode }) {
     return (
-      <AllTheProviders queryClient={queryClient} initialRoute={initialRoute}>
+      <AllTheProviders queryClient={queryClient} initialEntries={initialEntries}>
         {children}
       </AllTheProviders>
     )

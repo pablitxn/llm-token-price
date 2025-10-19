@@ -29,7 +29,7 @@ describe('AdminLoginPage - Client-Side Validation (P1)', () => {
   test('P1-001: shows validation error for empty username', async () => {
     const user = userEvent.setup()
     renderWithProviders(<AdminLoginPage />, {
-      initialRoute: '/admin/login',
+      initialEntries: ['/admin/login'],
     })
 
     // Find form elements
@@ -56,7 +56,7 @@ describe('AdminLoginPage - Client-Side Validation (P1)', () => {
   test('P1-002: shows validation error for password < 6 characters', async () => {
     const user = userEvent.setup()
     renderWithProviders(<AdminLoginPage />, {
-      initialRoute: '/admin/login',
+      initialEntries: ['/admin/login'],
     })
 
     const usernameInput = screen.getByLabelText(/username/i)
@@ -82,7 +82,7 @@ describe('AdminLoginPage - Client-Side Validation (P1)', () => {
   test('P1-003: displays Zod validation errors inline with proper ARIA attributes', async () => {
     const user = userEvent.setup()
     renderWithProviders(<AdminLoginPage />, {
-      initialRoute: '/admin/login',
+      initialEntries: ['/admin/login'],
     })
 
     const usernameInput = screen.getByLabelText(/username/i)
@@ -117,7 +117,7 @@ describe('AdminLoginPage - Client-Side Validation (P1)', () => {
   test('P1-004: clears validation error when user corrects input', async () => {
     const user = userEvent.setup()
     renderWithProviders(<AdminLoginPage />, {
-      initialRoute: '/admin/login',
+      initialEntries: ['/admin/login'],
     })
 
     const usernameInput = screen.getByLabelText(/username/i)
@@ -152,7 +152,7 @@ describe('AdminLoginPage - Client-Side Validation (P1)', () => {
 describe('AdminLoginPage - Form Behavior (P1)', () => {
   test('P1-005: submit button is disabled when fields are empty', () => {
     renderWithProviders(<AdminLoginPage />, {
-      initialRoute: '/admin/login',
+      initialEntries: ['/admin/login'],
     })
 
     const submitButton = screen.getByRole('button', { name: /sign in/i })
@@ -165,7 +165,7 @@ describe('AdminLoginPage - Form Behavior (P1)', () => {
   test('P1-006: submit button is enabled when both fields have values', async () => {
     const user = userEvent.setup()
     renderWithProviders(<AdminLoginPage />, {
-      initialRoute: '/admin/login',
+      initialEntries: ['/admin/login'],
     })
 
     const usernameInput = screen.getByLabelText(/username/i)
@@ -198,7 +198,7 @@ describe('AdminLoginPage - Form Behavior (P1)', () => {
     })
 
     renderWithProviders(<AdminLoginPage />, {
-      initialRoute: '/admin/login',
+      initialEntries: ['/admin/login'],
     })
 
     const usernameInput = screen.getByLabelText(/username/i)
@@ -236,7 +236,7 @@ describe('AdminLoginPage - Form Behavior (P1)', () => {
     })
 
     renderWithProviders(<AdminLoginPage />, {
-      initialRoute: '/admin/login',
+      initialEntries: ['/admin/login'],
     })
 
     // Assert: error message should be displayed
@@ -254,7 +254,7 @@ describe('AdminLoginPage - Form Behavior (P1)', () => {
 describe('AdminLoginPage - Accessibility (P2)', () => {
   test('P2-001: form has proper ARIA labels for screen readers', () => {
     renderWithProviders(<AdminLoginPage />, {
-      initialRoute: '/admin/login',
+      initialEntries: ['/admin/login'],
     })
 
     const usernameInput = screen.getByLabelText(/username/i)
@@ -285,7 +285,7 @@ describe('AdminLoginPage - Accessibility (P2)', () => {
 
     const user = userEvent.setup()
     renderWithProviders(<AdminLoginPage />, {
-      initialRoute: '/admin/login',
+      initialEntries: ['/admin/login'],
     })
 
     const usernameInput = screen.getByLabelText(/username/i)
@@ -307,7 +307,7 @@ describe('AdminLoginPage - Accessibility (P2)', () => {
 
   test('P2-003: form has noValidate attribute to disable browser validation', () => {
     renderWithProviders(<AdminLoginPage />, {
-      initialRoute: '/admin/login',
+      initialEntries: ['/admin/login'],
     })
 
     const form = screen.getByRole('button', { name: /sign in/i }).closest('form')
@@ -321,7 +321,7 @@ describe('AdminLoginPage - Edge Cases (P2)', () => {
   test('P2-004: handles extremely long username input', async () => {
     const user = userEvent.setup()
     renderWithProviders(<AdminLoginPage />, {
-      initialRoute: '/admin/login',
+      initialEntries: ['/admin/login'],
     })
 
     const usernameInput = screen.getByLabelText(/username/i)
@@ -342,7 +342,7 @@ describe('AdminLoginPage - Edge Cases (P2)', () => {
   test('P2-005: handles extremely long password input', async () => {
     const user = userEvent.setup()
     renderWithProviders(<AdminLoginPage />, {
-      initialRoute: '/admin/login',
+      initialEntries: ['/admin/login'],
     })
 
     const usernameInput = screen.getByLabelText(/username/i)
