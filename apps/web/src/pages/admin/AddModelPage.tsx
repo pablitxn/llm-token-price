@@ -45,7 +45,7 @@ export function AddModelPage() {
       </div>
 
       {/* Model Form */}
-      <ModelForm />
+      <ModelForm mode="create" />
     </div>
   )
 }

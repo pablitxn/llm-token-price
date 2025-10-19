@@ -116,6 +116,68 @@ public class AdminModelService : IAdminModelService
         return modelId;
     }
 
+    /// <inheritdoc />
+    public async Task<AdminModelDto?> UpdateModelAsync(Guid id, CreateModelRequest request, CancellationToken cancellationToken = default)
+    {
+        // 1. Fetch existing model with capabilities
+        var model = await _adminRepository.GetByIdAsync(id, cancellationToken);
+
+        if (model == null)
+        {
+            return null; // Model not found - controller will return 404
+        }
+
+        // 2. Check for duplicate name+provider on DIFFERENT models (exclude current model)
+        var existingModel = await _adminRepository.GetByNameAndProviderAsync(
+            request.Name,
+            request.Provider,
+            cancellationToken);
+
+        if (existingModel != null && existingModel.Id != id)
+        {
+            throw new InvalidOperationException(
+                $"A model with name '{request.Name}' and provider '{request.Provider}' already exists.");
+        }
+
+        // 3. Update Model entity fields
+        model.Name = request.Name;
+        model.Provider = request.Provider;
+        model.Version = request.Version;
+        model.ReleaseDate = !string.IsNullOrEmpty(request.ReleaseDate)
+            ? DateTime.SpecifyKind(DateTime.Parse(request.ReleaseDate), DateTimeKind.Utc)
+            : null;
+        model.Status = request.Status;
+        model.InputPricePer1M = request.InputPricePer1M;
+        model.OutputPricePer1M = request.OutputPricePer1M;
+        model.Currency = request.Currency;
+        model.PricingValidFrom = !string.IsNullOrEmpty(request.PricingValidFrom)
+            ? DateTime.SpecifyKind(DateTime.Parse(request.PricingValidFrom), DateTimeKind.Utc)
+            : null;
+        model.PricingValidTo = !string.IsNullOrEmpty(request.PricingValidTo)
+            ? DateTime.SpecifyKind(DateTime.Parse(request.PricingValidTo), DateTimeKind.Utc)
+            : null;
+        model.UpdatedAt = DateTime.UtcNow;
+
+        // 4. Update Capability entity fields (if exists)
+        if (model.Capability != null)
+        {
+            model.Capability.ContextWindow = request.Capabilities.ContextWindow;
+            model.Capability.MaxOutputTokens = request.Capabilities.MaxOutputTokens;
+            model.Capability.SupportsFunctionCalling = request.Capabilities.SupportsFunctionCalling;
+            model.Capability.SupportsVision = request.Capabilities.SupportsVision;
+            model.Capability.SupportsAudioInput = request.Capabilities.SupportsAudioInput;
+            model.Capability.SupportsAudioOutput = request.Capabilities.SupportsAudioOutput;
+            model.Capability.SupportsStreaming = request.Capabilities.SupportsStreaming;
+            model.Capability.SupportsJsonMode = request.Capabilities.SupportsJsonMode;
+        }
+
+        // 5. Save changes (EF Core change tracking handles UPDATE)
+        await _adminRepository.SaveChangesAsync(cancellationToken);
+
+        // 6. Return updated model as DTO
+        return MapToAdminDto(model);
+    }
+
     /// <summary>
     /// Maps a Model entity to an AdminModelDto for admin API response.
     /// Includes all fields including CreatedAt, IsActive, and nested data.

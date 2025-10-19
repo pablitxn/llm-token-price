@@ -77,4 +77,25 @@ public interface IAdminModelService
     /// 6. Returns new model GUID for Location header in controller
     /// </remarks>
     Task<Guid> CreateModelAsync(CreateModelRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Updates an existing model and its capabilities in the database.
+    /// Fetches model, validates for duplicates (excluding self), updates properties, and refreshes UpdatedAt timestamp.
+    /// </summary>
+    /// <param name="id">The unique identifier (GUID) of the model to update.</param>
+    /// <param name="request">The model update request with fields to modify.</param>
+    /// <param name="cancellationToken">Cancellation token for async operation.</param>
+    /// <returns>The updated AdminModelDto if model was found and updated, null if not found.</returns>
+    /// <exception cref="InvalidOperationException">Thrown when duplicate model (same name + provider) exists on a DIFFERENT model.</exception>
+    /// <remarks>
+    /// This method:
+    /// 1. Fetches existing model by ID (returns null if not found)
+    /// 2. Checks for duplicate name+provider on DIFFERENT models (allows same model to keep its values)
+    /// 3. Updates Model entity fields from request
+    /// 4. Updates Capability entity fields from nested request
+    /// 5. Sets UpdatedAt = DateTime.UtcNow
+    /// 6. Persists changes in single EF Core transaction
+    /// 7. Returns updated AdminModelDto for response
+    /// </remarks>
+    Task<AdminModelDto?> UpdateModelAsync(Guid id, CreateModelRequest request, CancellationToken cancellationToken = default);
 }

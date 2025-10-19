@@ -110,4 +110,15 @@ public interface IAdminModelRepository
     /// Does not include related entities (Capability, BenchmarkScores) for performance.
     /// </remarks>
     Task<Model?> GetByNameAndProviderAsync(string name, string provider, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Saves all pending changes to the database.
+    /// Used for updating entities tracked by EF Core change tracking.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token for async operation.</param>
+    /// <remarks>
+    /// This method commits all tracked changes from the DbContext to the database.
+    /// Typically used after updating entities fetched from GetByIdAsync.
+    /// </remarks>
+    Task SaveChangesAsync(CancellationToken cancellationToken = default);
 }

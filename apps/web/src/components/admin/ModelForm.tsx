@@ -10,11 +10,18 @@ import { useNavigate } from 'react-router-dom'
 import { useEffect } from 'react'
 import { createModelSchema, type CreateModelFormValues } from '@/schemas/modelSchema'
 import { useCreateModel } from '@/hooks/useCreateModel'
+import { useUpdateModel } from '@/hooks/useUpdateModel'
 import { CapabilitiesSection } from './CapabilitiesSection'
+import type { AdminModelDto } from '@/types/admin'
+import { format } from 'date-fns'
 
 interface ModelFormProps {
-  /** Optional model data for edit mode (null for create mode) */
-  model?: null
+  /** Form mode: 'create' for new models, 'edit' for existing models */
+  mode: 'create' | 'edit'
+  /** Model ID (required for edit mode) */
+  modelId?: string
+  /** Model data for edit mode (null for create mode) */
+  model?: AdminModelDto | null
 }
 
 /**
@@ -22,38 +29,71 @@ interface ModelFormProps {
  * Implements double-layer validation: Zod (client) + FluentValidation (server, Story 2.5)
  *
  * @param props - Component props
- * @param props.model - Model to edit (null for create mode)
+ * @param props.mode - Form mode ('create' | 'edit')
+ * @param props.modelId - Model ID for edit mode
+ * @param props.model - Model data for edit mode
  */
-export function ModelForm({ model = null }: ModelFormProps) {
-  // model parameter reserved for future edit mode implementation (Story 2.7)
-  void model
+export function ModelForm({ mode, modelId, model = null }: ModelFormProps) {
   const navigate = useNavigate()
-  const { mutate: createModel, isPending, error } = useCreateModel()
+  const { mutate: createModel, isPending: isCreating, error: createError } = useCreateModel()
+  const { mutate: updateModel, isPending: isUpdating, error: updateError } = useUpdateModel()
+
+  const isPending = mode === 'create' ? isCreating : isUpdating
+  const error = mode === 'create' ? createError : updateError
 
   const methods = useForm<CreateModelFormValues>({
     resolver: zodResolver(createModelSchema),
-    defaultValues: {
-      name: '',
-      provider: '',
-      version: '',
-      releaseDate: '',
-      status: 'active',
-      inputPricePer1M: 0,
-      outputPricePer1M: 0,
-      currency: 'USD',
-      pricingValidFrom: '',
-      pricingValidTo: '',
-      capabilities: {
-        contextWindow: 0,
-        maxOutputTokens: null,
-        supportsFunctionCalling: false,
-        supportsVision: false,
-        supportsAudioInput: false,
-        supportsAudioOutput: false,
-        supportsStreaming: true,
-        supportsJsonMode: false,
-      },
-    },
+    defaultValues: model
+      ? {
+          // Pre-populate from model data in edit mode
+          name: model.name,
+          provider: model.provider,
+          version: model.version || '',
+          releaseDate: model.releaseDate ? format(new Date(model.releaseDate), 'yyyy-MM-dd') : '',
+          status: model.status,
+          inputPricePer1M: model.inputPricePer1M,
+          outputPricePer1M: model.outputPricePer1M,
+          currency: model.currency,
+          pricingValidFrom: model.pricingValidFrom
+            ? format(new Date(model.pricingValidFrom), 'yyyy-MM-dd')
+            : '',
+          pricingValidTo: model.pricingValidTo
+            ? format(new Date(model.pricingValidTo), 'yyyy-MM-dd')
+            : '',
+          capabilities: {
+            contextWindow: model.capability?.contextWindow ?? 0,
+            maxOutputTokens: model.capability?.maxOutputTokens ?? null,
+            supportsFunctionCalling: model.capability?.supportsFunctionCalling ?? false,
+            supportsVision: model.capability?.supportsVision ?? false,
+            supportsAudioInput: model.capability?.supportsAudioInput ?? false,
+            supportsAudioOutput: model.capability?.supportsAudioOutput ?? false,
+            supportsStreaming: model.capability?.supportsStreaming ?? true,
+            supportsJsonMode: model.capability?.supportsJsonMode ?? false,
+          },
+        }
+      : {
+          // Default values for create mode
+          name: '',
+          provider: '',
+          version: '',
+          releaseDate: '',
+          status: 'active',
+          inputPricePer1M: 0,
+          outputPricePer1M: 0,
+          currency: 'USD',
+          pricingValidFrom: '',
+          pricingValidTo: '',
+          capabilities: {
+            contextWindow: 0,
+            maxOutputTokens: null,
+            supportsFunctionCalling: false,
+            supportsVision: false,
+            supportsAudioInput: false,
+            supportsAudioOutput: false,
+            supportsStreaming: true,
+            supportsJsonMode: false,
+          },
+        },
   })
 
   const {
@@ -86,7 +126,11 @@ export function ModelForm({ model = null }: ModelFormProps) {
       pricingValidTo: data.pricingValidTo || undefined,
     }
 
-    createModel(payload)
+    if (mode === 'create') {
+      createModel(payload)
+    } else if (mode === 'edit' && modelId) {
+      updateModel({ id: modelId, data: payload })
+    }
   }
 
   const handleCancel = () => {
@@ -114,12 +158,18 @@ export function ModelForm({ model = null }: ModelFormProps) {
           <div className="sm:col-span-2">
             <label htmlFor="name" className="block text-sm font-medium text-gray-700">
               Model Name <span className="text-red-600">*</span>
+              {mode === 'edit' && (
+                <span className="ml-2 text-xs text-gray-500">(Cannot be changed)</span>
+              )}
             </label>
             <input
               type="text"
               id="name"
               {...register('name')}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              disabled={mode === 'edit'}
+              className={`mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 ${
+                mode === 'edit' ? 'bg-gray-100 cursor-not-allowed opacity-60' : ''
+              }`}
               placeholder="e.g., GPT-4 Turbo"
             />
             {errors.name && (
@@ -131,12 +181,18 @@ export function ModelForm({ model = null }: ModelFormProps) {
           <div>
             <label htmlFor="provider" className="block text-sm font-medium text-gray-700">
               Provider <span className="text-red-600">*</span>
+              {mode === 'edit' && (
+                <span className="ml-2 text-xs text-gray-500">(Cannot be changed)</span>
+              )}
             </label>
             <input
               type="text"
               id="provider"
               {...register('provider')}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              disabled={mode === 'edit'}
+              className={`mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 ${
+                mode === 'edit' ? 'bg-gray-100 cursor-not-allowed opacity-60' : ''
+              }`}
               placeholder="e.g., OpenAI"
             />
             {errors.provider && (
@@ -361,8 +417,10 @@ export function ModelForm({ model = null }: ModelFormProps) {
               </svg>
               Saving...
             </span>
+          ) : mode === 'create' ? (
+            'Create Model'
           ) : (
-            'Save'
+            'Save Changes'
           )}
         </button>
       </div>

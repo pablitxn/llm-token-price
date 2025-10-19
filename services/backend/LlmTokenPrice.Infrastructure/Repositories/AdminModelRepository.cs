@@ -76,12 +76,12 @@ public class AdminModelRepository : IAdminModelRepository
     public async Task<Model?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         // Unlike public repository, we do NOT filter by IsActive
+        // NOTE: Tracking enabled for update scenarios (Story 2.7)
         return await _context.Models
             .Include(m => m.Capability)
             .Include(m => m.BenchmarkScores)
                 .ThenInclude(bs => bs.Benchmark)
             .Where(m => m.Id == id)
-            .AsNoTracking() // Read-only query optimization
             .FirstOrDefaultAsync(cancellationToken);
     }
 
@@ -146,5 +146,11 @@ public class AdminModelRepository : IAdminModelRepository
                        m.Provider.ToLower() == provider.ToLower())
             .AsNoTracking() // Read-only query optimization
             .FirstOrDefaultAsync(cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        await _context.SaveChangesAsync(cancellationToken);
     }
 }

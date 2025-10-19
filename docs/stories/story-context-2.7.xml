@@ -37,16 +37,241 @@
   </acceptanceCriteria>
 
   <artifacts>
-    <docs>{{docs_artifacts}}</docs>
-    <code>{{code_artifacts}}</code>
-    <dependencies>{{dependencies_artifacts}}</dependencies>
+    <docs>
+      <doc>
+        <path>docs/tech-spec-epic-2.md</path>
+        <title>Epic 2 Technical Specification</title>
+        <section>UpdateModelDto and UpdateModelValidator</section>
+        <snippet>UpdateModelDto should follow same structure as CreateModelDto with validation rules: required fields (name, provider, status, prices, currency), positive prices with 6 decimal max, string length limits (name 255, provider 100), enum validation for Status/Currency, conditional date range validation (pricingValidFrom &lt; pricingValidTo). UpdateModelValidator reuses CreateModelValidator rules but excludes duplicate name+provider check for same model.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-2.md</path>
+        <title>Epic 2 Technical Specification</title>
+        <section>AdminModelService Architecture</section>
+        <snippet>AdminModelService orchestrates CRUD operations following hexagonal architecture: receives DTOs from controller, coordinates validation via DataValidator, calls IAdminModelRepository port for persistence, handles cache invalidation via domain events, logs audit trail. UpdateModelAsync pattern: fetch existing model by ID (404 if not found), update Model entity fields, update Capability entity fields, save in single EF Core transaction, set UpdatedAt timestamp, invalidate cache patterns (cache:models:*, cache:model:{id}:*).</snippet>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture</title>
+        <section>Admin API Contracts</section>
+        <snippet>PUT /api/admin/models/{id} endpoint: [Authorize] JWT required, accepts UpdateModelDto in body, returns AdminApiResponse&lt;AdminModelDto&gt; with 200 OK on success, 404 if model not found, 400 for validation errors, 409 for duplicate conflicts. Response includes updated model data with UpdatedAt timestamp. Cache invalidation triggered via domain events after successful update.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-2.4.md</path>
+        <title>Story 2.4 - Create Add New Model Form</title>
+        <section>ModelForm Component Structure</section>
+        <snippet>ModelForm.tsx implemented with React Hook Form + Zod validation, three main sections: Basic Info (name, provider, version, releaseDate, status), Pricing (inputPricePer1M, outputPricePer1M, currency, validFrom, validTo), Capabilities (contextWindow, maxOutputTokens, 6 boolean flags). For edit mode, extend with mode prop to conditionally disable immutable fields (name, provider) and switch between create/update mutations.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-2.5.md</path>
+        <title>Story 2.5 - Create Backend API for Adding Models</title>
+        <section>CreateModelAsync Pattern</section>
+        <snippet>AdminModelService.CreateModelAsync implementation: duplicate check via GetByNameAndProviderAsync (case-insensitive), create Model entity with DateTime.SpecifyKind for UTC dates, create Capability entity with default values or DTO mapping, persist both in single transaction, return modelId (Guid). UpdateModelAsync should follow similar pattern but skip duplicate check for same model and update existing entities instead of creating new ones.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-2.6.md</path>
+        <title>Story 2.6 - Add Capabilities Section</title>
+        <section>Capabilities Form Integration</section>
+        <snippet>CapabilitiesSection component integrated into ModelForm with 2 number inputs (contextWindow required 1K-2M range, maxOutputTokens optional &lt;=contextWindow) and 6 checkboxes (function calling, vision, audio input/output, streaming default checked, JSON mode). Extended Zod schema with cross-field validation (maxOutput &lt;= contextWindow), backend CreateCapabilityRequest DTO with CreateCapabilityValidator. Edit mode must pre-populate all capability fields from fetched model data.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>apps/web/src/components/admin/ModelForm.tsx</path>
+        <kind>component</kind>
+        <symbol>ModelForm</symbol>
+        <lines>15-372</lines>
+        <reason>Core form component to extend for edit mode. Lines 15-18: ModelFormProps has model?: null placeholder for Story 2.7. Lines 33-57: useForm defaultValues to populate from fetched model. Lines 79-90: onSubmit function to modify for update mutation. Lines 109-372: Complete form structure with Basic Info, Pricing, and Capabilities sections—all need pre-population in edit mode.</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/schemas/modelSchema.ts</path>
+        <kind>schema</kind>
+        <symbol>createModelSchema</symbol>
+        <lines>17-112</lines>
+        <reason>Zod validation schema to reuse or extend for edit mode. Lines 19-22: Name validation (max 255). Lines 39-50: Price validation (positive, 6 decimals). Lines 86-97: Cross-field validation for capabilities (maxOutput &lt;= contextWindow). Lines 100-112: Date range validation (validFrom &lt; validTo). Can be reused as-is or renamed to editModelSchema.</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/api/admin.ts</path>
+        <kind>api-client</kind>
+        <symbol>getAdminModelById, createModel</symbol>
+        <lines>104-123</lines>
+        <reason>API client functions to extend. Lines 104-107: getAdminModelById() already exists for fetching model to edit. Lines 118-123: createModel() pattern to follow for updateModel() function—use PUT instead of POST, include id in URL path.</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/hooks/useCreateModel.ts</path>
+        <kind>hook</kind>
+        <symbol>useCreateModel</symbol>
+        <lines>35-54</lines>
+        <reason>TanStack Query mutation hook to mirror for useUpdateModel. Lines 39: useMutation generic types. Lines 41-43: Cache invalidation pattern (invalidate ['admin', 'models']). Lines 45-46: Navigation to /admin/models after success. Lines 48-52: Error handling pattern. Create parallel useUpdateModel hook with same structure.</reason>
+      </artifact>
+      <artifact>
+        <path>services/backend/LlmTokenPrice.API/Controllers/Admin/AdminModelsController.cs</path>
+        <kind>controller</kind>
+        <symbol>Create, GetById</symbol>
+        <lines>145-198, 212-307</lines>
+        <reason>Controller patterns to follow for Update endpoint. Lines 145-198: GetById() already exists (returns 404 if not found, 200 with model). Lines 212-307: Create() pattern for Update—use [HttpPut("{id}")], call UpdateModelAsync, return 200 OK instead of 201 Created, handle 404/400/409/500 errors same way.</reason>
+      </artifact>
+      <artifact>
+        <path>services/backend/LlmTokenPrice.Application/Services/AdminModelService.cs</path>
+        <kind>service</kind>
+        <symbol>CreateModelAsync</symbol>
+        <lines>60-117</lines>
+        <reason>Service method to mirror for UpdateModelAsync. Lines 63-71: Duplicate check (skip for same model in update). Lines 74-95: Model entity creation (change to entity update pattern). Lines 98-110: Capability entity creation (change to update pattern). Lines 113-114: Transaction pattern to maintain. New method: fetch existing model first, return null if not found (404), update fields instead of creating new entities.</reason>
+      </artifact>
+      <artifact>
+        <path>services/backend/LlmTokenPrice.Application/DTOs/CreateModelRequest.cs</path>
+        <kind>dto</kind>
+        <symbol>CreateModelRequest</symbol>
+        <lines>8-80</lines>
+        <reason>DTO to reuse or extend for UpdateModelRequest. Contains all required fields (Name, Provider, Status, InputPricePer1M, OutputPricePer1M, Currency, Capabilities) and optional fields (Version, ReleaseDate, PricingValidFrom, PricingValidTo). Can be reused as-is for PUT request body, or create UpdateModelRequest as alias/extension.</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/types/admin.ts</path>
+        <kind>types</kind>
+        <symbol>AdminModelDto, CreateModelRequest</symbol>
+        <lines>16-30, 65-76</lines>
+        <reason>TypeScript types for frontend. Lines 16-30: AdminModelDto returned from GET /api/admin/models/{id} for form pre-population. Lines 65-76: CreateModelRequest for POST body (extend/reuse for PUT). Need to create UpdateModelRequest type or reuse existing CreateModelRequest.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <frontend>
+        <package name="react" version="^19.1.1">Core framework</package>
+        <package name="react-hook-form" version="^7.65.0">Form state management (already used in ModelForm)</package>
+        <package name="zod" version="^4.1.12">Client-side validation schema (already defined)</package>
+        <package name="@hookform/resolvers" version="^5.2.2">Zod + React Hook Form integration</package>
+        <package name="@tanstack/react-query" version="^5.90.5">Data fetching and mutations (useQuery, useMutation)</package>
+        <package name="react-router-dom" version="^7.9.4">Routing for /admin/models/:id/edit</package>
+        <package name="axios" version="^1.12.2">HTTP client for API calls</package>
+        <package name="date-fns" version="^4.1.0">Date formatting for form fields</package>
+      </frontend>
+      <backend>
+        <package name="FluentValidation.AspNetCore" version="11.3.0">Server-side validation (already configured)</package>
+        <package name="FluentValidation.DependencyInjectionExtensions" version="11.5.1">DI for validators</package>
+        <package name="Microsoft.EntityFrameworkCore" version="9.0.10">ORM for database updates</package>
+        <package name="Microsoft.AspNetCore.Authentication.JwtBearer" version="9.0.10">JWT auth for [Authorize]</package>
+      </backend>
+    </dependencies>
   </artifacts>
 
-  <constraints>{{constraints}}</constraints>
-  <interfaces>{{interfaces}}</interfaces>
+  <constraints>
+    <architectural>
+      <constraint>Hexagonal Architecture: UpdateModelAsync must reside in Application layer (AdminModelService), not Infrastructure. Service calls IAdminModelRepository port for persistence.</constraint>
+      <constraint>Domain Purity: Model and Capability entities updated via property setters (no EF annotations in domain). EF Core change tracking handles persistence.</constraint>
+      <constraint>Transaction Boundary: Model + Capability updates must execute in single EF Core transaction. Call SaveChangesAsync() once after both entities updated.</constraint>
+      <constraint>Immutable Fields Pattern: Name and provider fields should be disabled in edit mode (prevent changing unique identifier). If change needed, delete + recreate model.</constraint>
+      <constraint>Component Reuse: Extend existing ModelForm component with mode prop rather than creating separate EditModelForm. DRY principle.</constraint>
+    </architectural>
+    <validation>
+      <constraint>Double-Layer Validation: Client Zod validation + Server FluentValidation must enforce identical rules. No rule divergence.</constraint>
+      <constraint>UpdateModelValidator: Reuse CreateModelValidator rules (required fields, positive prices, string lengths, enum validation, date range) but exclude duplicate check for same model.</constraint>
+      <constraint>Duplicate Detection: UpdateModelAsync must check if name+provider exists on DIFFERENT model (not current model being edited). Use case-insensitive comparison.</constraint>
+      <constraint>DateTime UTC Requirement: All date fields (ReleaseDate, PricingValidFrom, PricingValidTo) must use DateTime.SpecifyKind(..., DateTimeKind.Utc) to avoid PostgreSQL timezone errors.</constraint>
+      <constraint>Form Pre-Population: When loading model for edit, convert ISO date strings from API to Date objects for date pickers using date-fns parseISO().</constraint>
+    </validation>
+    <api-contract>
+      <constraint>PUT Endpoint: Use [HttpPut("{id}")] route attribute. Return 200 OK with updated AdminModelDto (not 201 Created like POST).</constraint>
+      <constraint>404 Handling: Return NotFound() if model ID doesn't exist. Check via GetModelByIdAsync() before update attempt.</constraint>
+      <constraint>Response Format: Wrap response in AdminApiResponse&lt;AdminModelDto&gt; with Meta field (timestamp, cached=false). Follow existing pattern from Create/GetById.</constraint>
+      <constraint>JWT Authorization: Add [Authorize] attribute to PUT endpoint. Requires valid JWT token in Authorization header or HttpOnly cookie.</constraint>
+      <constraint>Cache Invalidation: After successful update, invalidate Redis cache patterns: cache:models:*, cache:model:{id}:*, cache:bestvalue:* (for QAPS recalc in future Epic 6).</constraint>
+    </api-contract>
+    <ui-ux>
+      <constraint>Form Title: Display "Edit Model: {modelName}" as page title (not "Add New Model"). Show model identifier to prevent confusion.</constraint>
+      <constraint>Submit Button Text: Change button text from "Create Model" to "Save Changes" in edit mode. Clear action distinction.</constraint>
+      <constraint>Disabled Fields Styling: Apply disabled styling (opacity, cursor-not-allowed) to name and provider fields in edit mode. Visual indication of immutability.</constraint>
+      <constraint>Loading States: Show loading spinner while fetching model data. Prevent form interaction until data loaded. Handle 404 gracefully with error message.</constraint>
+      <constraint>Success Feedback: Display toast/notification "Model '{name}' updated successfully" after save. Redirect to /admin/models list with updated data visible.</constraint>
+      <constraint>Dirty State Check: Warn user if navigating away from form with unsaved changes (existing handleCancel logic). Prevent accidental data loss.</constraint>
+    </ui-ux>
+    <testing>
+      <constraint>Test Coverage Target: 70% unit / 25% integration / 5% E2E as per Epic 1 standards. Focus unit tests on UpdateModelValidator and UpdateModelAsync logic.</constraint>
+      <constraint>Component Testing: Test EditModelPage renders with loading state, fetches model data, pre-populates ModelForm, handles 404 errors, submits with correct payload.</constraint>
+      <constraint>Integration Testing: Test PUT /api/admin/models/{id} with valid data (200), invalid data (400), non-existent ID (404), duplicate name+provider (409), verify database persistence and UpdatedAt timestamp change.</constraint>
+      <constraint>Given-When-Then Structure: Follow Epic 1 testing patterns. Example: Given_ModelExists_When_UpdatingWithValidData_Then_Returns200AndUpdatesDatabase.</constraint>
+    </testing>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>PUT /api/admin/models/{id}</name>
+      <kind>REST endpoint</kind>
+      <signature>[HttpPut("{id}")] public async Task&lt;IActionResult&gt; Update(Guid id, [FromBody] CreateModelRequest request)</signature>
+      <description>Updates existing model. Requires JWT auth. Returns 200 OK with AdminApiResponse&lt;AdminModelDto&gt; on success, 404 if model not found, 400 for validation errors, 409 for duplicate conflicts.</description>
+    </interface>
+    <interface>
+      <name>IAdminModelService.UpdateModelAsync</name>
+      <kind>service-method</kind>
+      <signature>Task&lt;AdminModelDto?&gt; UpdateModelAsync(Guid id, CreateModelRequest request, CancellationToken cancellationToken = default)</signature>
+      <description>Application service method. Fetches model by ID, returns null if not found. Updates Model entity fields and Capability entity in single transaction. Sets UpdatedAt timestamp. Returns updated AdminModelDto or null.</description>
+    </interface>
+    <interface>
+      <name>updateModel</name>
+      <kind>api-client-function</kind>
+      <signature>export async function updateModel(id: string, data: CreateModelRequest): Promise&lt;AdminModelResponse&gt;</signature>
+      <description>Frontend API client function. Makes PUT request to /api/admin/models/{id} with CreateModelRequest payload. Returns AdminModelResponse with updated model data. Throws error on failure.</description>
+    </interface>
+    <interface>
+      <name>useUpdateModel</name>
+      <kind>react-hook</kind>
+      <signature>export function useUpdateModel(): UseMutationResult&lt;AdminModelResponse, Error, { id: string; data: CreateModelRequest }&gt;</signature>
+      <description>TanStack Query mutation hook for updating model. Accepts id and data, calls updateModel API function, invalidates ['admin', 'models'] cache on success, navigates to /admin/models, handles errors.</description>
+    </interface>
+    <interface>
+      <name>ModelFormProps (extended)</name>
+      <kind>react-component-props</kind>
+      <signature>interface ModelFormProps { mode: 'create' | 'edit'; modelId?: string; model?: AdminModelDto | null }</signature>
+      <description>Extended ModelForm props. mode determines form behavior (title, button text, mutation hook). modelId passed to update mutation. model provides defaultValues for form pre-population in edit mode.</description>
+    </interface>
+    <interface>
+      <name>EditModelPage</name>
+      <kind>react-component</kind>
+      <signature>export function EditModelPage(): JSX.Element</signature>
+      <description>New page component for /admin/models/:id/edit route. Extracts id from useParams(), fetches model via useQuery with getAdminModelById, renders loading/error states, passes model to ModelForm with mode='edit'.</description>
+    </interface>
+  </interfaces>
+
   <tests>
-    <standards>{{test_standards}}</standards>
-    <locations>{{test_locations}}</locations>
-    <ideas>{{test_ideas}}</ideas>
+    <standards>Epic 1 Story 1.11 established comprehensive testing standards: xUnit + FluentAssertions for backend unit/integration tests, Vitest + Testing Library for frontend component tests, TestContainers for database isolation, Given-When-Then naming convention, 70/25/5 unit/integration/E2E test pyramid. Story 2.7 must follow same patterns with focus on UpdateModelValidator (8+ unit tests), UpdateModelAsync service logic (6+ unit tests), PUT endpoint integration tests (8+ scenarios), and EditModelPage component tests (6+ scenarios).</standards>
+
+    <locations>
+      <location>apps/web/src/components/admin/__tests__/EditModelPage.test.tsx</location>
+      <location>apps/web/src/hooks/__tests__/useUpdateModel.test.ts</location>
+      <location>services/backend/LlmTokenPrice.Application.Tests/Validators/UpdateModelValidatorTests.cs</location>
+      <location>services/backend/LlmTokenPrice.Application.Tests/Services/AdminModelServiceTests.cs (extend existing)</location>
+      <location>services/backend/LlmTokenPrice.API.Tests/Controllers/AdminModelsControllerTests.cs (extend existing)</location>
+      <location>tests/e2e/admin-edit-model.spec.ts (Playwright E2E)</location>
+    </locations>
+
+    <ideas>
+      <test id="T1" ac="AC1,AC2" type="component">EditModelPage: Renders loading spinner while fetching model data via useQuery with getAdminModelById(id)</test>
+      <test id="T2" ac="AC1" type="component">EditModelPage: Displays error message "Model not found" when getAdminModelById returns 404</test>
+      <test id="T3" ac="AC2" type="component">EditModelPage: Pre-populates ModelForm with fetched model data (all fields: name, provider, version, prices, capabilities)</test>
+      <test id="T4" ac="AC2" type="component">ModelForm (edit mode): Name and provider fields are disabled (immutable fields pattern)</test>
+      <test id="T5" ac="AC2" type="component">ModelForm (edit mode): Date fields converted from ISO strings to Date objects using parseISO for date pickers</test>
+      <test id="T6" ac="AC6" type="component">ModelForm (edit mode): Submit button shows "Save Changes" text (not "Create Model")</test>
+      <test id="T7" ac="AC6" type="component">ModelForm (edit mode): Form submission calls useUpdateModel mutation with correct id and payload</test>
+      <test id="T8" ac="AC6" type="component">useUpdateModel hook: On success, invalidates ['admin', 'models'] query cache and navigates to /admin/models</test>
+      <test id="T9" ac="AC6" type="component">useUpdateModel hook: On error, displays validation error messages in form fields</test>
+      <test id="T10" ac="AC3" type="unit">UpdateModelValidator: Validates required fields (name, provider, status, prices, currency) same as CreateModelValidator</test>
+      <test id="T11" ac="AC3" type="unit">UpdateModelValidator: Rejects negative prices and validates 6 decimal precision max</test>
+      <test id="T12" ac="AC3" type="unit">UpdateModelValidator: Validates string length limits (name 255, provider 100)</test>
+      <test id="T13" ac="AC3" type="unit">UpdateModelValidator: Validates enum values for Status (active/deprecated/beta) and Currency (USD/EUR/GBP)</test>
+      <test id="T14" ac="AC3" type="unit">UpdateModelValidator: Validates date range (pricingValidFrom &lt; pricingValidTo) when both provided</test>
+      <test id="T15" ac="AC4,AC5" type="unit">AdminModelService.UpdateModelAsync: Returns null when model ID doesn't exist (404 scenario)</test>
+      <test id="T16" ac="AC4" type="unit">AdminModelService.UpdateModelAsync: Updates Model entity fields from request DTO correctly</test>
+      <test id="T17" ac="AC4" type="unit">AdminModelService.UpdateModelAsync: Updates Capability entity fields from nested DTO correctly</test>
+      <test id="T18" ac="AC5" type="unit">AdminModelService.UpdateModelAsync: Sets UpdatedAt timestamp to DateTime.UtcNow on save</test>
+      <test id="T19" ac="AC4" type="unit">AdminModelService.UpdateModelAsync: Allows same model to keep name+provider (no duplicate error for self)</test>
+      <test id="T20" ac="AC4" type="unit">AdminModelService.UpdateModelAsync: Rejects duplicate name+provider if already exists on DIFFERENT model (case-insensitive)</test>
+      <test id="T21" ac="AC3" type="integration">PUT /api/admin/models/{id}: Returns 401 Unauthorized without valid JWT token</test>
+      <test id="T22" ac="AC3,AC4,AC5" type="integration">PUT /api/admin/models/{id}: Returns 200 OK with updated AdminModelDto for valid request</test>
+      <test id="T23" ac="AC4,AC5" type="integration">PUT /api/admin/models/{id}: Persists Model and Capability updates to database and verifies UpdatedAt timestamp changed</test>
+      <test id="T24" ac="AC3" type="integration">PUT /api/admin/models/{id}: Returns 404 Not Found when model ID doesn't exist</test>
+      <test id="T25" ac="AC3" type="integration">PUT /api/admin/models/{id}: Returns 400 Bad Request with field-level validation errors for invalid data (negative prices, missing required fields)</test>
+      <test id="T26" ac="AC3" type="integration">PUT /api/admin/models/{id}: Returns 409 Conflict when name+provider already exists on different model</test>
+      <test id="T27" ac="AC4" type="integration">PUT /api/admin/models/{id}: Updates capabilities (contextWindow, maxOutputTokens, boolean flags) correctly in model_capabilities table</test>
+      <test id="T28" ac="AC5" type="integration">PUT /api/admin/models/{id}: UpdatedAt timestamp in database is later than original timestamp after update</test>
+      <test id="T29" ac="AC1,AC2,AC6" type="e2e">Full edit flow: Admin logs in → navigates to models list → clicks Edit button → form pre-populated → changes price → clicks Save → sees success message → redirected to models list with updated price visible</test>
+    </ideas>
   </tests>
 </story-context>
