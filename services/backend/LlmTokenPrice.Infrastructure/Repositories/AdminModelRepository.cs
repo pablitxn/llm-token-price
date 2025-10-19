@@ -93,9 +93,9 @@ public class AdminModelRepository : IAdminModelRepository
             .Where(m => m.Id == id)
             .FirstOrDefaultAsync(cancellationToken);
 
-        if (model == null)
+        if (model == null || !model.IsActive)
         {
-            return false; // Model not found
+            return false; // Model not found or already inactive
         }
 
         // Perform soft delete
