@@ -59,6 +59,43 @@ export const createModelSchema = z
       .string()
       .optional()
       .or(z.literal('')),
+    capabilities: z
+      .object({
+        contextWindow: z
+          .number({
+            message: 'Context window must be a number',
+          })
+          .int('Context window must be an integer')
+          .min(1000, 'Context window must be at least 1,000 tokens')
+          .max(2000000, 'Context window cannot exceed 2,000,000 tokens'),
+        maxOutputTokens: z
+          .number({
+            message: 'Max output tokens must be a number',
+          })
+          .int('Max output tokens must be an integer')
+          .positive('Max output tokens must be positive')
+          .optional()
+          .nullable(),
+        supportsFunctionCalling: z.boolean().default(false),
+        supportsVision: z.boolean().default(false),
+        supportsAudioInput: z.boolean().default(false),
+        supportsAudioOutput: z.boolean().default(false),
+        supportsStreaming: z.boolean().default(true),
+        supportsJsonMode: z.boolean().default(false),
+      })
+      .refine(
+        (data) => {
+          // Cross-field validation: maxOutputTokens <= contextWindow
+          if (data.maxOutputTokens && data.contextWindow) {
+            return data.maxOutputTokens <= data.contextWindow
+          }
+          return true
+        },
+        {
+          message: 'Max output tokens cannot exceed context window',
+          path: ['maxOutputTokens'],
+        }
+      ),
   })
   .refine(
     (data) => {

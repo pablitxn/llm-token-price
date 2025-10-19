@@ -23,6 +23,22 @@ public class AdminModelServiceTests
         _service = new AdminModelService(_mockRepository.Object);
     }
 
+    /// <summary>
+    /// Helper method to create valid capabilities for test requests.
+    /// Story 2.6: All requests now require capabilities.
+    /// </summary>
+    private static CreateCapabilityRequest CreateValidCapabilities() => new()
+    {
+        ContextWindow = 128000,
+        MaxOutputTokens = 4096,
+        SupportsFunctionCalling = true,
+        SupportsVision = false,
+        SupportsAudioInput = false,
+        SupportsAudioOutput = false,
+        SupportsStreaming = true,
+        SupportsJsonMode = true
+    };
+
     #region CreateModelAsync - Success Scenarios
 
     /// <summary>
@@ -45,6 +61,7 @@ public class AdminModelServiceTests
             Currency = "USD",
             PricingValidFrom = "2024-01-01",
             PricingValidTo = "2024-12-31"
+            , Capabilities = CreateValidCapabilities()
         };
 
         // Mock repository: no duplicate exists
@@ -104,6 +121,7 @@ public class AdminModelServiceTests
             InputPricePer1M = 10.00m,
             OutputPricePer1M = 30.00m,
             Currency = "USD"
+            , Capabilities = CreateValidCapabilities()
         };
 
         // Mock repository: no duplicate exists
@@ -125,17 +143,17 @@ public class AdminModelServiceTests
         // WHEN: Creating model via service
         await _service.CreateModelAsync(request, CancellationToken.None);
 
-        // THEN: CreateCapabilityAsync called with correct defaults
+        // THEN: CreateCapabilityAsync called with values from request DTO (Story 2.6)
         _mockRepository.Verify(r => r.CreateCapabilityAsync(
             It.Is<Capability>(c =>
-                c.ContextWindow == 0 &&
-                c.MaxOutputTokens == null &&
-                c.SupportsFunctionCalling == false &&
+                c.ContextWindow == 128000 && // From request DTO
+                c.MaxOutputTokens == 4096 && // From request DTO
+                c.SupportsFunctionCalling == true && // From request DTO
                 c.SupportsVision == false &&
                 c.SupportsAudioInput == false &&
                 c.SupportsAudioOutput == false &&
-                c.SupportsStreaming == true && // Only this flag is true
-                c.SupportsJsonMode == false
+                c.SupportsStreaming == true &&
+                c.SupportsJsonMode == true // From request DTO
             ),
             It.IsAny<CancellationToken>()
         ), Times.Once);
@@ -156,6 +174,7 @@ public class AdminModelServiceTests
             InputPricePer1M = 15.00m,
             OutputPricePer1M = 75.00m,
             Currency = "USD"
+            , Capabilities = CreateValidCapabilities()
         };
 
         // Mock repository: no duplicate exists
@@ -197,6 +216,7 @@ public class AdminModelServiceTests
             InputPricePer1M = 5.00m,
             OutputPricePer1M = 15.00m,
             Currency = "USD"
+            , Capabilities = CreateValidCapabilities()
         };
 
         // Mock repository: no duplicate exists
@@ -258,6 +278,7 @@ public class AdminModelServiceTests
             InputPricePer1M = 10.00m,
             OutputPricePer1M = 30.00m,
             Currency = "USD"
+            , Capabilities = CreateValidCapabilities()
         };
 
         // Mock repository: duplicate exists
@@ -315,6 +336,7 @@ public class AdminModelServiceTests
             InputPricePer1M = 10.00m,
             OutputPricePer1M = 30.00m,
             Currency = "USD"
+            , Capabilities = CreateValidCapabilities()
         };
 
         // Mock repository: duplicate exists with different casing
@@ -366,6 +388,7 @@ public class AdminModelServiceTests
             ReleaseDate = "2023-03-14",
             PricingValidFrom = "2024-01-01",
             PricingValidTo = "2024-12-31"
+            , Capabilities = CreateValidCapabilities()
         };
 
         // Mock repository: no duplicate exists
@@ -415,6 +438,7 @@ public class AdminModelServiceTests
             ReleaseDate = null,
             PricingValidFrom = null,
             PricingValidTo = null
+            , Capabilities = CreateValidCapabilities()
         };
 
         // Mock repository: no duplicate exists

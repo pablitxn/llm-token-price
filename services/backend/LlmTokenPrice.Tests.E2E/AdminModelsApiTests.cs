@@ -310,6 +310,7 @@ public class AdminModelsApiTests : IClassFixture<WebApplicationFactory<LlmTokenP
             inputPricePer1M = 10.00m,
             outputPricePer1M = 30.00m,
             currency = "USD"
+            , capabilities = new { contextWindow = 128000, maxOutputTokens = 4096, supportsFunctionCalling = true, supportsVision = false, supportsAudioInput = false, supportsAudioOutput = false, supportsStreaming = true, supportsJsonMode = true }
         };
 
         // WHEN: Attempting to create model without authentication
@@ -341,6 +342,7 @@ public class AdminModelsApiTests : IClassFixture<WebApplicationFactory<LlmTokenP
             inputPricePer1M = 5.50m,
             outputPricePer1M = 15.00m,
             currency = "USD",
+            capabilities = new { contextWindow = 128000, maxOutputTokens = 4096, supportsFunctionCalling = true, supportsVision = false, supportsAudioInput = false, supportsAudioOutput = false, supportsStreaming = true, supportsJsonMode = true },
             pricingValidFrom = "2024-01-01",
             pricingValidTo = "2024-12-31"
         };
@@ -378,6 +380,7 @@ public class AdminModelsApiTests : IClassFixture<WebApplicationFactory<LlmTokenP
             inputPricePer1M = 7.25m,
             outputPricePer1M = 20.00m,
             currency = "USD"
+            , capabilities = new { contextWindow = 128000, maxOutputTokens = 4096, supportsFunctionCalling = true, supportsVision = false, supportsAudioInput = false, supportsAudioOutput = false, supportsStreaming = true, supportsJsonMode = true }
         };
 
         // WHEN: Creating model via API
@@ -465,6 +468,7 @@ public class AdminModelsApiTests : IClassFixture<WebApplicationFactory<LlmTokenP
             inputPricePer1M = inputPrice,
             outputPricePer1M = outputPrice,
             currency = "USD"
+            , capabilities = new { contextWindow = 128000, maxOutputTokens = 4096, supportsFunctionCalling = true, supportsVision = false, supportsAudioInput = false, supportsAudioOutput = false, supportsStreaming = true, supportsJsonMode = true }
         };
 
         // WHEN: Attempting to create model with invalid prices
@@ -495,6 +499,7 @@ public class AdminModelsApiTests : IClassFixture<WebApplicationFactory<LlmTokenP
             inputPricePer1M = 10.00m,
             outputPricePer1M = 30.00m,
             currency = "USD"
+            , capabilities = new { contextWindow = 128000, maxOutputTokens = 4096, supportsFunctionCalling = true, supportsVision = false, supportsAudioInput = false, supportsAudioOutput = false, supportsStreaming = true, supportsJsonMode = true }
         };
 
         var firstResponse = await _client.PostAsJsonAsync("/api/admin/models", firstRequest);
@@ -509,6 +514,7 @@ public class AdminModelsApiTests : IClassFixture<WebApplicationFactory<LlmTokenP
             inputPricePer1M = 15.00m, // Different price (but duplicate by name+provider)
             outputPricePer1M = 45.00m,
             currency = "USD"
+            , capabilities = new { contextWindow = 128000, maxOutputTokens = 4096, supportsFunctionCalling = true, supportsVision = false, supportsAudioInput = false, supportsAudioOutput = false, supportsStreaming = true, supportsJsonMode = true }
         };
 
         var duplicateResponse = await _client.PostAsJsonAsync("/api/admin/models", duplicateRequest);
@@ -542,6 +548,7 @@ public class AdminModelsApiTests : IClassFixture<WebApplicationFactory<LlmTokenP
             inputPricePer1M = 10.00m,
             outputPricePer1M = 30.00m,
             currency = "USD"
+            , capabilities = new { contextWindow = 128000, maxOutputTokens = 4096, supportsFunctionCalling = true, supportsVision = false, supportsAudioInput = false, supportsAudioOutput = false, supportsStreaming = true, supportsJsonMode = true }
         };
 
         // WHEN: Attempting to create model with invalid status
@@ -572,7 +579,8 @@ public class AdminModelsApiTests : IClassFixture<WebApplicationFactory<LlmTokenP
             status = "active",
             inputPricePer1M = 10.00m,
             outputPricePer1M = 30.00m,
-            currency = invalidCurrency
+            currency = invalidCurrency,
+            capabilities = new { contextWindow = 128000, maxOutputTokens = 4096, supportsFunctionCalling = true, supportsVision = false, supportsAudioInput = false, supportsAudioOutput = false, supportsStreaming = true, supportsJsonMode = true }
         };
 
         // WHEN: Attempting to create model with invalid currency
@@ -604,6 +612,7 @@ public class AdminModelsApiTests : IClassFixture<WebApplicationFactory<LlmTokenP
             inputPricePer1M = 12.75m,
             outputPricePer1M = 35.50m,
             currency = "EUR",
+            capabilities = new { contextWindow = 128000, maxOutputTokens = 4096, supportsFunctionCalling = true, supportsVision = false, supportsAudioInput = false, supportsAudioOutput = false, supportsStreaming = true, supportsJsonMode = true },
             pricingValidFrom = "2024-06-01",
             pricingValidTo = "2024-12-31"
         };

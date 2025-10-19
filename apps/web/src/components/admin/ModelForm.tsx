@@ -4,12 +4,13 @@
  * Uses React Hook Form for performance and Zod for validation
  */
 
-import { useForm } from 'react-hook-form'
+import { useForm, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate } from 'react-router-dom'
 import { useEffect } from 'react'
 import { createModelSchema, type CreateModelFormValues } from '@/schemas/modelSchema'
 import { useCreateModel } from '@/hooks/useCreateModel'
+import { CapabilitiesSection } from './CapabilitiesSection'
 
 interface ModelFormProps {
   /** Optional model data for edit mode (null for create mode) */
@@ -29,12 +30,7 @@ export function ModelForm({ model = null }: ModelFormProps) {
   const navigate = useNavigate()
   const { mutate: createModel, isPending, error } = useCreateModel()
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isDirty },
-    reset,
-  } = useForm<CreateModelFormValues>({
+  const methods = useForm<CreateModelFormValues>({
     resolver: zodResolver(createModelSchema),
     defaultValues: {
       name: '',
@@ -47,8 +43,25 @@ export function ModelForm({ model = null }: ModelFormProps) {
       currency: 'USD',
       pricingValidFrom: '',
       pricingValidTo: '',
+      capabilities: {
+        contextWindow: 0,
+        maxOutputTokens: null,
+        supportsFunctionCalling: false,
+        supportsVision: false,
+        supportsAudioInput: false,
+        supportsAudioOutput: false,
+        supportsStreaming: true,
+        supportsJsonMode: false,
+      },
     },
   })
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isDirty },
+    reset,
+  } = methods
 
   // Warn user about unsaved changes when navigating away
   useEffect(() => {
@@ -91,7 +104,8 @@ export function ModelForm({ model = null }: ModelFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+    <FormProvider {...methods}>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
       {/* Basic Info Section */}
       <div className="bg-white shadow rounded-lg p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h2>
@@ -290,6 +304,9 @@ export function ModelForm({ model = null }: ModelFormProps) {
         </div>
       </div>
 
+      {/* Capabilities Section */}
+      <CapabilitiesSection />
+
       {/* Server Error Display */}
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
@@ -349,6 +366,7 @@ export function ModelForm({ model = null }: ModelFormProps) {
           )}
         </button>
       </div>
-    </form>
+      </form>
+    </FormProvider>
   )
 }

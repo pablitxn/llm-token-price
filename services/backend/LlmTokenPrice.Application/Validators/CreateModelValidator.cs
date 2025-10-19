@@ -65,5 +65,10 @@ public class CreateModelValidator : AbstractValidator<CreateModelRequest>
                 })
                 .WithMessage("Pricing Valid From must be before Pricing Valid To");
         });
+
+        // Capabilities validation (Story 2.6)
+        RuleFor(x => x.Capabilities)
+            .NotNull().WithMessage("Capabilities are required")
+            .SetValidator(new CreateCapabilityValidator());
     }
 }

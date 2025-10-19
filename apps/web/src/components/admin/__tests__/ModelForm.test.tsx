@@ -351,6 +351,7 @@ describe('ModelForm', () => {
     await user.type(screen.getByLabelText(/version/i), '1.0')
     await user.type(screen.getByLabelText(/input price per 1m tokens/i), '10.00')
     await user.type(screen.getByLabelText(/output price per 1m tokens/i), '30.00')
+    await user.type(screen.getByLabelText(/context window/i), '128000')
 
     // Submit form
     await user.click(screen.getByRole('button', { name: /save/i }))
@@ -435,5 +436,291 @@ describe('ModelForm', () => {
     expect(
       screen.getByText(/validation failed: model name already exists/i)
     ).toBeInTheDocument()
+  })
+
+  /**
+   * =====================================================
+   * Story 2.6: Capabilities Section Tests
+   * =====================================================
+   */
+
+  describe('Story 2.6: Capabilities Section', () => {
+    /**
+     * AC 2.6.1: Capabilities section added to model form
+     */
+    it('renders capabilities section with all fields', () => {
+      renderForm()
+
+      // Check section header exists
+      expect(screen.getByText(/model capabilities/i)).toBeInTheDocument()
+
+      // Check numeric inputs exist
+      expect(screen.getByLabelText(/context window/i)).toBeInTheDocument()
+      expect(screen.getByLabelText(/max output tokens/i)).toBeInTheDocument()
+
+      // Check all capability checkboxes exist
+      expect(screen.getByLabelText(/supports function calling/i)).toBeInTheDocument()
+      expect(screen.getByLabelText(/supports vision/i)).toBeInTheDocument()
+      expect(screen.getByLabelText(/supports audio input/i)).toBeInTheDocument()
+      expect(screen.getByLabelText(/supports audio output/i)).toBeInTheDocument()
+      expect(screen.getByLabelText(/supports streaming/i)).toBeInTheDocument()
+      expect(screen.getByLabelText(/supports json mode/i)).toBeInTheDocument()
+    })
+
+    /**
+     * AC 2.6.2: Number inputs for context_window, max_output_tokens
+     */
+    it('allows entering values for context window and max output tokens', async () => {
+      const user = userEvent.setup()
+      renderForm()
+
+      const contextInput = screen.getByLabelText(/context window/i) as HTMLInputElement
+      const maxOutputInput = screen.getByLabelText(/max output tokens/i) as HTMLInputElement
+
+      await user.clear(contextInput)
+      await user.type(contextInput, '256000')
+
+      await user.clear(maxOutputInput)
+      await user.type(maxOutputInput, '8192')
+
+      expect(contextInput.value).toBe('256000')
+      expect(maxOutputInput.value).toBe('8192')
+    })
+
+    /**
+     * AC 2.6.3: Checkboxes for binary capabilities
+     */
+    it('allows toggling capability checkboxes', async () => {
+      const user = userEvent.setup()
+      renderForm()
+
+      const functionCallingCheckbox = screen.getByLabelText(
+        /supports function calling/i
+      ) as HTMLInputElement
+      const visionCheckbox = screen.getByLabelText(/supports vision/i) as HTMLInputElement
+      const jsonModeCheckbox = screen.getByLabelText(/supports json mode/i) as HTMLInputElement
+
+      // Initially unchecked (except streaming which defaults to true)
+      expect(functionCallingCheckbox).not.toBeChecked()
+      expect(visionCheckbox).not.toBeChecked()
+      expect(jsonModeCheckbox).not.toBeChecked()
+
+      // Toggle checkboxes
+      await user.click(functionCallingCheckbox)
+      await user.click(visionCheckbox)
+      await user.click(jsonModeCheckbox)
+
+      expect(functionCallingCheckbox).toBeChecked()
+      expect(visionCheckbox).toBeChecked()
+      expect(jsonModeCheckbox).toBeChecked()
+    })
+
+    /**
+     * AC 2.6.3: Streaming checkbox defaults to checked
+     */
+    it('has streaming checkbox checked by default', () => {
+      renderForm()
+
+      const streamingCheckbox = screen.getByLabelText(/supports streaming/i) as HTMLInputElement
+      expect(streamingCheckbox).toBeChecked()
+    })
+
+    /**
+     * AC 2.6.4: Form submission includes capabilities data
+     */
+    it('includes capabilities in form submission payload', async () => {
+      const user = userEvent.setup()
+      renderForm()
+
+      // Fill required fields
+      await user.type(screen.getByLabelText(/model name/i), 'GPT-4 Turbo')
+      await user.type(screen.getByLabelText(/provider/i), 'OpenAI')
+      await user.type(screen.getByLabelText(/input price per 1m tokens/i), '10.00')
+      await user.type(screen.getByLabelText(/output price per 1m tokens/i), '30.00')
+
+      // Fill capabilities
+      const contextInput = screen.getByLabelText(/context window/i)
+      await user.clear(contextInput)
+      await user.type(contextInput, '128000')
+
+      const maxOutputInput = screen.getByLabelText(/max output tokens/i)
+      await user.clear(maxOutputInput)
+      await user.type(maxOutputInput, '4096')
+
+      await user.click(screen.getByLabelText(/supports function calling/i))
+      await user.click(screen.getByLabelText(/supports json mode/i))
+
+      // Submit form
+      await user.click(screen.getByRole('button', { name: /save/i }))
+
+      // Verify capabilities are included in mutation payload
+      await waitFor(() => {
+        expect(mockMutate).toHaveBeenCalledWith(
+          expect.objectContaining({
+            name: 'GPT-4 Turbo',
+            provider: 'OpenAI',
+            capabilities: expect.objectContaining({
+              contextWindow: 128000,
+              maxOutputTokens: 4096,
+              supportsFunctionCalling: true,
+              supportsVision: false,
+              supportsAudioInput: false,
+              supportsAudioOutput: false,
+              supportsStreaming: true,
+              supportsJsonMode: true,
+            }),
+          })
+        )
+      })
+    })
+
+    /**
+     * Validates context window minimum value (1000 tokens)
+     */
+    it('validates context window minimum of 1000 tokens', async () => {
+      const user = userEvent.setup()
+      renderForm()
+
+      // Fill required fields
+      await user.type(screen.getByLabelText(/model name/i), 'Test Model')
+      await user.type(screen.getByLabelText(/provider/i), 'Test Provider')
+      await user.type(screen.getByLabelText(/input price per 1m tokens/i), '10')
+      await user.type(screen.getByLabelText(/output price per 1m tokens/i), '20')
+
+      // Enter invalid context window (below minimum)
+      const contextInput = screen.getByLabelText(/context window/i)
+      await user.clear(contextInput)
+      await user.type(contextInput, '500')
+
+      // Submit form
+      await user.click(screen.getByRole('button', { name: /save/i }))
+
+      // Expect validation error
+      await waitFor(() => {
+        expect(screen.getByText(/context window must be at least 1,000 tokens/i)).toBeInTheDocument()
+      })
+    })
+
+    /**
+     * Validates context window maximum value (2,000,000 tokens)
+     */
+    it('validates context window maximum of 2,000,000 tokens', async () => {
+      const user = userEvent.setup()
+      renderForm()
+
+      // Fill required fields
+      await user.type(screen.getByLabelText(/model name/i), 'Test Model')
+      await user.type(screen.getByLabelText(/provider/i), 'Test Provider')
+      await user.type(screen.getByLabelText(/input price per 1m tokens/i), '10')
+      await user.type(screen.getByLabelText(/output price per 1m tokens/i), '20')
+
+      // Enter invalid context window (above maximum)
+      const contextInput = screen.getByLabelText(/context window/i)
+      await user.clear(contextInput)
+      await user.type(contextInput, '3000000')
+
+      // Submit form
+      await user.click(screen.getByRole('button', { name: /save/i }))
+
+      // Expect validation error
+      await waitFor(() => {
+        expect(
+          screen.getByText(/context window cannot exceed 2,000,000 tokens/i)
+        ).toBeInTheDocument()
+      })
+    })
+
+    /**
+     * Cross-field validation: maxOutputTokens <= contextWindow
+     */
+    it('validates that max output tokens cannot exceed context window', async () => {
+      const user = userEvent.setup()
+      renderForm()
+
+      // Fill required fields
+      await user.type(screen.getByLabelText(/model name/i), 'Test Model')
+      await user.type(screen.getByLabelText(/provider/i), 'Test Provider')
+      await user.type(screen.getByLabelText(/input price per 1m tokens/i), '10')
+      await user.type(screen.getByLabelText(/output price per 1m tokens/i), '20')
+
+      // Set context window
+      const contextInput = screen.getByLabelText(/context window/i)
+      await user.clear(contextInput)
+      await user.type(contextInput, '10000')
+
+      // Set max output higher than context window
+      const maxOutputInput = screen.getByLabelText(/max output tokens/i)
+      await user.clear(maxOutputInput)
+      await user.type(maxOutputInput, '20000')
+
+      // Submit form
+      await user.click(screen.getByRole('button', { name: /save/i }))
+
+      // Expect cross-field validation error
+      await waitFor(() => {
+        expect(
+          screen.getByText(/max output tokens cannot exceed context window/i)
+        ).toBeInTheDocument()
+      })
+    })
+
+    /**
+     * Allows max output tokens equal to context window
+     */
+    it('allows max output tokens equal to context window', async () => {
+      const user = userEvent.setup()
+      renderForm()
+
+      // Fill required fields
+      await user.type(screen.getByLabelText(/model name/i), 'Test Model')
+      await user.type(screen.getByLabelText(/provider/i), 'Test Provider')
+      await user.type(screen.getByLabelText(/input price per 1m tokens/i), '10')
+      await user.type(screen.getByLabelText(/output price per 1m tokens/i), '20')
+
+      // Set context window and max output equal
+      const contextInput = screen.getByLabelText(/context window/i)
+      await user.clear(contextInput)
+      await user.type(contextInput, '10000')
+
+      const maxOutputInput = screen.getByLabelText(/max output tokens/i)
+      await user.clear(maxOutputInput)
+      await user.type(maxOutputInput, '10000')
+
+      // Submit form
+      await user.click(screen.getByRole('button', { name: /save/i }))
+
+      // Should NOT show validation error
+      await waitFor(() => {
+        expect(mockMutate).toHaveBeenCalled()
+      })
+
+      expect(screen.queryByText(/max output tokens cannot exceed/i)).not.toBeInTheDocument()
+    })
+
+    /**
+     * Context window is required field
+     */
+    it('shows error when context window is not provided', async () => {
+      const user = userEvent.setup()
+      renderForm()
+
+      // Fill other required fields but leave context window empty
+      await user.type(screen.getByLabelText(/model name/i), 'Test Model')
+      await user.type(screen.getByLabelText(/provider/i), 'Test Provider')
+      await user.type(screen.getByLabelText(/input price per 1m tokens/i), '10')
+      await user.type(screen.getByLabelText(/output price per 1m tokens/i), '20')
+
+      // Clear context window (required field)
+      const contextInput = screen.getByLabelText(/context window/i)
+      await user.clear(contextInput)
+
+      // Submit form
+      await user.click(screen.getByRole('button', { name: /save/i }))
+
+      // Should show error (either required or type error)
+      await waitFor(() => {
+        expect(mockMutate).not.toHaveBeenCalled()
+      })
+    })
   })
 })
