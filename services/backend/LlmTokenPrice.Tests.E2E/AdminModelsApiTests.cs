@@ -222,7 +222,7 @@ public class AdminModelsApiTests : IClassFixture<WebApplicationFactory<LlmTokenP
         // Arrange - Login as admin
         await LoginAsAdminAsync();
 
-        // First, get all models to find one to delete
+        // First, get all models to find an ACTIVE one to delete
         var getResponse = await _client.GetAsync("/api/admin/models");
         var responseBody = await getResponse.Content.ReadAsStringAsync();
         var adminResponse = JsonSerializer.Deserialize<AdminApiResponse>(
@@ -232,7 +232,9 @@ public class AdminModelsApiTests : IClassFixture<WebApplicationFactory<LlmTokenP
         var models = adminResponse!.Data;
         models.Should().NotBeEmpty("Need at least one model to test deletion");
 
-        var modelToDelete = models![0];
+        // Select an active model to delete
+        var modelToDelete = models!.FirstOrDefault(m => m.IsActive);
+        modelToDelete.Should().NotBeNull("Need at least one active model to test soft delete");
 
         // Act - Delete the model
         var deleteResponse = await _client.DeleteAsync($"/api/admin/models/{modelToDelete.Id}");
@@ -290,6 +292,60 @@ public class AdminModelsApiTests : IClassFixture<WebApplicationFactory<LlmTokenP
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized,
             "DELETE endpoint must require JWT authentication");
+    }
+
+    /// <summary>
+    /// AC 2.8.4: Validates soft-deleted models are excluded from public API.
+    /// Critical test - ensures deleted models don't appear in public comparison table.
+    /// </summary>
+    [Fact]
+    public async Task DeleteModel_SoftDeleted_Should_BeExcludedFromPublicAPI()
+    {
+        // Arrange - Login as admin
+        await LoginAsAdminAsync();
+
+        // Get initial count from public API
+        var publicBeforeResponse = await _client.GetAsync("/api/models");
+        publicBeforeResponse.EnsureSuccessStatusCode();
+        var publicBeforeBody = await publicBeforeResponse.Content.ReadAsStringAsync();
+        var publicBeforeModels = JsonSerializer.Deserialize<PublicApiResponse>(
+            publicBeforeBody,
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        var initialPublicCount = publicBeforeModels!.Data!.Count;
+
+        // Get an ACTIVE model to delete from admin API
+        var adminResponse = await _client.GetAsync("/api/admin/models");
+        var adminBody = await adminResponse.Content.ReadAsStringAsync();
+        var adminModels = JsonSerializer.Deserialize<AdminApiResponse>(
+            adminBody,
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+        adminModels!.Data.Should().NotBeEmpty("Need at least one model to test deletion");
+
+        // Find an active model to delete
+        var modelToDelete = adminModels.Data!.FirstOrDefault(m => m.IsActive);
+        modelToDelete.Should().NotBeNull("Need at least one active model to test soft delete");
+
+        // Act - Delete the model
+        var deleteResponse = await _client.DeleteAsync($"/api/admin/models/{modelToDelete.Id}");
+        deleteResponse.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        // Assert - Verify model is excluded from public API
+        var publicAfterResponse = await _client.GetAsync("/api/models");
+        publicAfterResponse.EnsureSuccessStatusCode();
+        var publicAfterBody = await publicAfterResponse.Content.ReadAsStringAsync();
+        var publicAfterModels = JsonSerializer.Deserialize<PublicApiResponse>(
+            publicAfterBody,
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+        // Public API should have one less model
+        publicAfterModels!.Data!.Count.Should().Be(initialPublicCount - 1,
+            "Soft-deleted model should be excluded from public API");
+
+        // Verify the specific model is not in public API
+        var deletedModelInPublicApi = publicAfterModels.Data!.Any(m => m.Id == modelToDelete.Id);
+        deletedModelInPublicApi.Should().BeFalse(
+            $"Soft-deleted model '{modelToDelete.Name}' should not appear in public API");
     }
 
     #region POST /api/admin/models - Story 2.5
@@ -723,4 +779,34 @@ internal class SingleAdminApiResponse
 {
     public AdminModelDto? Data { get; set; }
     public AdminApiResponseMeta? Meta { get; set; }
+}
+
+/// <summary>
+/// Response structure for public models API (GET /api/models)
+/// </summary>
+internal class PublicApiResponse
+{
+    public List<PublicModelDto>? Data { get; set; }
+    public PublicApiResponseMeta? Meta { get; set; }
+}
+
+/// <summary>
+/// Public model DTO for testing (matches backend ModelDto)
+/// </summary>
+internal class PublicModelDto
+{
+    public string Id { get; set; } = null!;
+    public string Name { get; set; } = null!;
+    public string Provider { get; set; } = null!;
+    public decimal InputPricePer1M { get; set; }
+    public decimal OutputPricePer1M { get; set; }
+}
+
+/// <summary>
+/// Meta information for public API responses
+/// </summary>
+internal class PublicApiResponseMeta
+{
+    public bool Cached { get; set; }
+    public string? Timestamp { get; set; }
 }
