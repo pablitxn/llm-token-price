@@ -12,7 +12,6 @@ import {
   deleteBenchmark,
 } from '@/api/admin'
 import type {
-  BenchmarkResponseDto,
   CreateBenchmarkFormData,
   UpdateBenchmarkFormData,
 } from '@/schemas/benchmarkSchema'

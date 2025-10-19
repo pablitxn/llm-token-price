@@ -10,6 +10,8 @@ import AdminModelsPage from './pages/admin/AdminModelsPage'
 import { AddModelPage } from './pages/admin/AddModelPage'
 import { EditModelPage } from './pages/admin/EditModelPage'
 import AdminBenchmarksPage from './pages/admin/AdminBenchmarksPage'
+import { AddBenchmarkPage } from './pages/admin/AddBenchmarkPage'
+import { EditBenchmarkPage } from './pages/admin/EditBenchmarkPage'
 import AdminLayout from './components/layout/AdminLayout'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 
@@ -40,6 +42,8 @@ export default function App() {
         <Route path="models/new" element={<AddModelPage />} />
         <Route path="models/:id/edit" element={<EditModelPage />} />
         <Route path="benchmarks" element={<AdminBenchmarksPage />} />
+        <Route path="benchmarks/new" element={<AddBenchmarkPage />} />
+        <Route path="benchmarks/:id/edit" element={<EditBenchmarkPage />} />
       </Route>
 
       {/* 404 Not Found */}
