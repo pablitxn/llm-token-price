@@ -34,8 +34,9 @@ namespace LlmTokenPrice.Infrastructure.Data.Migrations
                         .HasColumnType("character varying(100)");
 
                     b.Property<string>("Category")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -49,8 +50,14 @@ namespace LlmTokenPrice.Infrastructure.Data.Migrations
                         .HasColumnType("character varying(300)");
 
                     b.Property<string>("Interpretation")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
 
                     b.Property<decimal?>("TypicalRangeMax")
                         .HasColumnType("decimal(5,2)");
@@ -58,11 +65,19 @@ namespace LlmTokenPrice.Infrastructure.Data.Migrations
                     b.Property<decimal?>("TypicalRangeMin")
                         .HasColumnType("decimal(5,2)");
 
+                    b.Property<decimal>("WeightInQaps")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("decimal(3,2)")
+                        .HasDefaultValue(0m);
+
                     b.HasKey("Id");
 
                     b.HasIndex("BenchmarkName")
                         .IsUnique()
                         .HasDatabaseName("unique_benchmark_name");
+
+                    b.HasIndex("IsActive")
+                        .HasDatabaseName("idx_benchmarks_is_active");
 
                     b.ToTable("benchmarks", (string)null);
                 });

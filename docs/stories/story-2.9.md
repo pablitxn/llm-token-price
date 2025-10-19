@@ -506,7 +506,7 @@ export function BenchmarkForm({ mode = 'create', defaultValues }: BenchmarkFormP
 
 ### Context Reference
 
-<!-- Path(s) to story context XML will be added here by context workflow -->
+- `docs/stories/story-context-2.9.xml` (Generated: 2025-10-19)
 
 ### Agent Model Used
 

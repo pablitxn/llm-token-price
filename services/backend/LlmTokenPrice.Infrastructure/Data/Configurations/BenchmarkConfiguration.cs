@@ -1,4 +1,5 @@
 using LlmTokenPrice.Domain.Entities;
+using LlmTokenPrice.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -42,11 +43,16 @@ public class BenchmarkConfiguration : IEntityTypeConfiguration<Benchmark>
         builder.Property(b => b.Description)
             .HasMaxLength(1000);
 
+        // Enum stored as string in database
         builder.Property(b => b.Category)
-            .HasMaxLength(50);
+            .IsRequired()
+            .HasConversion<string>()
+            .HasMaxLength(20);
 
         builder.Property(b => b.Interpretation)
-            .HasMaxLength(50);
+            .IsRequired()
+            .HasConversion<string>()
+            .HasMaxLength(20);
 
         // Column Configurations - Decimal Precision for typical ranges
         builder.Property(b => b.TypicalRangeMin)
@@ -56,6 +62,21 @@ public class BenchmarkConfiguration : IEntityTypeConfiguration<Benchmark>
         builder.Property(b => b.TypicalRangeMax)
             .HasColumnType("decimal(5,2)")
             .IsRequired(false);
+
+        // Column Configuration - QAPS Weight
+        builder.Property(b => b.WeightInQaps)
+            .HasColumnType("decimal(3,2)")
+            .IsRequired()
+            .HasDefaultValue(0m);
+
+        // Column Configuration - Soft Delete Flag
+        builder.Property(b => b.IsActive)
+            .IsRequired()
+            .HasDefaultValue(true);
+
+        // Index on IsActive for public queries (filtering active benchmarks)
+        builder.HasIndex(b => b.IsActive)
+            .HasDatabaseName("idx_benchmarks_is_active");
 
         // Relationships
 

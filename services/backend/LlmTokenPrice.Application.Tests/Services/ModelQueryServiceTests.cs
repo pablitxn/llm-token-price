@@ -2,6 +2,7 @@ using FluentAssertions;
 using LlmTokenPrice.Application.DTOs;
 using LlmTokenPrice.Application.Services;
 using LlmTokenPrice.Domain.Entities;
+using LlmTokenPrice.Domain.Enums;
 using LlmTokenPrice.Domain.Repositories;
 using Moq;
 
@@ -240,11 +241,12 @@ public class ModelQueryServiceTests
             Id = Guid.NewGuid(),
             BenchmarkName = name,
             FullName = $"{name} Full Name",
-            Category = "Reasoning",
+            Category = BenchmarkCategory.Reasoning,
             Description = $"{name} benchmark description",
             TypicalRangeMin = 0.0m,
             TypicalRangeMax = 100.0m,
-            Interpretation = "Higher is better",
+            Interpretation = BenchmarkInterpretation.HigherBetter,
+            WeightInQaps = 0.30m,
             CreatedAt = DateTime.UtcNow
         };
     }

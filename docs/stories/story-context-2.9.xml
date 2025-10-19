@@ -1,0 +1,284 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>2.9</storyId>
+    <title>Create Benchmark Definitions Management</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-19</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-2.9.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>an administrator</asA>
+    <iWant>to manage benchmark definitions</iWant>
+    <soThat>I can add new benchmarks for scoring models</soThat>
+    <tasks>
+      <task id="1">Create benchmarks management page with list view showing all benchmark definitions</task>
+      <task id="2">Create add benchmark form with fields: name, full_name, description, category, interpretation, typical_range, weight_in_qaps</task>
+      <task id="3">Create benchmark validation schema (Zod client-side, FluentValidation server-side)</task>
+      <task id="4">Create POST /api/admin/benchmarks endpoint with JWT authorization</task>
+      <task id="5">Implement AdminBenchmarkService.CreateBenchmarkAsync with duplicate detection and cache invalidation</task>
+      <task id="6">Add edit benchmark functionality with PUT endpoint and pre-populated form</task>
+      <task id="7">Add delete benchmark functionality with confirmation dialog and cascade handling</task>
+      <task id="8">Create DTOs (CreateBenchmarkDto, BenchmarkResponseDto) and validators</task>
+      <task id="9">Add BenchmarkCategory and BenchmarkInterpretation enums</task>
+      <task id="10">Add comprehensive testing (component, unit, integration, E2E)</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">Benchmarks management page created in admin panel at /admin/benchmarks route</criterion>
+    <criterion id="AC2">List view shows all benchmark definitions in TanStack Table with columns: name, full_name, category, typical_range, weight, actions</criterion>
+    <criterion id="AC3">Add benchmark form includes all required fields with proper validation (name, full_name, description, category dropdown, interpretation dropdown, typical_range_min/max, weight_in_qaps 0-1)</criterion>
+    <criterion id="AC4">POST /api/admin/benchmarks endpoint creates benchmark definition with 201 Created response</criterion>
+    <criterion id="AC5">Edit and delete functionality for benchmarks with confirmation dialogs</criterion>
+    <criterion id="AC6">Validation ensures benchmark names are unique (case-insensitive) and returns 409 Conflict for duplicates</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/tech-spec-epic-2.md" title="Epic 2 Technical Specification" section="Benchmark Management DTOs and API Endpoints">
+        Defines CreateBenchmarkDto with benchmarkName (unique), fullName, description, category enum, interpretation enum, typicalRangeMin/Max, weightInQAPS. API endpoints: POST/PUT/DELETE /api/admin/benchmarks with JWT auth. AdminBenchmarkService orchestrates validation, entity creation, duplicate detection, cache invalidation (cache:benchmarks:*, cache:qaps:*, cache:bestvalue:*).
+      </doc>
+      <doc path="docs/solution-architecture.md" title="Solution Architecture" section="3.1 Database Schema - benchmarks table">
+        Benchmarks table schema: benchmark_name VARCHAR(50) UNIQUE, full_name VARCHAR(255), description TEXT, category VARCHAR(20), interpretation VARCHAR(20), typical_range_min/max DECIMAL, weight_in_qaps DECIMAL(3,2), created_at TIMESTAMP. Primary key UUID. Referenced by benchmark_scores.benchmark_id foreign key.
+      </doc>
+      <doc path="docs/solution-architecture.md" title="Solution Architecture" section="5 QAPS Algorithm - Benchmark Weights">
+        QAPS algorithm uses configurable benchmark weights: Reasoning 0.30 (MMLU, Big-Bench Hard), Code 0.25 (HumanEval, MBPP), Math 0.20 (GSM8K, MATH), Language 0.15 (HellaSwag, TruthfulQA), Multimodal 0.10 (MMMU, VQA). Normalization formula: (Score - Min) / (Max - Min) using typical_range_min/max from benchmarks table.
+      </doc>
+      <doc path="docs/stories/story-2.8.md" title="Story 2.8: Delete Model Functionality" section="Soft-Delete Pattern">
+        Soft-delete pattern: sets is_active=false instead of hard-delete. ConfirmDialog component created at apps/web/src/components/ui/ConfirmDialog.tsx. DELETE endpoint returns 204 No Content. Cascade behavior: associated data preserved. Pattern applicable to benchmark deletion with check for dependent benchmark_scores.
+      </doc>
+      <doc path="docs/stories/story-2.5.md" title="Story 2.5: Create Backend API for Adding Models" section="CREATE Endpoint Validation">
+        FluentValidation pattern with CreateModelValidator. POST endpoint returns 201 Created with Location header. Duplicate detection via repository GetByNameAndProviderAsync. Request body validated server-side, audit timestamps (createdAt, updatedAt) populated automatically.
+      </doc>
+      <doc path="docs/stories/story-2.7.md" title="Story 2.7: Edit Model Functionality" section="UPDATE Endpoint Pattern">
+        PUT /api/admin/models/{id} endpoint pattern with pre-populated form. Dual-mode form component (mode: 'create'|'edit'). UpdateModelAsync service method: fetch existing, validate excluding self from duplicate check, update entity, SaveChangesAsync, invalidate cache. Returns 200 OK or 404/409.
+      </doc>
+    </docs>
+    <code>
+      <artifact path="services/backend/LlmTokenPrice.Domain/Entities/Benchmark.cs" kind="entity" symbol="Benchmark" lines="1-30">
+        Domain entity with Id (Guid), BenchmarkName (string, unique), FullName, Description, Category, Interpretation, TypicalRangeMin/Max (decimal?), CreatedAt (DateTime). Navigation property: Scores (ICollection&lt;BenchmarkScore&gt;). Pure POCO with zero infrastructure dependencies.
+      </artifact>
+      <artifact path="services/backend/LlmTokenPrice.Application/Validators/CreateModelValidator.cs" kind="validator" symbol="CreateModelValidator" lines="15-85">
+        FluentValidation pattern to mirror for CreateBenchmarkValidator. Demonstrates: RuleFor chains, .NotEmpty(), .MaximumLength(), .GreaterThan(0), .Must() for custom logic, .When() for conditional validation, async duplicate detection via repository.
+      </artifact>
+      <artifact path="services/backend/LlmTokenPrice.API/Controllers/Admin/AdminModelsController.cs" kind="controller" symbol="AdminModelsController" lines="212-470">
+        REST controller pattern for CRUD: [HttpPost] Create (line 212, returns 201 Created with Location header), [HttpPut("{id}")] Update (line 322, returns 200/404/400/409), [HttpDelete("{id}")] Delete (line 427, returns 204/404). All endpoints: [Authorize] attribute, structured logging, error responses.
+      </artifact>
+      <artifact path="services/backend/LlmTokenPrice.Application/Services/AdminModelService.cs" kind="service" symbol="AdminModelService" lines="1-150">
+        Application service orchestration pattern: CreateModelAsync validates, creates entity, saves to DB, invalidates cache. UpdateModelAsync fetches existing, validates excluding self, updates, saves. DeleteModelAsync soft-deletes (IsActive=false), invalidates cache. Mirror for AdminBenchmarkService.
+      </artifact>
+      <artifact path="apps/web/src/pages/admin/AdminModelsPage.tsx" kind="component" symbol="AdminModelsPage" lines="1-200">
+        Admin CRUD page pattern: useAdminModels() TanStack Query hook, TanStack Table for display, modal for edit, ConfirmDialog for delete, search/filter UI, "Add New" button. Mirror for AdminBenchmarksPage.
+      </artifact>
+      <artifact path="apps/web/src/components/admin/ModelForm.tsx" kind="component" symbol="ModelForm" lines="1-400">
+        Form component with React Hook Form + zodResolver. Text inputs, dropdowns, date pickers. Error display beneath fields. Loading state on submit. Dual mode support (create/edit). Mirror for BenchmarkForm.
+      </artifact>
+      <artifact path="apps/web/src/components/ui/ConfirmDialog.tsx" kind="component" symbol="ConfirmDialog" lines="1-50">
+        Reusable confirmation dialog: props (open, onClose, onConfirm, title, message, loading). Destructive action styling. Use for benchmark delete confirmation.
+      </artifact>
+      <artifact path="apps/web/src/api/admin.ts" kind="api-client" symbol="admin" lines="1-200">
+        API client functions: createAdminModel, updateAdminModel, deleteAdminModel. Axios with JWT token from authStore. Error handling. Add: createBenchmark, updateBenchmark, deleteBenchmark, getBenchmarks, getBenchmark.
+      </artifact>
+    </code>
+    <dependencies>
+      <backend>
+        <package name="Microsoft.AspNetCore.Authentication.JwtBearer" version="9.0.10">JWT token validation for [Authorize] endpoints</package>
+        <package name="Microsoft.EntityFrameworkCore" version="9.0.10">ORM for database access</package>
+        <package name="Npgsql.EntityFrameworkCore.PostgreSQL" version="9.0.4">PostgreSQL provider</package>
+        <package name="FluentValidation.AspNetCore" version="11.3.0">Server-side validation framework</package>
+        <package name="FluentValidation.DependencyInjectionExtensions" version="11.5.1">DI integration for validators</package>
+        <package name="Serilog.AspNetCore" version="9.0.0">Structured logging</package>
+        <package name="Swashbuckle.AspNetCore" version="9.0.6">Swagger/OpenAPI documentation</package>
+      </backend>
+      <frontend>
+        <package name="react" version="19.1.1">UI framework</package>
+        <package name="react-hook-form" version="7.65.0">Form state management</package>
+        <package name="zod" version="4.1.12">TypeScript-first schema validation</package>
+        <package name="@tanstack/react-query" version="5.90.5">Server state management</package>
+        <package name="@tanstack/react-table" version="8.21.3">Headless table component</package>
+        <package name="axios" version="1.12.2">HTTP client</package>
+        <package name="react-router-dom" version="7.9.4">Client-side routing</package>
+        <package name="lucide-react" version="0.546.0">Icon library</package>
+        <package name="@hookform/resolvers" version="5.2.2">React Hook Form resolvers for Zod</package>
+      </frontend>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <architectural>
+      <constraint>Hexagonal Architecture: Domain layer (Benchmark entity) must have zero dependencies on infrastructure. All DB access via IBenchmarkRepository interface defined in Domain, implemented in Infrastructure.</constraint>
+      <constraint>Dependency Flow: Infrastructure → Application → Domain (never Domain → Infrastructure). AdminBenchmarkService (Application) calls IBenchmarkRepository (Domain port) implemented by BenchmarkRepository (Infrastructure adapter).</constraint>
+      <constraint>Cache Invalidation: Admin mutations (CREATE/UPDATE/DELETE) must invalidate Redis patterns: cache:benchmarks:*, cache:qaps:*, cache:bestvalue:*. Use ICacheService.RemovePatternAsync().</constraint>
+      <constraint>Repository Pattern: Define IBenchmarkRepository interface in Domain with methods: GetByNameAsync, GetByIdAsync, GetAllAsync, AddAsync, UpdateAsync, DeleteAsync, SaveChangesAsync. Concrete BenchmarkRepository in Infrastructure uses EF Core DbContext.</constraint>
+    </architectural>
+    <validation>
+      <constraint>BenchmarkName: Required, max 50 chars, regex /^[a-zA-Z0-9_]+$/, UNIQUE case-insensitive. Enforce in Zod schema, FluentValidation, and database UNIQUE constraint.</constraint>
+      <constraint>FullName: Required, max 255 chars.</constraint>
+      <constraint>Description: Optional, max 1000 chars.</constraint>
+      <constraint>Category: Required enum ['reasoning', 'code', 'math', 'language', 'multimodal']. Create BenchmarkCategory enum in Domain/Enums.</constraint>
+      <constraint>Interpretation: Required enum ['higher_better', 'lower_better']. Create BenchmarkInterpretation enum in Domain/Enums.</constraint>
+      <constraint>TypicalRangeMin/Max: Must be numeric, Min &lt; Max. Validate in Zod refine() and FluentValidation RuleFor(x =&gt; x.TypicalRangeMin).LessThan(x =&gt; x.TypicalRangeMax).</constraint>
+      <constraint>WeightInQaps: Range 0.00-1.00, max 2 decimal places. Validate with z.number().min(0).max(1).multipleOf(0.01) and FluentValidation .InclusiveBetween(0m, 1m).ScalePrecision(2, 3).</constraint>
+      <constraint>Unique Validation: FluentValidation CreateBenchmarkValidator must inject IBenchmarkRepository and implement MustAsync(BeUniqueName) that calls GetByNameAsync. Return false if existing benchmark found.</constraint>
+    </validation>
+    <database>
+      <constraint>Unique Constraint: Database migration must include UNIQUE(benchmark_name) constraint on benchmarks table.</constraint>
+      <constraint>Cascade Delete Decision: DELETE benchmark must check for dependent benchmark_scores. If scores exist, return 400 Bad Request with message "Cannot delete benchmark with associated scores". Optional: Offer cascade delete with confirmation dialog warning.</constraint>
+      <constraint>NOT NULL: benchmarkName, category, interpretation, createdAt columns must be NOT NULL.</constraint>
+      <constraint>Soft Delete Option: Consider adding is_active BOOLEAN DEFAULT true for audit trail (like models table). Story 2.9 can implement soft-delete: set is_active=false, filter WHERE is_active=true in public queries.</constraint>
+    </database>
+    <api-contract>
+      <constraint>Success Response Format: 201 Created (POST), 200 OK (PUT), 204 No Content (DELETE). Include Location header on 201 with /api/admin/benchmarks/{id}.</constraint>
+      <constraint>Error Response Format: 400 Bad Request (validation), 404 Not Found (invalid ID), 409 Conflict (duplicate name). JSON body: { "error": { "code": "...", "message": "...", "details": {...} } }</constraint>
+      <constraint>JWT Authorization: All /api/admin/benchmarks/* endpoints require [Authorize] attribute. Return 401 Unauthorized if token missing/invalid.</constraint>
+      <constraint>Cache Invalidation on Mutation: POST/PUT/DELETE must call ICacheService to invalidate patterns. Frontend TanStack Query hooks must call queryClient.invalidateQueries({ queryKey: ['benchmarks'] }) on mutation success.</constraint>
+    </api-contract>
+    <testing>
+      <constraint>Test Pyramid: 70% unit (validators, service methods), 25% integration (API endpoints with TestContainers), 5% E2E (Playwright full CRUD flow).</constraint>
+      <constraint>Component Tests: BenchmarkForm validation errors, dropdown selections, range validation (min &lt; max), submit loading state. Vitest + Testing Library.</constraint>
+      <constraint>Integration Tests: POST returns 201, duplicate name returns 409, invalid category returns 400, benchmark persisted to database, cache invalidated. WebApplicationFactory + TestContainers.</constraint>
+      <constraint>Unit Tests: CreateBenchmarkValidator with all validation rules, AdminBenchmarkService.CreateBenchmarkAsync duplicate detection, QAPS score normalization using benchmark ranges.</constraint>
+    </testing>
+  </constraints>
+
+  <interfaces>
+    <interface name="POST /api/admin/benchmarks" kind="REST endpoint">
+      <signature>POST /api/admin/benchmarks [Authorize]</signature>
+      <request>CreateBenchmarkDto { benchmarkName, fullName, description?, category, interpretation, typicalRangeMin, typicalRangeMax, weightInQaps }</request>
+      <response>201 Created with Location header and BenchmarkResponseDto { id, benchmarkName, fullName, description, category, interpretation, typicalRangeMin, typicalRangeMax, weightInQaps, createdAt }</response>
+      <errors>400 Bad Request (validation), 401 Unauthorized (JWT), 409 Conflict (duplicate name)</errors>
+      <path>services/backend/LlmTokenPrice.API/Controllers/Admin/AdminBenchmarksController.cs (NEW)</path>
+    </interface>
+    <interface name="PUT /api/admin/benchmarks/{id}" kind="REST endpoint">
+      <signature>PUT /api/admin/benchmarks/{id} [Authorize]</signature>
+      <request>UpdateBenchmarkDto (same fields as Create, partial updates allowed)</request>
+      <response>200 OK with updated BenchmarkResponseDto</response>
+      <errors>404 Not Found, 400 Bad Request, 401 Unauthorized, 409 Conflict</errors>
+      <path>services/backend/LlmTokenPrice.API/Controllers/Admin/AdminBenchmarksController.cs (NEW)</path>
+    </interface>
+    <interface name="DELETE /api/admin/benchmarks/{id}" kind="REST endpoint">
+      <signature>DELETE /api/admin/benchmarks/{id} [Authorize]</signature>
+      <response>204 No Content on success</response>
+      <errors>404 Not Found, 400 Bad Request (if has dependent scores), 401 Unauthorized</errors>
+      <path>services/backend/LlmTokenPrice.API/Controllers/Admin/AdminBenchmarksController.cs (NEW)</path>
+    </interface>
+    <interface name="GET /api/admin/benchmarks" kind="REST endpoint">
+      <signature>GET /api/admin/benchmarks [Authorize]</signature>
+      <response>200 OK with List&lt;BenchmarkResponseDto&gt;</response>
+      <queryParams>search? (string), category? (filter)</queryParams>
+      <path>services/backend/LlmTokenPrice.API/Controllers/Admin/AdminBenchmarksController.cs (NEW)</path>
+    </interface>
+    <interface name="IAdminBenchmarkService" kind="Application Service">
+      <signature>
+        Task&lt;Guid&gt; CreateBenchmarkAsync(CreateBenchmarkDto dto, CancellationToken ct)
+        Task&lt;BenchmarkResponseDto?&gt; GetBenchmarkByIdAsync(Guid id, CancellationToken ct)
+        Task&lt;List&lt;BenchmarkResponseDto&gt;&gt; GetAllBenchmarksAsync(CancellationToken ct)
+        Task&lt;bool&gt; UpdateBenchmarkAsync(Guid id, UpdateBenchmarkDto dto, CancellationToken ct)
+        Task&lt;bool&gt; DeleteBenchmarkAsync(Guid id, CancellationToken ct)
+      </signature>
+      <path>services/backend/LlmTokenPrice.Application/Services/IAdminBenchmarkService.cs (NEW)</path>
+    </interface>
+    <interface name="IBenchmarkRepository" kind="Domain Port">
+      <signature>
+        Task&lt;Benchmark?&gt; GetByNameAsync(string benchmarkName, CancellationToken ct)
+        Task&lt;Benchmark?&gt; GetByIdAsync(Guid id, CancellationToken ct)
+        Task&lt;List&lt;Benchmark&gt;&gt; GetAllAsync(CancellationToken ct)
+        Task AddAsync(Benchmark benchmark, CancellationToken ct)
+        Task UpdateAsync(Benchmark benchmark, CancellationToken ct)
+        Task DeleteAsync(Guid id, CancellationToken ct)
+        Task SaveChangesAsync(CancellationToken ct)
+      </signature>
+      <path>services/backend/LlmTokenPrice.Domain/Repositories/IBenchmarkRepository.cs (EXTEND existing interface if exists, or CREATE)</path>
+    </interface>
+    <interface name="createBenchmark" kind="API client function">
+      <signature>async function createBenchmark(data: CreateBenchmarkRequest): Promise&lt;BenchmarkResponseDto&gt;</signature>
+      <path>apps/web/src/api/admin.ts (ADD to existing file)</path>
+    </interface>
+    <interface name="useCreateBenchmark" kind="TanStack Query mutation hook">
+      <signature>
+        function useCreateBenchmark() {
+          return useMutation({
+            mutationFn: (data: CreateBenchmarkRequest) =&gt; api.createBenchmark(data),
+            onSuccess: () =&gt; queryClient.invalidateQueries({ queryKey: ['benchmarks'] })
+          })
+        }
+      </signature>
+      <path>apps/web/src/hooks/useCreateBenchmark.ts (NEW)</path>
+    </interface>
+    <interface name="BenchmarkForm" kind="React component">
+      <signature>
+        interface BenchmarkFormProps {
+          mode: 'create' | 'edit'
+          benchmarkId?: string
+          onSuccess?: () =&gt; void
+        }
+        function BenchmarkForm({ mode, benchmarkId, onSuccess }: BenchmarkFormProps)
+      </signature>
+      <path>apps/web/src/components/admin/BenchmarkForm.tsx (NEW)</path>
+    </interface>
+    <interface name="createBenchmarkSchema" kind="Zod validation schema">
+      <signature>
+        const createBenchmarkSchema = z.object({
+          benchmarkName: z.string().min(1).max(50).regex(/^[a-zA-Z0-9_]+$/),
+          fullName: z.string().min(1).max(255),
+          description: z.string().max(1000).optional(),
+          category: z.enum(['reasoning', 'code', 'math', 'language', 'multimodal']),
+          interpretation: z.enum(['higher_better', 'lower_better']),
+          typicalRangeMin: z.number().finite(),
+          typicalRangeMax: z.number().finite(),
+          weightInQaps: z.number().min(0).max(1).multipleOf(0.01).default(0)
+        }).refine(data =&gt; data.typicalRangeMin &lt; data.typicalRangeMax, { path: ['typicalRangeMax'] })
+      </signature>
+      <path>apps/web/src/schemas/benchmarkSchema.ts (NEW)</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Backend testing uses xUnit + FluentAssertions for unit tests, TestContainers (PostgreSQL + Redis) for integration tests, WebApplicationFactory for API tests. Frontend testing uses Vitest + Testing Library for component tests, MSW for API mocking. E2E tests use Playwright. Test pyramid: 70% unit, 25% integration, 5% E2E. Coverage target: 70%+ overall, 90%+ domain layer. All tests use Given-When-Then structure.
+    </standards>
+    <locations>
+      <location>services/backend/LlmTokenPrice.Application.Tests/Validators/CreateBenchmarkValidatorTests.cs (NEW - unit tests)</location>
+      <location>services/backend/LlmTokenPrice.Application.Tests/Services/AdminBenchmarkServiceTests.cs (NEW - unit tests)</location>
+      <location>services/backend/LlmTokenPrice.Tests.E2E/AdminBenchmarksApiTests.cs (NEW - integration tests)</location>
+      <location>apps/web/src/components/admin/__tests__/BenchmarkForm.test.tsx (NEW - component tests)</location>
+      <location>apps/web/src/hooks/__tests__/useCreateBenchmark.test.ts (NEW - hook tests)</location>
+      <location>apps/web/src/schemas/__tests__/benchmarkSchema.test.ts (NEW - validation schema tests)</location>
+      <location>services/backend/LlmTokenPrice.Tests.E2E/BenchmarkCrudFlowTests.cs (NEW - Playwright E2E)</location>
+    </locations>
+    <ideas>
+      <test ac="AC1" priority="P0">Component test: AdminBenchmarksPage renders with "Benchmarks" heading and empty table when no benchmarks exist</test>
+      <test ac="AC1" priority="P0">Component test: AdminBenchmarksPage displays "Add Benchmark" button that opens BenchmarkForm modal</test>
+      <test ac="AC2" priority="P0">Component test: BenchmarkList renders TanStack Table with columns: name, full_name, category, typical_range, weight, actions</test>
+      <test ac="AC2" priority="P1">Integration test: GET /api/admin/benchmarks returns 200 OK with array of BenchmarkResponseDto</test>
+      <test ac="AC3" priority="P0">Component test: BenchmarkForm renders all required fields (benchmarkName, fullName, category dropdown, interpretation dropdown, typicalRangeMin/Max, weightInQaps)</test>
+      <test ac="AC3" priority="P0">Component test: BenchmarkForm shows error "Benchmark name is required" when submitting empty benchmarkName</test>
+      <test ac="AC3" priority="P0">Component test: BenchmarkForm shows error "Only letters, numbers, and underscores" when benchmarkName contains special characters</test>
+      <test ac="AC3" priority="P0">Component test: BenchmarkForm shows error "Min must be less than max" when typicalRangeMin >= typicalRangeMax</test>
+      <test ac="AC3" priority="P1">Component test: BenchmarkForm shows error "Weight must be between 0 and 1" when weightInQaps > 1 or < 0</test>
+      <test ac="AC3" priority="P1">Schema test: createBenchmarkSchema validates category is one of 5 enum values</test>
+      <test ac="AC3" priority="P1">Schema test: createBenchmarkSchema validates interpretation is 'higher_better' or 'lower_better'</test>
+      <test ac="AC4" priority="P0">Integration test: POST /api/admin/benchmarks with valid data returns 201 Created with Location header</test>
+      <test ac="AC4" priority="P0">Integration test: POST persists benchmark to database with correct field values</test>
+      <test ac="AC4" priority="P0">Integration test: POST returns 401 Unauthorized when JWT token missing</test>
+      <test ac="AC4" priority="P1">Integration test: POST returns 400 Bad Request when category is invalid enum value</test>
+      <test ac="AC4" priority="P1">Integration test: POST invalidates Redis cache pattern cache:benchmarks:*</test>
+      <test ac="AC5" priority="P0">Component test: BenchmarkForm in edit mode pre-populates fields with existing benchmark data</test>
+      <test ac="AC5" priority="P0">Component test: Delete button opens ConfirmDialog with warning message</test>
+      <test ac="AC5" priority="P1">Integration test: PUT /api/admin/benchmarks/{id} with valid data returns 200 OK with updated benchmark</test>
+      <test ac="AC5" priority="P1">Integration test: DELETE /api/admin/benchmarks/{id} returns 204 No Content and sets is_active=false</test>
+      <test ac="AC5" priority="P1">Integration test: DELETE returns 400 Bad Request when benchmark has dependent benchmark_scores</test>
+      <test ac="AC6" priority="P0">Unit test: CreateBenchmarkValidator.BeUniqueName returns false when benchmark with same name exists (case-insensitive)</test>
+      <test ac="AC6" priority="P0">Integration test: POST with duplicate benchmarkName returns 409 Conflict</test>
+      <test ac="AC6" priority="P1">Unit test: AdminBenchmarkService.CreateBenchmarkAsync throws ValidationException when duplicate name detected</test>
+      <test ac="AC6" priority="P1">Integration test: Database UNIQUE constraint on benchmark_name prevents duplicate insertion</test>
+      <test priority="P2">E2E test: Admin logs in → navigates to /admin/benchmarks → clicks "Add Benchmark" → fills form → submits → sees new benchmark in list</test>
+      <test priority="P2">E2E test: Admin edits existing benchmark → changes weight → saves → verifies updated value in list</test>
+      <test priority="P2">E2E test: Admin deletes benchmark → confirms dialog → verifies removed from list</test>
+      <test priority="P1">Unit test: QAPS normalization uses typical_range_min/max from benchmark definition</test>
+    </ideas>
+  </tests>
+</story-context>
