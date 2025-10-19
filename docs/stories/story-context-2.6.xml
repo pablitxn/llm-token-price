@@ -1,0 +1,242 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>2.6</storyId>
+    <title>Add Capabilities Section to Model Form</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-19</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-2.6.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>an administrator</asA>
+    <iWant>to specify model capabilities in the form</iWant>
+    <soThat>capability information is captured during model creation/editing</soThat>
+    <tasks>
+      <task id="1" ac="1">Add capabilities section to ModelForm component - Create CapabilitiesSection.tsx with section header and description, organize fields in logical groups (context fields, feature flags), style with border/background visual separation</task>
+      <task id="2" ac="2">Add numeric capability fields - Add Context Window and Max Output Tokens number inputs with placeholders, validate context window positive integer, validate max output &lt;= context window if both provided, format large numbers with commas</task>
+      <task id="3" ac="3">Add boolean capability checkboxes - Add 6 checkboxes (function calling, vision, audio input/output, streaming default checked, JSON mode), add label tooltips, style with icons for visual clarity</task>
+      <task id="4" ac="4">Update form validation schema - Extend Zod schema with capabilities object, validate contextWindow (required, int, min 1000, max 2M), validate maxOutputTokens (optional, int, &lt;= contextWindow), boolean defaults (streaming=true, others=false)</task>
+      <task id="5" ac="4,5">Update CreateModelDto and API - Add capabilities object to CreateModelRequest frontend type, update createModel API call, add CapabilitiesDto to backend CreateModelRequest.cs, extend CreateModelValidator with CapabilitiesValidator, update AdminModelService to save capabilities from DTO</task>
+      <task id="6" ac="5">Update backend to save capabilities - Modify AdminModelService.CreateModelAsync to use DTO capabilities instead of defaults, create ModelCapabilities entity from DTO, ensure same transaction as model</task>
+      <task id="7" ac="6">Support editing capabilities - Fetch existing capabilities when loading edit form, pre-populate fields with current values, update model detail query to include capabilities (note: full edit in Story 2.7)</task>
+      <task id="8">Add helper text and tooltips - Add explanations for context window, function calling, vision, JSON mode, add link to capability documentation</task>
+      <task id="9">Add testing - Component tests for CapabilitiesSection, form submission includes capabilities, context window validation, max output validation, checkbox toggles, backend integration tests verify capabilities saved, edit form pre-populates</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1">Capabilities section added to model form with visual separation (border, background) and organized field groups (context fields: contextWindow/maxOutputTokens, feature flags: 6 boolean checkboxes)</criterion>
+    <criterion id="2">Number inputs for context_window (required, placeholder "128000 tokens") and max_output_tokens (optional, placeholder "4096 tokens") with validation (positive integer, max output &lt;= context window if both provided) and formatted display (commas for large numbers like 128,000)</criterion>
+    <criterion id="3">Checkboxes for binary capabilities: supportsFunctionCalling, supportsVision, supportsAudioInput, supportsAudioOutput, supportsStreaming (default: checked), supportsJsonMode. Each checkbox has label tooltip explaining the capability (e.g., "Model can call external functions/tools", "Model can understand images")</criterion>
+    <criterion id="4">Form submission includes capabilities data nested object with all 8 fields (contextWindow, maxOutputTokens, 6 booleans). Frontend Zod validation enforces: contextWindow required int min 1000 max 2M, maxOutputTokens optional int &lt;= contextWindow, booleans with defaults</criterion>
+    <criterion id="5">Backend API updated to accept and save capabilities. CreateModelRequest.cs extended with CapabilitiesDto nested property (ContextWindow int, MaxOutputTokens int?, 6 bool properties). CapabilitiesValidator validates context window range (1000-2M) and max output &lt;= context window. AdminModelService.CreateModelAsync creates ModelCapabilities entity from DTO (not defaults) and saves to model_capabilities table in same transaction</criterion>
+    <criterion id="6">Existing models display current capabilities when editing. GET /api/admin/models/{id} returns model with capabilities nested object. Edit form pre-populates all capability fields (context window, max output, 6 checkboxes) with current database values. Full edit implementation in Story 2.7</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/tech-spec-epic-2.md</path>
+        <title>Technical Specification: Epic 2 - Model Data Management &amp; Admin CRUD</title>
+        <section>Data Models and Contracts - C# Backend DTOs - CreateCapabilityDto</section>
+        <snippet>Defines CreateCapabilityDto record with ContextWindow (int), MaxOutputTokens (int?), SupportsFunctionCalling (bool), SupportsVision (bool), SupportsAudioInput (bool), SupportsAudioOutput (bool), SupportsStreaming (bool), SupportsJsonMode (bool). Used as nested property in CreateModelDto for Story 2.6 capabilities section. Validation rules: context window 1000-2M, max output optional &lt;= context window</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-2.md</path>
+        <title>Technical Specification: Epic 2</title>
+        <section>Services and Modules - AdminModelService</section>
+        <snippet>AdminModelService orchestrates model CRUD with capabilities. Story 2.6 updates CreateModelAsync to accept CreateCapabilityDto from request and create ModelCapabilities entity with DTO values instead of hardcoded defaults. Maintains transaction boundary (model + capabilities in single SaveChangesAsync)</snippet>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture Document</title>
+        <section>Database Schema - model_capabilities table</section>
+        <snippet>model_capabilities table with columns: id (uuid PK), model_id (uuid FK unique), context_window (int NOT NULL), max_output_tokens (int NULL), supports_function_calling (bool), supports_vision (bool), supports_audio_input (bool), supports_audio_output (bool), supports_streaming (bool default true), supports_json_mode (bool). One-to-one relationship with models table via unique constraint on model_id. Cascade delete when model deleted</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-2.4.md</path>
+        <title>Story 2.4: Create Add New Model Form</title>
+        <section>Dev Notes - Implementation Details</section>
+        <snippet>ModelForm.tsx component structure with React Hook Form and Zod validation. Two existing sections: BasicInfoSection (name, provider, version, releaseDate, status) and PricingSection (inputPricePer1M, outputPricePer1M, currency, validFrom, validTo). Story 2.6 adds third section: CapabilitiesSection. Form uses uncontrolled inputs with register(), error display pattern, TailwindCSS styling</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-2.5.md</path>
+        <title>Story 2.5: Create Backend API for Adding Models</title>
+        <section>Dev Notes - Implementation Details</section>
+        <snippet>AdminModelService.CreateModelAsync implementation creates ModelCapabilities entity with default values (ContextWindow=0, all booleans=false except SupportsStreaming=true). Story 2.6 changes this to create capabilities from DTO instead: var capabilities = new ModelCapabilities { ModelId = model.Id, ContextWindow = dto.Capabilities.ContextWindow, MaxOutputTokens = dto.Capabilities.MaxOutputTokens, SupportsFunctionCalling = dto.Capabilities.SupportsFunctionCalling, ... }. Same transaction pattern maintained</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-2.6.md</path>
+        <title>Story 2.6: Add Capabilities Section to Model Form</title>
+        <section>Dev Notes - Extended Zod Schema and FluentValidation</section>
+        <snippet>Complete Zod schema extension with capabilities object: contextWindow (int, min 1000, max 2M), maxOutputTokens (int, positive, optional), 6 booleans with defaults (streaming=true, others=false), refine() for cross-field validation (maxOutput &lt;= contextWindow). FluentValidation CapabilitiesValidator: GreaterThanOrEqualTo(1000), LessThanOrEqualTo(2000000), When(maxOutputTokens.HasValue) LessThanOrEqualTo(contextWindow). Nested validator in CreateModelValidator via SetValidator(new CapabilitiesValidator())</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>apps/web/src/components/admin/ModelForm.tsx</path>
+        <kind>component</kind>
+        <symbol>ModelForm</symbol>
+        <lines>1-355</lines>
+        <reason>Current ModelForm implementation from Story 2.4 with Basic Info and Pricing sections. Story 2.6 adds third section: CapabilitiesSection component inserted between Pricing section (lines 187-291) and Server Error Display (lines 293-300). Provides pattern for section structure, register() usage, error display, TailwindCSS styling (bg-white shadow rounded-lg p-6, grid grid-cols-2 gap-4)</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/schemas/modelSchema.ts</path>
+        <kind>schema</kind>
+        <symbol>createModelSchema</symbol>
+        <lines>17-76</lines>
+        <reason>Current Zod validation schema with model and pricing fields. Story 2.6 extends this schema by adding capabilities object (8 fields: contextWindow number, maxOutputTokens optional number, 6 booleans). Shows refine() pattern for cross-field validation (lines 63-75) to apply for maxOutputTokens &lt;= contextWindow validation. CreateModelFormValues type automatically includes new capabilities fields via z.infer</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/hooks/useCreateModel.ts</path>
+        <kind>hook</kind>
+        <symbol>useCreateModel</symbol>
+        <lines>1-55</lines>
+        <reason>TanStack Query mutation hook for createModel API call. No changes needed - hook already accepts CreateModelRequest type which will be extended with capabilities. Mutation automatically serializes nested capabilities object to JSON. Cache invalidation (line 43) triggers after successful create. Shows error handling pattern (lines 48-52)</reason>
+      </artifact>
+      <artifact>
+        <path>services/backend/LlmTokenPrice.Application/DTOs/CreateModelRequest.cs</path>
+        <kind>dto</kind>
+        <symbol>CreateModelRequest</symbol>
+        <lines>1-74</lines>
+        <reason>Backend DTO for model creation from Story 2.5. Story 2.6 adds new property: public required CreateCapabilityDto Capabilities { get; init; }. Shows required vs optional pattern, XML documentation style, record syntax. New CapabilitiesDto will be defined in separate file: CapabilitiesDto.cs in same DTOs folder</reason>
+      </artifact>
+      <artifact>
+        <path>services/backend/LlmTokenPrice.Domain/Entities/Capability.cs</path>
+        <kind>entity</kind>
+        <symbol>Capability</symbol>
+        <lines>1-81</lines>
+        <reason>Pure domain entity defining Capability structure. Story 2.6 AdminModelService.CreateModelAsync maps CreateCapabilityDto to this entity: ContextWindow (required int), MaxOutputTokens (nullable int), 6 boolean flags. Shows property names, types, defaults (SupportsStreaming=true line 65), XML documentation explaining each capability (function calling, vision, audio, streaming, JSON mode), one-to-one ModelId foreign key relationship</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <frontend>
+        <package name="react-hook-form" version="7.x" reason="Already installed - useFormContext() for nested CapabilitiesSection component to access parent ModelForm register(), formState, errors. No additional installation needed" />
+        <package name="zod" version="3.x" reason="Already installed - extend createModelSchema with capabilities object (z.object with 8 fields). z.refine() for cross-field validation (maxOutput &lt;= contextWindow). No additional installation needed" />
+        <package name="@hookform/resolvers" version="3.x" reason="Already installed - zodResolver connects Zod schema to React Hook Form. No changes needed for capabilities extension" />
+      </frontend>
+      <backend>
+        <package name="FluentValidation.AspNetCore" version="11.3.0" reason="Already installed - create new CapabilitiesValidator : AbstractValidator&lt;CreateCapabilityDto&gt;. Nest in CreateModelValidator via RuleFor(x =&gt; x.Capabilities).SetValidator(new CapabilitiesValidator()). No additional installation needed" />
+      </backend>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <architectural>
+      <constraint>Form Component Architecture: ModelForm.tsx structure with three sections (BasicInfo, Pricing, Capabilities NEW). CapabilitiesSection uses useFormContext() to access parent form state rather than separate form instance. Single form submission includes all sections. Maintains React Hook Form uncontrolled input pattern with register()</constraint>
+      <constraint>Nested Object Validation: Zod schema uses nested object (capabilities: z.object({...})) for grouped validation. React Hook Form register paths use dot notation ('capabilities.contextWindow', 'capabilities.supportsFunctionCalling'). Backend DTO mirrors nesting with CreateCapabilityDto property. Validation errors accessible via errors.capabilities?.contextWindow?.message</constraint>
+      <constraint>Transaction Boundary: Model and Capabilities still created in single EF Core SaveChangesAsync transaction (from Story 2.5 pattern). AdminModelService.CreateModelAsync now maps dto.Capabilities to entity instead of hardcoded defaults. If capabilities validation fails, entire transaction rolls back (no model created)</constraint>
+      <constraint>Domain Purity Maintained: Capability.cs entity remains pure POCO in Domain layer with no validation attributes. Validation logic split: client-side Zod (modelSchema.ts), server-side FluentValidation (CapabilitiesValidator.cs). Entity configuration still via Fluent API in Infrastructure/Data/Configuration/CapabilityConfiguration.cs</constraint>
+    </architectural>
+    <validation>
+      <constraint>Context Window Validation: Required field, integer type, minimum 1000 tokens (smallest practical context window), maximum 2,000,000 tokens (current industry maximum for models like Claude 3). Client Zod: z.number().int().min(1000).max(2000000). Server FluentValidation: GreaterThanOrEqualTo(1000), LessThanOrEqualTo(2000000)</constraint>
+      <constraint>Max Output Validation: Optional field (nullable int), must be positive if provided, must be less than or equal to context window (cross-field validation). Client Zod: z.number().int().positive().optional() with refine() checking maxOutput &lt;= contextWindow. Server FluentValidation: When(x =&gt; x.MaxOutputTokens.HasValue, () =&gt; RuleFor(...).LessThanOrEqualTo(x =&gt; x.ContextWindow))</constraint>
+      <constraint>Boolean Defaults: All capability flags default to false EXCEPT SupportsStreaming which defaults to true (most modern LLMs support streaming). Client Zod: z.boolean().default(false) for 5 flags, z.boolean().default(true) for streaming. Backend DTO: bool properties with default values. Frontend form sets initial checkbox states from defaults</constraint>
+      <constraint>Double-Layer Validation Consistency: Client Zod and server FluentValidation rules must match exactly. Context window range 1000-2M enforced both sides. Max output &lt;= context window enforced both sides. Prevents validation bypassing via direct API calls or browser dev tools</constraint>
+    </validation>
+    <ui-ux>
+      <constraint>Visual Section Separation: Capabilities section visually distinct from Pricing section using border-top (border-t), padding-top (pt-6), margin-top (mt-6) TailwindCSS classes. Maintains consistent bg-white shadow rounded-lg p-6 card styling from existing sections. Section header "Model Capabilities" with descriptive subtitle</constraint>
+      <constraint>Field Organization: Context fields (contextWindow, maxOutputTokens) in first row using grid-cols-2 for side-by-side layout. Boolean checkboxes in second area, also grid-cols-2 for compact 3x2 checkbox grid. Logical grouping: numeric limits first, feature flags second. Mobile responsive (stacks on small screens via sm: breakpoint)</constraint>
+      <constraint>Input Formatting: Context window number input shows placeholder "128000" (common GPT-4 context). Max output shows "4096" placeholder (common output limit). Large numbers formatted with commas for readability (128,000 tokens) via formatNumber utility. Step attribute omitted (integers only, no decimals unlike pricing fields)</constraint>
+      <constraint>Checkbox Labels and Tooltips: Each checkbox has clear label ("Supports Function Calling", "Supports Vision", etc.) with optional tooltip icon explaining capability. Tooltip content explains use case (e.g., "Model can call external functions/tools based on user prompts" for function calling). Streaming checkbox pre-checked by default with note "Most modern LLMs support streaming"</constraint>
+      <constraint>Error Display: Validation errors show inline below each field (red text, text-sm). Context window errors like "Must be at least 1,000 tokens" or "Cannot exceed 2,000,000 tokens". Max output error "Must be less than or equal to context window" appears when validation fails. Consistent error styling with existing form sections</constraint>
+    </ui-ux>
+    <api-integration>
+      <constraint>Request Payload Extension: POST /api/admin/models request body extended with capabilities nested object: { name, provider, ..., capabilities: { contextWindow: 128000, maxOutputTokens: 4096, supportsFunctionCalling: true, supportsVision: false, ... } }. Frontend createModel API function serializes capabilities automatically (axios JSON serialization). Backend deserializes to CreateCapabilityDto nested property</constraint>
+      <constraint>Response Format: 201 Created response includes full AdminModelDto with nested AdminCapabilityDto (mirrors request structure). GET /api/admin/models/{id} also returns capabilities for edit form pre-population. Response matches structure: { data: { id, name, ..., capabilities: { contextWindow, maxOutputTokens, ... } }, meta: { ... } }</constraint>
+      <constraint>Backward Compatibility: Story 2.5 created models with default capabilities (contextWindow=0, all flags=false except streaming). Story 2.6 models created with admin-specified capabilities. Both model types coexist in database. Edit form in Story 2.7 updates old models with actual capabilities. contextWindow=0 treated as "unknown" in UI (placeholder "Enter context window")</constraint>
+    </api-integration>
+    <testing>
+      <constraint>Component Test Coverage: CapabilitiesSection component tests verify: (1) All 8 fields render correctly, (2) Context window validation errors display for out-of-range values, (3) Max output validation error displays when exceeding context window, (4) Checkboxes toggle correctly and update form state, (5) Default values set (streaming=true, others=false), (6) Tooltips render and display on hover. Use Vitest + Testing Library with render() and user.click() / user.type()</constraint>
+      <constraint>Integration Test Extension: Story 2.5 integration tests for POST /api/admin/models extended to include capabilities in request payload. Verify: (1) Model created with capabilities matching request, (2) ModelCapabilities record persisted to database with correct values, (3) Validation rejects invalid capabilities (context window &lt;1000, max output &gt; context window), (4) GET /api/admin/models/{id} returns capabilities. Use TestContainers for database isolation</constraint>
+      <constraint>Form Submission Test: ModelForm component integration test submits form with all three sections (Basic, Pricing, Capabilities). Verify createModel mutation called with correct payload shape: { name, provider, ..., capabilities: { ... } }. Mock useCreateModel hook with vi.fn(). Assert mutation receives nested capabilities object with 8 properties. Validate Zod schema accepts valid capabilities, rejects invalid</constraint>
+    </testing>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>CapabilitiesSection Component</name>
+      <kind>React component</kind>
+      <signature>export function CapabilitiesSection(): JSX.Element</signature>
+      <path>apps/web/src/components/admin/CapabilitiesSection.tsx (new file to create)</path>
+      <description>React component for capabilities form section. Uses useFormContext() to access parent ModelForm register/errors. Renders context window and max output number inputs (grid-cols-2) followed by 6 capability checkboxes (grid-cols-2, 3x2 grid). Includes tooltips for each checkbox explaining capability purpose. Integrates into ModelForm.tsx between Pricing section and Form Actions</description>
+    </interface>
+    <interface>
+      <name>Extended createModelSchema</name>
+      <kind>Zod schema</kind>
+      <signature>z.object({ ..., capabilities: z.object({ contextWindow: z.number().int().min(1000).max(2000000), maxOutputTokens: z.number().int().positive().optional(), supportsFunctionCalling: z.boolean().default(false), ... }) }).refine(...)</signature>
+      <path>apps/web/src/schemas/modelSchema.ts (modify existing)</path>
+      <description>Extended Zod validation schema with capabilities nested object. Validates contextWindow (required int 1K-2M), maxOutputTokens (optional int positive), 6 boolean flags with defaults. Uses refine() for cross-field validation ensuring maxOutputTokens &lt;= contextWindow when both provided. CreateModelFormValues type automatically updated via z.infer to include capabilities</description>
+    </interface>
+    <interface>
+      <name>CreateCapabilityDto</name>
+      <kind>C# record DTO</kind>
+      <signature>public record CreateCapabilityDto(int ContextWindow, int? MaxOutputTokens, bool SupportsFunctionCalling, bool SupportsVision, bool SupportsAudioInput, bool SupportsAudioOutput, bool SupportsStreaming, bool SupportsJsonMode)</signature>
+      <path>services/backend/LlmTokenPrice.Application/DTOs/CreateCapabilityDto.cs (new file to create)</path>
+      <description>Backend DTO for capability creation nested in CreateModelRequest. Properties: ContextWindow (int, required), MaxOutputTokens (int?, nullable), 6 boolean flags. Used by AdminModelService.CreateModelAsync to create Capability entity. Validated by CapabilitiesValidator. Maps to frontend CreateModelFormValues.capabilities type via JSON serialization</description>
+    </interface>
+    <interface>
+      <name>Extended CreateModelRequest</name>
+      <kind>C# record DTO</kind>
+      <signature>public record CreateModelRequest { ..., public required CreateCapabilityDto Capabilities { get; init; } }</signature>
+      <path>services/backend/LlmTokenPrice.Application/DTOs/CreateModelRequest.cs (modify existing)</path>
+      <description>Extended CreateModelRequest with new Capabilities property. Required field ensures all model creations include capability data. Nested DTO approach groups capability fields logically. Validated via nested CreateModelValidator.SetValidator(new CapabilitiesValidator()) FluentValidation pattern</description>
+    </interface>
+    <interface>
+      <name>CapabilitiesValidator</name>
+      <kind>FluentValidation validator</kind>
+      <signature>public class CapabilitiesValidator : AbstractValidator&lt;CreateCapabilityDto&gt;</signature>
+      <path>services/backend/LlmTokenPrice.Application/Validators/CapabilitiesValidator.cs (new file to create)</path>
+      <description>FluentValidation validator for CreateCapabilityDto. Rules: ContextWindow GreaterThanOrEqualTo(1000) and LessThanOrEqualTo(2000000). Conditional rule for MaxOutputTokens: When(HasValue, GreaterThan(0) and LessThanOrEqualTo(ContextWindow)). Nested in CreateModelValidator via RuleFor(x =&gt; x.Capabilities).NotNull().SetValidator(new CapabilitiesValidator()). Registered automatically via AddValidatorsFromAssemblyContaining</description>
+    </interface>
+    <interface>
+      <name>AdminModelService.CreateModelAsync (extended)</name>
+      <kind>Application service method</kind>
+      <signature>Task&lt;Guid&gt; CreateModelAsync(CreateModelRequest request, CancellationToken cancellationToken)</signature>
+      <path>services/backend/LlmTokenPrice.Application/Services/AdminModelService.cs (modify existing from Story 2.5)</path>
+      <description>Extended CreateModelAsync implementation now creates Capability entity from dto.Capabilities instead of hardcoded defaults. Mapping: ContextWindow = dto.Capabilities.ContextWindow, MaxOutputTokens = dto.Capabilities.MaxOutputTokens, SupportsFunctionCalling = dto.Capabilities.SupportsFunctionCalling, etc. Transaction boundary unchanged (model + capabilities in single SaveChangesAsync). Returns model.Id GUID as before</description>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Testing follows Epic 1 Story 1.11 patterns: Vitest for frontend component tests with Testing Library (render, user events, waitFor), xUnit for backend unit tests with FluentAssertions, TestContainers for integration tests (PostgreSQL 16 + Redis 7.2), WebApplicationFactory for API endpoint testing. Test naming: ComponentName_Scenario_ExpectedBehavior or MethodName_Scenario_ExpectedBehavior. Given-When-Then structure. Frontend tests mock useCreateModel hook with vi.fn(). Backend tests mock IAdminModelRepository with Moq. Integration tests use real database via TestContainers with Respawn cleanup. Code coverage target: 70%+ overall, 90%+ for validation logic (Zod schema + FluentValidation)</standards>
+    <locations>
+      <location>apps/web/src/components/admin/__tests__/CapabilitiesSection.test.tsx (new component tests for capabilities section)</location>
+      <location>apps/web/src/components/admin/__tests__/ModelForm.test.tsx (extend existing tests to verify capabilities submission)</location>
+      <location>apps/web/src/schemas/__tests__/modelSchema.test.ts (extend existing tests with capabilities validation scenarios)</location>
+      <location>services/backend/LlmTokenPrice.Application.Tests/Validators/CapabilitiesValidatorTests.cs (new unit tests for capabilities validation rules)</location>
+      <location>services/backend/LlmTokenPrice.Application.Tests/Services/AdminModelServiceTests.cs (extend existing tests to verify capabilities from DTO)</location>
+      <location>services/backend/LlmTokenPrice.Infrastructure.Tests/Integration/AdminModelsControllerTests.cs (extend POST tests with capabilities in payload)</location>
+    </locations>
+    <ideas>
+      <test ac="1" type="component">CapabilitiesSection renders with section header "Model Capabilities" and description text - verify heading and description present using getByRole('heading') and getByText()</test>
+      <test ac="1" type="component">CapabilitiesSection renders with visual separation from other sections - verify border-t, pt-6, mt-6 TailwindCSS classes applied to section container div</test>
+      <test ac="2" type="component">Context Window number input renders with correct label, placeholder "128000", and required attribute - verify input type="number" with proper accessibility labels</test>
+      <test ac="2" type="component">Max Output Tokens number input renders with correct label, placeholder "4096", and optional (no required attribute) - verify optional field styling and placeholder</test>
+      <test ac="2" type="unit">Zod schema validates context window is required - createModelSchema.parse({ ..., capabilities: { maxOutputTokens: 4096 } }) throws ZodError with "contextWindow required" message</test>
+      <test ac="2" type="unit">Zod schema validates context window minimum 1000 - createModelSchema.parse({ ..., capabilities: { contextWindow: 500 } }) throws ZodError "Must be at least 1,000 tokens"</test>
+      <test ac="2" type="unit">Zod schema validates context window maximum 2,000,000 - createModelSchema.parse({ ..., capabilities: { contextWindow: 3000000 } }) throws ZodError "Cannot exceed 2,000,000 tokens"</test>
+      <test ac="2" type="unit">Zod schema validates context window is integer - createModelSchema.parse({ ..., capabilities: { contextWindow: 128000.5 } }) throws ZodError "Must be an integer"</test>
+      <test ac="2" type="unit">Zod schema validates maxOutputTokens &lt;= contextWindow - createModelSchema.parse({ ..., capabilities: { contextWindow: 4096, maxOutputTokens: 8192 } }) throws ZodError "Max output tokens cannot exceed context window"</test>
+      <test ac="2" type="component">Context window validation error displays when value out of range - user types "500", blur input, verify error text "Must be at least 1,000 tokens" appears below field</test>
+      <test ac="2" type="component">Max output validation error displays when exceeding context window - user types contextWindow "4096" and maxOutput "8192", verify error "Max output tokens cannot exceed context window"</test>
+      <test ac="3" type="component">All 6 capability checkboxes render with correct labels - verify "Supports Function Calling", "Supports Vision", "Supports Audio Input", "Supports Audio Output", "Supports Streaming", "Supports JSON Mode" checkboxes present</test>
+      <test ac="3" type="component">Streaming checkbox is checked by default, others unchecked - verify supportsStreaming checkbox has checked attribute, other 5 checkboxes unchecked on initial render</test>
+      <test ac="3" type="component">Checkboxes toggle correctly and update form state - user clicks supportsFunctionCalling checkbox, verify checkbox becomes checked, form state updated with supportsFunctionCalling: true</test>
+      <test ac="3" type="component">Capability checkboxes have tooltips with explanations - hover over "Supports Function Calling" checkbox, verify tooltip displays "Model can call external functions/tools based on user prompts"</test>
+      <test ac="4" type="integration">Form submission includes capabilities data in payload - submit ModelForm with all sections filled, verify createModel mutation called with { name, provider, ..., capabilities: { contextWindow: 128000, maxOutputTokens: 4096, supportsFunctionCalling: true, ... } }</test>
+      <test ac="4" type="unit">CreateModelFormValues type includes capabilities property - TypeScript compilation succeeds with const formData: CreateModelFormValues = { ..., capabilities: { contextWindow: 128000, ... } }. Verify type inference from Zod schema</test>
+      <test ac="5" type="unit">CapabilitiesValidator validates context window range - validator.Validate(new CreateCapabilityDto { ContextWindow = 500 }) returns IsValid=false with error "Context window must be at least 1,000 tokens"</test>
+      <test ac="5" type="unit">CapabilitiesValidator validates maxOutputTokens &lt;= contextWindow - validator.Validate(new CreateCapabilityDto { ContextWindow = 4096, MaxOutputTokens = 8192 }) returns IsValid=false with error "Max output tokens cannot exceed context window"</test>
+      <test ac="5" type="unit">AdminModelService.CreateModelAsync creates Capability entity from DTO - mock repository, call CreateModelAsync with dto.Capabilities.ContextWindow=128000, verify repository.CreateCapabilityAsync called with Capability { ContextWindow=128000, SupportsFunctionCalling=dto.Capabilities.SupportsFunctionCalling, ... }</test>
+      <test ac="5" type="integration">POST /api/admin/models with capabilities saves to database - send POST with capabilities { contextWindow: 128000, supportsFunctionCalling: true, supportsVision: false, ... }, verify ModelCapabilities record persisted with correct values in model_capabilities table</test>
+      <test ac="5" type="integration">POST /api/admin/models with invalid capabilities returns 400 Bad Request - send POST with contextWindow: 500 (below minimum), verify 400 response with validation error details { field: "capabilities.contextWindow", message: "Context window must be at least 1,000 tokens" }</test>
+      <test ac="5" type="integration">POST /api/admin/models creates Model and Capability in same transaction - send POST request, simulate Capability creation failure, verify Model not created (transaction rolled back)</test>
+      <test ac="6" type="integration">GET /api/admin/models/{id} returns model with capabilities - create model with capabilities, call GET endpoint, verify response includes capabilities nested object with all 8 fields matching database values</test>
+      <test ac="6" type="component">Edit form pre-populates capabilities from existing model - render ModelForm with model prop containing capabilities { contextWindow: 128000, supportsFunctionCalling: true, ... }, verify inputs display correct values (context window shows 128000, function calling checkbox checked)</test>
+      <test ac="1-6" type="e2e">Full model creation with capabilities flow - authenticate, navigate to /admin/models/new, fill Basic Info + Pricing + Capabilities sections, submit form, verify 201 Created response, navigate to models list, verify new model displays, click edit, verify capabilities pre-populated correctly</test>
+    </ideas>
+  </tests>
+</story-context>

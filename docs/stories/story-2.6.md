@@ -1,6 +1,6 @@
 # Story 2.6: Add Capabilities Section to Model Form
 
-Status: Ready
+Status: ContextReadyDraft
 
 ## Story
 
@@ -310,7 +310,7 @@ export function CapabilitiesSection() {
 
 ### Context Reference
 
-<!-- Path(s) to story context XML will be added here by context workflow -->
+- docs/stories/story-context-2.6.xml (✅ Generated: 2025-10-19)
 
 ### Agent Model Used
 
