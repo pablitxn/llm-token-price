@@ -3,8 +3,8 @@
  * Provides server state management with automatic caching and refetch logic
  */
 
-import { useQuery } from '@tanstack/react-query'
-import { getAdminModels } from '@/api/admin'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { getAdminModels, deleteAdminModel } from '@/api/admin'
 import type { AdminModelDto } from '@/types/admin'
 
 /**
@@ -123,5 +123,47 @@ export function useAdminModel(id: string) {
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
     enabled: !!id, // Only run query if id is provided
+  })
+}
+
+/**
+ * Hook for deleting an admin model
+ * Uses TanStack Query mutation with automatic cache invalidation
+ *
+ * @returns Mutation object with mutate, mutateAsync, isLoading, error, etc.
+ *
+ * @example
+ * ```tsx
+ * function ModelList() {
+ *   const deleteMutation = useDeleteModel()
+ *
+ *   const handleDelete = async (id: string) => {
+ *     try {
+ *       await deleteMutation.mutateAsync(id)
+ *       toast.success('Model deleted successfully')
+ *     } catch (error) {
+ *       toast.error('Failed to delete model')
+ *     }
+ *   }
+ *
+ *   return <button onClick={() => handleDelete(model.id)}>Delete</button>
+ * }
+ * ```
+ */
+export function useDeleteModel() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const response = await deleteAdminModel(id)
+      return response
+    },
+    onSuccess: () => {
+      // Invalidate all admin models queries to trigger refetch
+      queryClient.invalidateQueries({ queryKey: ['admin', 'models'] })
+    },
+    onError: (error: Error) => {
+      console.error('Failed to delete model:', error)
+    },
   })
 }

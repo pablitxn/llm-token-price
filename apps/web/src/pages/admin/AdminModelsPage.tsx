@@ -8,7 +8,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ModelList } from '@/components/admin/ModelList'
-import { useAdminModels } from '@/hooks/useAdminModels'
+import { useAdminModels, useDeleteModel } from '@/hooks/useAdminModels'
 import type { AdminModelDto } from '@/types/admin'
 import * as React from 'react'
 
@@ -51,6 +51,9 @@ export default function AdminModelsPage() {
   // Fetch models using TanStack Query hook
   const { data: models, isLoading, error, refetch } = useAdminModels(debouncedSearchTerm)
 
+  // Delete mutation hook
+  const deleteMutation = useDeleteModel()
+
   /**
    * Handles clear search button click
    */
@@ -76,18 +79,25 @@ export default function AdminModelsPage() {
 
   /**
    * Handles delete confirmation
-   * TODO: Implement delete mutation in Story 2.8
+   * Performs soft delete (sets isActive = false) and refetches the model list
    */
   const handleConfirmDelete = async () => {
     if (!modelToDelete) return
 
-    // TODO: Implement delete mutation using TanStack Query useMutation
-    // await deleteModel(modelToDelete.id)
-    // refetch()
+    try {
+      // Execute delete mutation
+      await deleteMutation.mutateAsync(modelToDelete.id)
 
-    console.log('Delete model:', modelToDelete.id)
-    setDeleteModalOpen(false)
-    setModelToDelete(null)
+      // Close modal and clear state on success
+      setDeleteModalOpen(false)
+      setModelToDelete(null)
+
+      // Note: Query invalidation happens automatically in the mutation's onSuccess
+    } catch (error) {
+      // Error is already logged in the mutation's onError
+      // Keep modal open so user can try again or cancel
+      console.error('Failed to delete model:', error)
+    }
   }
 
   /**
