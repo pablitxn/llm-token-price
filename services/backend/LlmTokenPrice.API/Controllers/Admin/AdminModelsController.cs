@@ -41,42 +41,49 @@ public class AdminModelsController : ControllerBase
 
     /// <summary>
     /// Retrieves all LLM models for admin panel (including inactive).
-    /// Supports search by name/provider and filtering by status.
+    /// Supports search by name/provider, filtering by status, and optional pagination.
     /// </summary>
+    /// <param name="page">Optional page number (1-indexed, default: returns all).</param>
+    /// <param name="pageSize">Optional page size (default: 20, max: 100).</param>
     /// <param name="searchTerm">Optional search term to filter by model name or provider (case-insensitive).</param>
     /// <param name="provider">Optional provider filter (exact match, case-insensitive).</param>
     /// <param name="status">Optional status filter (exact match, case-insensitive).</param>
     /// <param name="cancellationToken">Cancellation token for async operation.</param>
-    /// <returns>List of all models (including inactive) with full audit data.</returns>
-    /// <response code="200">Returns the list of models (including inactive).</response>
+    /// <returns>List of all models (including inactive) with full audit data, optionally paginated.</returns>
+    /// <response code="200">Returns the list of models (including inactive), paginated or full list.</response>
+    /// <response code="400">If pagination parameters are invalid.</response>
     /// <response code="401">If JWT token is missing, invalid, or expired.</response>
     /// <response code="500">If an unexpected error occurs during processing.</response>
     /// <example>
     /// GET /api/admin/models
     /// GET /api/admin/models?searchTerm=gpt
-    /// GET /api/admin/models?provider=OpenAI&status=active
+    /// GET /api/admin/models?provider=OpenAI&amp;status=active
+    /// GET /api/admin/models?page=1&amp;pageSize=20&amp;searchTerm=gpt
     ///
-    /// Response:
+    /// Non-paginated response:
     /// {
-    ///   "data": [
-    ///     {
-    ///       "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-    ///       "name": "GPT-4",
-    ///       "provider": "OpenAI",
-    ///       "version": "0613",
-    ///       "status": "active",
-    ///       "inputPricePer1M": 30.00,
-    ///       "outputPricePer1M": 60.00,
-    ///       "currency": "USD",
-    ///       "isActive": true,
-    ///       "createdAt": "2024-01-10T08:00:00Z",
-    ///       "updatedAt": "2024-01-15T10:30:00Z",
-    ///       "capabilities": { ... },
-    ///       "topBenchmarks": [ ... ]
-    ///     }
-    ///   ],
+    ///   "data": [ ... ],
     ///   "meta": {
     ///     "totalCount": 25,
+    ///     "cached": false,
+    ///     "timestamp": "2024-01-15T10:30:00Z"
+    ///   }
+    /// }
+    ///
+    /// Paginated response:
+    /// {
+    ///   "data": {
+    ///     "items": [ ... ],
+    ///     "pagination": {
+    ///       "currentPage": 1,
+    ///       "pageSize": 20,
+    ///       "totalItems": 150,
+    ///       "totalPages": 8,
+    ///       "hasNextPage": true,
+    ///       "hasPreviousPage": false
+    ///     }
+    ///   },
+    ///   "meta": {
     ///     "cached": false,
     ///     "timestamp": "2024-01-15T10:30:00Z"
     ///   }
@@ -84,9 +91,13 @@ public class AdminModelsController : ControllerBase
     /// </example>
     [HttpGet]
     [ProducesResponseType(typeof(AdminApiResponse<List<AdminModelDto>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(AdminApiResponse<PagedResult<AdminModelDto>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetAll(
+        [FromQuery] int? page,
+        [FromQuery] int? pageSize,
         [FromQuery] string? searchTerm = null,
         [FromQuery] string? provider = null,
         [FromQuery] string? status = null,
@@ -94,32 +105,96 @@ public class AdminModelsController : ControllerBase
     {
         try
         {
-            _logger.LogInformation(
-                "Admin fetching all models (search: {SearchTerm}, provider: {Provider}, status: {Status})",
-                searchTerm ?? "none",
-                provider ?? "none",
-                status ?? "none");
-
-            var models = await _adminModelService.GetAllModelsAsync(
-                searchTerm,
-                provider,
-                status,
-                cancellationToken);
-
-            _logger.LogInformation("Successfully retrieved {Count} models for admin", models.Count);
-
-            var response = new AdminApiResponse<List<AdminModelDto>>
+            // If pagination parameters provided, use paginated endpoint
+            if (page.HasValue || pageSize.HasValue)
             {
-                Data = models,
-                Meta = new AdminApiResponseMeta
-                {
-                    TotalCount = models.Count,
-                    Cached = false, // Admin endpoints are NEVER cached
-                    Timestamp = DateTime.UtcNow
-                }
-            };
+                _logger.LogInformation(
+                    "Admin fetching paginated models (page: {Page}, pageSize: {PageSize}, search: {SearchTerm}, provider: {Provider}, status: {Status})",
+                    page ?? 1, pageSize ?? 20,
+                    searchTerm ?? "none",
+                    provider ?? "none",
+                    status ?? "none");
 
-            return Ok(response);
+                var pagination = new PaginationParams
+                {
+                    Page = page ?? 1,
+                    PageSize = pageSize ?? 20
+                };
+
+                if (!pagination.IsValid())
+                {
+                    _logger.LogWarning("Invalid pagination parameters: page={Page}, pageSize={PageSize}",
+                        pagination.Page, pagination.PageSize);
+
+                    return BadRequest(new
+                    {
+                        error = new
+                        {
+                            code = "VALIDATION_ERROR",
+                            message = "Invalid pagination parameters",
+                            details = new
+                            {
+                                page = pagination.Page,
+                                pageSize = pagination.PageSize,
+                                maxPageSize = 100,
+                                validation = "Page must be >= 1, PageSize must be between 1 and 100"
+                            }
+                        }
+                    });
+                }
+
+                var pagedResult = await _adminModelService.GetAllModelsPagedAsync(
+                    pagination,
+                    searchTerm,
+                    provider,
+                    status,
+                    cancellationToken);
+
+                _logger.LogInformation("Successfully retrieved page {Page} ({Count}/{Total} models) for admin",
+                    pagination.Page, pagedResult.Items.Count, pagedResult.Pagination.TotalItems);
+
+                var response = new AdminApiResponse<PagedResult<AdminModelDto>>
+                {
+                    Data = pagedResult,
+                    Meta = new AdminApiResponseMeta
+                    {
+                        Cached = false, // Admin endpoints are NEVER cached
+                        Timestamp = DateTime.UtcNow
+                    }
+                };
+
+                return Ok(response);
+            }
+            else
+            {
+                // Original behavior - return all models
+                _logger.LogInformation(
+                    "Admin fetching all models (search: {SearchTerm}, provider: {Provider}, status: {Status})",
+                    searchTerm ?? "none",
+                    provider ?? "none",
+                    status ?? "none");
+
+                var models = await _adminModelService.GetAllModelsAsync(
+                    searchTerm,
+                    provider,
+                    status,
+                    cancellationToken);
+
+                _logger.LogInformation("Successfully retrieved {Count} models for admin", models.Count);
+
+                var response = new AdminApiResponse<List<AdminModelDto>>
+                {
+                    Data = models,
+                    Meta = new AdminApiResponseMeta
+                    {
+                        TotalCount = models.Count,
+                        Cached = false, // Admin endpoints are NEVER cached
+                        Timestamp = DateTime.UtcNow
+                    }
+                };
+
+                return Ok(response);
+            }
         }
         catch (Exception ex)
         {

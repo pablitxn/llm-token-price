@@ -87,16 +87,25 @@ public static class CacheConfiguration
     public static class InvalidationPatterns
     {
         /// <summary>
-        /// Pattern to invalidate ALL model-related caches (list + details).
+        /// Pattern to invalidate ALL model-related caches (list + details + paginated lists).
         /// Example: "llmpricing:model*"
         /// Use when: Model created, updated, or deleted
+        ///
+        /// This pattern matches:
+        /// - Individual model details: "llmpricing:model:{guid}:v1"
+        /// - Model lists: "llmpricing:models:list:v1"
+        /// - Paginated lists: "llmpricing:models:list:v1:p{page}:s{size}"
         /// </summary>
         public const string AllModels = InstancePrefix + "model*";
 
         /// <summary>
-        /// Pattern to invalidate ONLY model list caches.
+        /// Pattern to invalidate ONLY model list caches (including paginated variants).
         /// Example: "llmpricing:models:*"
         /// Use when: Need to refresh list but keep individual model caches
+        ///
+        /// This pattern matches:
+        /// - Non-paginated: "llmpricing:models:list:v1"
+        /// - Paginated: "llmpricing:models:list:v1:p{page}:s{size}"
         /// </summary>
         public const string ModelLists = InstancePrefix + "models:*";
 

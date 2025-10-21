@@ -37,6 +37,41 @@ public interface IAdminModelRepository
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Retrieves a paginated list of models from the database (including inactive).
+    /// Includes related Capability and BenchmarkScores with Benchmark data.
+    /// </summary>
+    /// <param name="page">Page number (1-indexed).</param>
+    /// <param name="pageSize">Number of items per page.</param>
+    /// <param name="searchTerm">Optional search term to filter by model name or provider (case-insensitive).</param>
+    /// <param name="provider">Optional provider filter (exact match, case-insensitive).</param>
+    /// <param name="status">Optional status filter (exact match, case-insensitive).</param>
+    /// <param name="cancellationToken">Cancellation token for async operation.</param>
+    /// <returns>Tuple containing the list of models for the requested page and the total count of filtered models.</returns>
+    /// <remarks>
+    /// Story 2.13 Task 5: Pagination implementation for admin endpoints.
+    ///
+    /// Unlike public repository, this returns ALL models regardless of IsActive status.
+    /// Applies filters FIRST, then pagination on the filtered result set.
+    /// Results ordered by UpdatedAt DESC (most recently updated first).
+    /// Eagerly loads Capability and BenchmarkScores.ThenInclude(Benchmark) to avoid N+1 queries.
+    ///
+    /// Implementation uses efficient database-level pagination:
+    /// - Filter by searchTerm/provider/status (if provided)
+    /// - Count filtered results for total
+    /// - Skip((page - 1) * pageSize)
+    /// - Take(pageSize)
+    ///
+    /// Page numbering: 1-indexed (page=1 is first page)
+    /// </remarks>
+    Task<(List<Model> Items, int TotalCount)> GetAllModelsPagedAsync(
+        int page,
+        int pageSize,
+        string? searchTerm = null,
+        string? provider = null,
+        string? status = null,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Retrieves a single model by its unique identifier (including inactive).
     /// Includes related Capability and BenchmarkScores with Benchmark data.
     /// </summary>

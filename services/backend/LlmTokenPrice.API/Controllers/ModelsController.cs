@@ -28,15 +28,20 @@ public class ModelsController : ControllerBase
 
     /// <summary>
     /// Retrieves all active LLM models with pricing, capabilities, and top benchmark scores.
+    /// Supports optional pagination via query parameters.
     /// </summary>
+    /// <param name="page">Optional page number (1-indexed, default: returns all).</param>
+    /// <param name="pageSize">Optional page size (default: 20, max: 100).</param>
     /// <param name="cancellationToken">Cancellation token for async operation.</param>
-    /// <returns>List of models with nested capability and benchmark data.</returns>
-    /// <response code="200">Returns the list of active models.</response>
+    /// <returns>List of models or paginated result with metadata.</returns>
+    /// <response code="200">Returns the list of active models (paginated or full list).</response>
+    /// <response code="400">If pagination parameters are invalid.</response>
     /// <response code="500">If an unexpected error occurs during processing.</response>
     /// <example>
     /// GET /api/models
+    /// GET /api/models?page=1&amp;pageSize=20
     ///
-    /// Response:
+    /// Non-paginated response:
     /// {
     ///   "data": [
     ///     {
@@ -49,24 +54,8 @@ public class ModelsController : ControllerBase
     ///       "outputPricePer1M": 60.00,
     ///       "currency": "USD",
     ///       "updatedAt": "2024-01-15T10:30:00Z",
-    ///       "capabilities": {
-    ///         "contextWindow": 8192,
-    ///         "maxOutputTokens": 4096,
-    ///         "supportsFunctionCalling": true,
-    ///         "supportsVision": false,
-    ///         "supportsAudioInput": false,
-    ///         "supportsAudioOutput": false,
-    ///         "supportsStreaming": true,
-    ///         "supportsJsonMode": true
-    ///       },
-    ///       "topBenchmarks": [
-    ///         {
-    ///           "benchmarkName": "MMLU",
-    ///           "score": 86.4,
-    ///           "maxScore": 100.0,
-    ///           "normalizedScore": 0.864
-    ///         }
-    ///       ]
+    ///       "capabilities": { ... },
+    ///       "topBenchmarks": [ ... ]
     ///     }
     ///   ],
     ///   "meta": {
@@ -75,32 +64,111 @@ public class ModelsController : ControllerBase
     ///     "timestamp": "2024-01-15T10:30:00Z"
     ///   }
     /// }
+    ///
+    /// Paginated response:
+    /// {
+    ///   "data": {
+    ///     "items": [ ... ],
+    ///     "pagination": {
+    ///       "currentPage": 1,
+    ///       "pageSize": 20,
+    ///       "totalItems": 150,
+    ///       "totalPages": 8,
+    ///       "hasNextPage": true,
+    ///       "hasPreviousPage": false
+    ///     }
+    ///   },
+    ///   "meta": {
+    ///     "cached": false,
+    ///     "timestamp": "2024-01-15T10:30:00Z"
+    ///   }
+    /// }
     /// </example>
     [HttpGet]
     [ProducesResponseType(typeof(ApiResponse<List<ModelDto>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<PagedResult<ModelDto>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetAll(
+        [FromQuery] int? page,
+        [FromQuery] int? pageSize,
+        CancellationToken cancellationToken)
     {
         try
         {
-            _logger.LogInformation("Fetching all active models");
-
-            var models = await _queryService.GetAllModelsAsync(cancellationToken);
-
-            _logger.LogInformation("Successfully retrieved {Count} models", models.Count);
-
-            var response = new ApiResponse<List<ModelDto>>
+            // If pagination parameters provided, use paginated endpoint
+            if (page.HasValue || pageSize.HasValue)
             {
-                Data = models,
-                Meta = new ApiResponseMeta
-                {
-                    Count = models.Count,
-                    Cached = false,
-                    Timestamp = DateTime.UtcNow
-                }
-            };
+                _logger.LogInformation("Fetching paginated models (page: {Page}, pageSize: {PageSize})",
+                    page ?? 1, pageSize ?? 20);
 
-            return Ok(response);
+                var pagination = new PaginationParams
+                {
+                    Page = page ?? 1,
+                    PageSize = pageSize ?? 20
+                };
+
+                if (!pagination.IsValid())
+                {
+                    _logger.LogWarning("Invalid pagination parameters: page={Page}, pageSize={PageSize}",
+                        pagination.Page, pagination.PageSize);
+
+                    return BadRequest(new
+                    {
+                        error = new
+                        {
+                            code = "VALIDATION_ERROR",
+                            message = "Invalid pagination parameters",
+                            details = new
+                            {
+                                page = pagination.Page,
+                                pageSize = pagination.PageSize,
+                                maxPageSize = 100,
+                                validation = "Page must be >= 1, PageSize must be between 1 and 100"
+                            }
+                        }
+                    });
+                }
+
+                var pagedResult = await _queryService.GetAllModelsPagedAsync(pagination, cancellationToken);
+
+                _logger.LogInformation("Successfully retrieved page {Page} ({Count}/{Total} models)",
+                    pagination.Page, pagedResult.Items.Count, pagedResult.Pagination.TotalItems);
+
+                var response = new ApiResponse<PagedResult<ModelDto>>
+                {
+                    Data = pagedResult,
+                    Meta = new ApiResponseMeta
+                    {
+                        Cached = false,
+                        Timestamp = DateTime.UtcNow
+                    }
+                };
+
+                return Ok(response);
+            }
+            else
+            {
+                // Original behavior - return all models
+                _logger.LogInformation("Fetching all active models (no pagination)");
+
+                var models = await _queryService.GetAllModelsAsync(cancellationToken);
+
+                _logger.LogInformation("Successfully retrieved {Count} models", models.Count);
+
+                var response = new ApiResponse<List<ModelDto>>
+                {
+                    Data = models,
+                    Meta = new ApiResponseMeta
+                    {
+                        Count = models.Count,
+                        Cached = false,
+                        Timestamp = DateTime.UtcNow
+                    }
+                };
+
+                return Ok(response);
+            }
         }
         catch (Exception ex)
         {
