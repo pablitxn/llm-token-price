@@ -226,6 +226,9 @@ namespace LlmTokenPrice.Infrastructure.Data.Migrations
                     b.Property<decimal>("OutputPricePer1M")
                         .HasColumnType("decimal(10,6)");
 
+                    b.Property<DateTime?>("PricingUpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateTime?>("PricingValidFrom")
                         .HasColumnType("timestamp with time zone");
 
@@ -255,6 +258,10 @@ namespace LlmTokenPrice.Infrastructure.Data.Migrations
                         .HasColumnType("character varying(50)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("PricingUpdatedAt")
+                        .IsDescending()
+                        .HasDatabaseName("idx_models_pricing_updated");
 
                     b.HasIndex("Provider")
                         .HasDatabaseName("idx_models_provider");

@@ -1,0 +1,356 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>2.12</storyId>
+    <title>Add Timestamp Tracking and Display</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-21</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-2.12.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>an administrator</asA>
+    <iWant>to see when models were last updated</iWant>
+    <soThat>I know data freshness</soThat>
+    <tasks>
+      <task id="1" ac="4">
+        <description>Ensure timestamp fields in database</description>
+        <subtasks>
+          <subtask id="1.1">Verify created_at and updated_at columns exist on models table (from Story 1.4)</subtask>
+          <subtask id="1.2">Add pricing_updated_at column to models table for tracking pricing changes specifically</subtask>
+          <subtask id="1.3">Create migration to add pricing_updated_at if needed</subtask>
+          <subtask id="1.4">Set default: pricing_updated_at = updated_at for existing models</subtask>
+          <subtask id="1.5">Update model entity to include PricingUpdatedAt property</subtask>
+        </subtasks>
+      </task>
+      <task id="2" ac="4">
+        <description>Update timestamps on model modifications</description>
+        <subtasks>
+          <subtask id="2.1">Set updated_at = DateTime.UtcNow on every model update (already in Story 2.7)</subtask>
+          <subtask id="2.2">Set pricing_updated_at = DateTime.UtcNow when pricing fields change</subtask>
+          <subtask id="2.3">Detect pricing changes: compare old vs new inputPricePer1M and outputPricePer1M</subtask>
+          <subtask id="2.4">Keep updated_at for general updates, pricing_updated_at for pricing-specific</subtask>
+          <subtask id="2.5">Set created_at on model creation (already in Story 2.5)</subtask>
+        </subtasks>
+      </task>
+      <task id="3" ac="1">
+        <description>Add "Last Updated" column to admin models list</description>
+        <subtasks>
+          <subtask id="3.1">Add "Last Updated" column to ModelList table (from Story 2.3)</subtask>
+          <subtask id="3.2">Display updated_at timestamp with relative formatting ("2 days ago")</subtask>
+          <subtask id="3.3">Use date-fns library for relative time formatting</subtask>
+          <subtask id="3.4">Show exact timestamp on hover (tooltip)</subtask>
+          <subtask id="3.5">Make column sortable (most recent first by default)</subtask>
+          <subtask id="3.6">Add column for pricing_updated_at (optional, or combine with general updated_at)</subtask>
+        </subtasks>
+      </task>
+      <task id="4" ac="2">
+        <description>Highlight stale models</description>
+        <subtasks>
+          <subtask id="4.1">Calculate days since last update: (now - updated_at).days</subtask>
+          <subtask id="4.2">Apply visual indicator for models &gt;7 days old (yellow/orange background or icon)</subtask>
+          <subtask id="4.3">Apply stronger indicator for models &gt;30 days old (critical)</subtask>
+          <subtask id="4.4">Add filter: "Show stale models only" (&gt;7 days)</subtask>
+          <subtask id="4.5">Sort stale models to top of list (optional)</subtask>
+        </subtasks>
+      </task>
+      <task id="5" ac="3">
+        <description>Create admin dashboard with data freshness metrics</description>
+        <subtasks>
+          <subtask id="5.1">Update AdminDashboard component (placeholder from Story 2.2)</subtask>
+          <subtask id="5.2">Add metric card: "Models Needing Updates" (count where updated_at &gt;7 days ago)</subtask>
+          <subtask id="5.3">Add metric card: "Critical Updates" (count where updated_at &gt;30 days ago)</subtask>
+          <subtask id="5.4">Add metric card: "Recently Updated" (count where updated_at &lt;7 days)</subtask>
+          <subtask id="5.5">Add link to "View Stale Models" filtered list</subtask>
+          <subtask id="5.6">Fetch metrics from GET /api/admin/dashboard/metrics endpoint</subtask>
+        </subtasks>
+      </task>
+      <task id="6" ac="3">
+        <description>Create dashboard metrics endpoint</description>
+        <subtasks>
+          <subtask id="6.1">Create GET /api/admin/dashboard/metrics endpoint</subtask>
+          <subtask id="6.2">Calculate counts: total active models, models &gt;7 days, models &gt;30 days, models updated in last 7 days</subtask>
+          <subtask id="6.3">Add pricing-specific metrics: models with pricing &gt;30 days old, models with no pricing_updated_at</subtask>
+          <subtask id="6.4">Cache metrics (5 min TTL) for performance</subtask>
+          <subtask id="6.5">Add [Authorize] attribute</subtask>
+        </subtasks>
+      </task>
+      <task id="7" ac="4">
+        <description>Include timestamps in public API</description>
+        <subtasks>
+          <subtask id="7.1">Add updated_at to GET /api/models response (list endpoint)</subtask>
+          <subtask id="7.2">Add pricing_updated_at to model detail response</subtask>
+          <subtask id="7.3">Add created_at to model detail response (optional)</subtask>
+          <subtask id="7.4">Format timestamps as ISO 8601 strings in JSON</subtask>
+          <subtask id="7.5">Update ModelDto and ModelDetailDto to include timestamp fields</subtask>
+        </subtasks>
+      </task>
+      <task id="8" ac="5">
+        <description>Display relative timestamps in public frontend</description>
+        <subtasks>
+          <subtask id="8.1">Show "Updated X days ago" on model cards in comparison table</subtask>
+          <subtask id="8.2">Use date-fns formatDistanceToNow() function</subtask>
+          <subtask id="8.3">Show exact timestamp on hover (tooltip)</subtask>
+          <subtask id="8.4">Add freshness indicator icon (green checkmark &lt;7 days, yellow clock 7-30 days, red warning &gt;30 days)</subtask>
+          <subtask id="8.5">Display in model detail modal (pricing tab)</subtask>
+        </subtasks>
+      </task>
+      <task id="9">
+        <description>Add timestamp utilities and formatting</description>
+        <subtasks>
+          <subtask id="9.1">Create formatters.ts utility file (if not exists)</subtask>
+          <subtask id="9.2">Add formatRelativeTime(date) function using date-fns</subtask>
+          <subtask id="9.3">Add formatTimestamp(date) for absolute formatting</subtask>
+          <subtask id="9.4">Add getDaysSince(date) helper for age calculation</subtask>
+          <subtask id="9.5">Add getFreshnessStatus(date) returning 'fresh' | 'stale' | 'critical'</subtask>
+          <subtask id="9.6">Export reusable components: &lt;RelativeTime date={...} /&gt;, &lt;FreshnessIndicator date={...} /&gt;</subtask>
+        </subtasks>
+      </task>
+      <task id="10">
+        <description>Add testing</description>
+        <subtasks>
+          <subtask id="10.1">Write unit tests for timestamp formatting utilities</subtask>
+          <subtask id="10.2">Test formatRelativeTime shows correct values ("2 days ago", "1 month ago")</subtask>
+          <subtask id="10.3">Test getFreshnessStatus categorizes correctly</subtask>
+          <subtask id="10.4">Write component tests for RelativeTime component</subtask>
+          <subtask id="10.5">Write integration tests for dashboard metrics endpoint</subtask>
+          <subtask id="10.6">Test metrics return correct counts</subtask>
+          <subtask id="10.7">Test updated_at included in public API responses</subtask>
+          <subtask id="10.8">Test pricing_updated_at only changes when pricing changes</subtask>
+          <subtask id="10.9">Test stale model highlighting in admin UI</subtask>
+        </subtasks>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1">Models list table displays "Last Updated" column with formatted timestamp</criterion>
+    <criterion id="2">Models with updates &gt;7 days ago highlighted or flagged</criterion>
+    <criterion id="3">Admin dashboard shows count of models needing updates</criterion>
+    <criterion id="4">Public API includes pricing_updated_at timestamp</criterion>
+    <criterion id="5">Frontend displays "Updated X days ago" on model cards</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/tech-spec-epic-2.md</path>
+        <title>Epic 2 Technical Specification - Admin Panel CRUD</title>
+        <section>Story 2.12: Timestamp Tracking and Display</section>
+        <snippet>AC 2.12.2: Models with updated_at &gt;7 days old highlighted with yellow background or warning icon. AC 2.12.4: Public API includes pricingUpdatedAt timestamp in ModelDto (mapped from updated_at). Test: Create model → updated_at set, wait 8 days (or mock timestamp) → model highlighted as stale in admin dashboard.</snippet>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture - LLM Token Price Platform</title>
+        <section>3.1 Database Schema - Timestamp columns</section>
+        <snippet>Timestamp tracking: created_at, updated_at for all entities. Indexed on models(updated_at DESC) for freshness queries. Epic 7: Data Quality includes DataFreshnessIndicator, ValidationMessages, AdminDashboard with audit_log and model timestamps.</snippet>
+      </doc>
+      <doc>
+        <path>docs/testing-guide.md</path>
+        <title>Testing Guide - Test Architecture and Standards</title>
+        <section>Test Pyramid Distribution and Technology Stack</section>
+        <snippet>Test pyramid: 70% unit tests (Domain layer 90%+), 25% integration (TestContainers), 5% E2E (Playwright). Tools: xUnit, FluentAssertions, Bogus, Respawn. Frontend: Vitest, Testing Library, MSW. Coverage goal: 70%+ overall.</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>NFR003 - Data Accuracy and Freshness</section>
+        <snippet>95%+ pricing accuracy requirement. Timestamp tracking enables administrators to identify stale data requiring updates and supports data quality monitoring.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>services/backend/LlmTokenPrice.Domain/Entities/Model.cs</path>
+        <kind>entity</kind>
+        <symbol>Model</symbol>
+        <lines>1-113</lines>
+        <reason>Domain entity with CreatedAt and UpdatedAt properties already defined. Need to add PricingUpdatedAt property for pricing-specific timestamp tracking.</reason>
+      </artifact>
+      <artifact>
+        <path>services/backend/LlmTokenPrice.Application/DTOs/AdminModelDto.cs</path>
+        <kind>dto</kind>
+        <symbol>AdminModelDto</symbol>
+        <lines>1-87</lines>
+        <reason>Admin DTO with CreatedAt and UpdatedAt fields. Need to add PricingUpdatedAt field to expose pricing-specific timestamp to admin frontend.</reason>
+      </artifact>
+      <artifact>
+        <path>services/backend/LlmTokenPrice.API/Controllers/Admin/AdminModelsController.cs</path>
+        <kind>controller</kind>
+        <symbol>AdminModelsController</symbol>
+        <lines>all</lines>
+        <reason>Admin API controller for model CRUD operations. Update operations need to detect pricing changes and set PricingUpdatedAt accordingly.</reason>
+      </artifact>
+      <artifact>
+        <path>services/backend/LlmTokenPrice.Application/Services/AdminModelService.cs</path>
+        <kind>service</kind>
+        <symbol>AdminModelService</symbol>
+        <lines>all</lines>
+        <reason>Service layer handling model updates. Implement logic to compare old vs new pricing values and conditionally update PricingUpdatedAt timestamp.</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/components/admin/ModelList.tsx</path>
+        <kind>component</kind>
+        <symbol>ModelList</symbol>
+        <lines>1-259</lines>
+        <reason>Admin models table already displays updatedAt with relative time formatting (line 232). Enhance to add freshness indicators (icons/highlighting) for stale models (&gt;7 days, &gt;30 days).</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/pages/admin/AdminDashboardPage.tsx</path>
+        <kind>component</kind>
+        <symbol>AdminDashboardPage</symbol>
+        <lines>1-54</lines>
+        <reason>Placeholder dashboard with "--" for metrics (lines 36-44). Implement real metrics by fetching from /api/admin/dashboard/metrics endpoint.</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/package.json</path>
+        <kind>config</kind>
+        <symbol>dependencies</symbol>
+        <lines>17-32</lines>
+        <reason>date-fns 4.1.0 already installed for timestamp formatting. lucide-react available for freshness indicator icons (CheckCircle, Clock, AlertTriangle).</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <backend>
+        <package name="Microsoft.EntityFrameworkCore" version="9.0.10" />
+        <package name="Npgsql.EntityFrameworkCore.PostgreSQL" version="9.0.4" />
+        <package name="StackExchange.Redis" version="2.9.32" />
+        <package name="Serilog.AspNetCore" version="9.0.0" />
+        <package name="Microsoft.AspNetCore.Authentication.JwtBearer" version="9.0.10" />
+      </backend>
+      <frontend>
+        <package name="react" version="19.1.1" />
+        <package name="date-fns" version="4.1.0" />
+        <package name="lucide-react" version="0.546.0" />
+        <package name="@tanstack/react-query" version="5.90.5" />
+        <package name="zustand" version="5.0.8" />
+        <package name="react-router-dom" version="7.9.4" />
+        <package name="vite" version="npm:rolldown-vite@7.1.14" />
+      </frontend>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <architectural>
+      <constraint>Hexagonal Architecture: Domain layer (Model.cs) has NO framework dependencies. Add PricingUpdatedAt as pure C# property; configure via Fluent API in Infrastructure layer (ModelConfiguration.cs).</constraint>
+      <constraint>Timestamp Strategy: Three timestamps serve different purposes - created_at (set once, never changes), updated_at (any field change), pricing_updated_at (only pricing changes). Keep them separate for granular data quality tracking.</constraint>
+      <constraint>UTC Time: All timestamps use DateTime.UtcNow for consistency across timezones. Frontend converts to user timezone for display.</constraint>
+      <constraint>Freshness Categories: Fresh (&lt;7 days), Stale (7-30 days), Critical (&gt;30 days). These thresholds align with NFR003 (95%+ pricing accuracy) requirements.</constraint>
+    </architectural>
+    <coding>
+      <constraint>TypeScript Strict Mode: Zero 'any' types allowed. Define proper types for timestamp fields in AdminModelDto interface.</constraint>
+      <constraint>Async All The Way: Use async/await for all database queries and API calls. No blocking synchronous operations.</constraint>
+      <constraint>Immutable DTOs: Use C# record types for DTOs (AdminModelDto already follows this pattern). Frontend uses readonly interfaces.</constraint>
+      <constraint>Structured Logging: Use Serilog with semantic properties for timestamp-related operations (e.g., Log.Information("Updated model {ModelId} pricing at {PricingUpdatedAt}", id, timestamp)).</constraint>
+    </coding>
+    <testing>
+      <constraint>Test Pyramid: 70% unit tests, 25% integration tests, 5% E2E tests. Focus unit tests on timestamp calculation utilities and freshness categorization logic.</constraint>
+      <constraint>Test Data: Use Bogus library for realistic test data generation. Mock time-dependent tests using fixed DateTime values.</constraint>
+      <constraint>Integration Tests: Use TestContainers for PostgreSQL. Verify timestamps are correctly set/updated in database via integration tests.</constraint>
+      <constraint>Component Tests: Use Vitest + Testing Library. Test RelativeTime component with various date inputs, verify tooltip displays absolute time.</constraint>
+    </testing>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>GET /api/admin/dashboard/metrics</name>
+      <kind>REST endpoint</kind>
+      <signature>GET /api/admin/dashboard/metrics → DashboardMetricsDto</signature>
+      <path>services/backend/LlmTokenPrice.API/Controllers/Admin/AdminDashboardController.cs (new file)</path>
+      <description>Returns dashboard metrics including counts of models by freshness category. Cached for 5 minutes using [ResponseCache(Duration = 300)] attribute. Requires [Authorize] for admin access.</description>
+    </interface>
+    <interface>
+      <name>DashboardMetricsDto</name>
+      <kind>DTO</kind>
+      <signature>
+public class DashboardMetricsDto
+{
+    public int TotalActiveModels { get; set; }
+    public int ModelsNeedingUpdates { get; set; }      // &gt;7 days
+    public int CriticalUpdates { get; set; }           // &gt;30 days
+    public int RecentlyUpdated { get; set; }           // &lt;7 days
+    public int PricingNeedingUpdates { get; set; }     // pricing &gt;30 days
+    public DateTime CalculatedAt { get; set; }
+}
+      </signature>
+      <path>services/backend/LlmTokenPrice.Application/DTOs/DashboardMetricsDto.cs (new file)</path>
+      <description>DTO for dashboard metrics response with timestamp-based counts</description>
+    </interface>
+    <interface>
+      <name>RelativeTime Component</name>
+      <kind>React component</kind>
+      <signature>
+interface RelativeTimeProps {
+  date: string | Date
+  showIcon?: boolean
+}
+export function RelativeTime({ date, showIcon }: RelativeTimeProps)
+      </signature>
+      <path>apps/web/src/components/ui/RelativeTime.tsx (new file)</path>
+      <description>Reusable component displaying relative time ("2 days ago") with tooltip showing absolute timestamp. Optional freshness icon based on age.</description>
+    </interface>
+    <interface>
+      <name>Timestamp Utility Functions</name>
+      <kind>TypeScript utilities</kind>
+      <signature>
+export function formatRelativeTime(date: string | Date): string
+export function formatTimestamp(date: string | Date): string
+export function getDaysSince(date: string | Date): number
+export function getFreshnessStatus(date: string | Date): 'fresh' | 'stale' | 'critical'
+      </signature>
+      <path>apps/web/src/utils/formatters.ts (new file)</path>
+      <description>Utility functions for timestamp formatting and freshness calculation using date-fns library</description>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      <standard>Test Pyramid: 70% unit tests (xUnit, Vitest), 25% integration tests (TestContainers, WebApplicationFactory), 5% E2E tests (Playwright API tests)</standard>
+      <standard>Backend: xUnit test framework with FluentAssertions for readable assertions, Bogus for test data generation, Respawn for database cleanup</standard>
+      <standard>Frontend: Vitest test framework with Testing Library for component tests, MSW for API mocking, happy-dom for DOM simulation</standard>
+      <standard>Architecture Tests: ArchUnitNET enforces hexagonal architecture boundaries (Domain has no Infrastructure dependencies)</standard>
+      <standard>Coverage Goals: 70%+ overall code coverage, 90%+ Domain layer coverage (critical business logic including timestamp calculations)</standard>
+    </standards>
+    <locations>
+      <location>services/backend/LlmTokenPrice.Domain.Tests/ - Domain unit tests</location>
+      <location>services/backend/LlmTokenPrice.Application.Tests/ - Application service tests</location>
+      <location>services/backend/LlmTokenPrice.Infrastructure.Tests/ - Integration tests with TestContainers</location>
+      <location>services/backend/LlmTokenPrice.Tests.E2E/ - End-to-end API tests</location>
+      <location>apps/web/src/**/__tests__/ - Frontend component and unit tests</location>
+    </locations>
+    <ideas>
+      <idea ac="1">
+        <description>Unit test: formatRelativeTime utility function</description>
+        <test>Test formatRelativeTime with date 2 days ago returns "2 days ago", with date 1 month ago returns "1 month ago". Use fixed mock dates to avoid time-dependent flakiness.</test>
+      </idea>
+      <idea ac="2">
+        <description>Unit test: getFreshnessStatus categorization</description>
+        <test>Test getFreshnessStatus returns 'fresh' for dates &lt;7 days old, 'stale' for 7-30 days, 'critical' for &gt;30 days. Test boundary conditions (exactly 7 days, exactly 30 days).</test>
+      </idea>
+      <idea ac="3">
+        <description>Integration test: Dashboard metrics endpoint</description>
+        <test>Seed database with models of various ages (1 day, 10 days, 45 days old). Call GET /api/admin/dashboard/metrics. Verify counts match expected values (e.g., 1 fresh, 1 stale, 1 critical).</test>
+      </idea>
+      <idea ac="4">
+        <description>Integration test: PricingUpdatedAt only changes on price changes</description>
+        <test>Create model via POST. Update non-pricing field (e.g., status) → verify pricing_updated_at unchanged. Update pricing field → verify pricing_updated_at updated to current time.</test>
+      </idea>
+      <idea ac="5">
+        <description>Component test: RelativeTime component</description>
+        <test>Render &lt;RelativeTime date="2025-10-19" /&gt;. Verify text displays "2 days ago" (relative to 2025-10-21). Hover over element → verify tooltip shows absolute timestamp "Oct 19, 2025, 12:00 AM".</test>
+      </idea>
+      <idea ac="2">
+        <description>Component test: Stale model highlighting in ModelList</description>
+        <test>Render ModelList with models array containing one model with updatedAt 10 days ago. Verify row has yellow background or warning icon. Verify fresh models (&lt;7 days) have no highlighting.</test>
+      </idea>
+      <idea ac="3">
+        <description>Component test: AdminDashboard displays metrics</description>
+        <test>Mock useDashboardMetrics hook to return {totalActiveModels: 50, modelsNeedingUpdates: 12, criticalUpdates: 3}. Render AdminDashboard. Verify metric cards display correct counts.</test>
+      </idea>
+      <idea ac="4">
+        <description>Integration test: Public API includes timestamps</description>
+        <test>Call GET /api/models. Verify response includes updated_at field in ISO 8601 format. Call GET /api/models/{id}. Verify response includes pricing_updated_at field.</test>
+      </idea>
+    </ideas>
+  </tests>
+</story-context>
