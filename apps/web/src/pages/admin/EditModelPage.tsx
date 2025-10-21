@@ -2,6 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { getAdminModelById } from '@/api/admin'
 import { ModelForm } from '@/components/admin/ModelForm'
+import { BenchmarkScoresSection } from '@/components/admin/BenchmarkScoresSection'
 
 export function EditModelPage() {
   const { id } = useParams<{ id: string }>()
@@ -72,7 +73,7 @@ export function EditModelPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
+    <div className="max-w-4xl mx-auto p-6 space-y-8">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">
           Edit Model: {model.name}
@@ -82,7 +83,13 @@ export function EditModelPage() {
         </p>
       </div>
 
+      {/* Model Basic Information Form */}
       <ModelForm mode="edit" modelId={id} model={model} />
+
+      {/* Benchmark Scores Section */}
+      <div className="border-t border-gray-200 pt-8">
+        <BenchmarkScoresSection modelId={id} />
+      </div>
     </div>
   )
 }

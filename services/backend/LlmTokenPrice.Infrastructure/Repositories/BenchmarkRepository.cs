@@ -132,6 +132,106 @@ public class BenchmarkRepository : IBenchmarkRepository
             .AnyAsync(bs => bs.BenchmarkId == benchmarkId, cancellationToken);
     }
 
+    // ========== Benchmark Score Management Methods ==========
+
+    /// <inheritdoc />
+    public async Task<BenchmarkScore?> GetScoreAsync(Guid modelId, Guid benchmarkId, CancellationToken cancellationToken = default)
+    {
+        // Find existing score for this model+benchmark combination
+        // Used for duplicate detection before adding new score
+        return await _context.BenchmarkScores
+            .Where(bs => bs.ModelId == modelId && bs.BenchmarkId == benchmarkId)
+            .AsNoTracking() // Read-only query optimization
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task AddScoreAsync(BenchmarkScore score, CancellationToken cancellationToken = default)
+    {
+        // Ensure CreatedAt timestamp is set
+        score.CreatedAt = DateTime.UtcNow;
+
+        // Add score to context
+        await _context.BenchmarkScores.AddAsync(score, cancellationToken);
+
+        // Note: Caller responsible for calling SaveChangesAsync
+    }
+
+    /// <inheritdoc />
+    public async Task<List<BenchmarkScore>> GetScoresByModelIdAsync(Guid modelId, CancellationToken cancellationToken = default)
+    {
+        // Retrieve all scores for a specific model
+        // Eagerly load Benchmark for denormalized display data
+        return await _context.BenchmarkScores
+            .Where(bs => bs.ModelId == modelId)
+            .Include(bs => bs.Benchmark) // Eager load for display
+            .OrderBy(bs => bs.Benchmark!.BenchmarkName) // Order alphabetically by benchmark name
+            .AsNoTracking() // Read-only query optimization
+            .ToListAsync(cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<BenchmarkScore?> GetScoreByIdAsync(Guid scoreId, CancellationToken cancellationToken = default)
+    {
+        // Retrieve a single score by ID for edit/delete operations
+        // Tracking enabled for update scenarios
+        return await _context.BenchmarkScores
+            .Include(bs => bs.Benchmark) // Eager load for denormalized display
+            .Where(bs => bs.Id == scoreId)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task UpdateScoreAsync(BenchmarkScore score, CancellationToken cancellationToken = default)
+    {
+        // EF Core change tracking handles UPDATE on SaveChangesAsync call
+        // Score entity must be tracked by DbContext
+        _context.BenchmarkScores.Update(score);
+
+        // Note: Caller responsible for calling SaveChangesAsync
+        await Task.CompletedTask; // Satisfy async signature
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> DeleteScoreAsync(Guid scoreId, CancellationToken cancellationToken = default)
+    {
+        // Find the score (tracking enabled for delete)
+        var score = await _context.BenchmarkScores
+            .Where(bs => bs.Id == scoreId)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (score == null)
+        {
+            return false; // Score not found
+        }
+
+        // Perform HARD delete (physical removal)
+        // Unlike models/benchmarks, scores don't use soft delete
+        _context.BenchmarkScores.Remove(score);
+
+        // Save changes to database
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return true;
+    }
+
+    /// <inheritdoc />
+    public async Task BulkAddScoresAsync(IEnumerable<BenchmarkScore> scores, CancellationToken cancellationToken = default)
+    {
+        // Set CreatedAt for all scores
+        var now = DateTime.UtcNow;
+        foreach (var score in scores)
+        {
+            score.CreatedAt = now;
+        }
+
+        // Bulk add using AddRangeAsync for performance (single database round-trip)
+        await _context.BenchmarkScores.AddRangeAsync(scores, cancellationToken);
+
+        // Note: Caller responsible for calling SaveChangesAsync to persist all scores in single transaction
+        // If SaveChangesAsync fails (e.g., unique constraint violation), entire batch is rolled back
+    }
+
     /// <inheritdoc />
     public async Task SaveChangesAsync(CancellationToken cancellationToken = default)
     {

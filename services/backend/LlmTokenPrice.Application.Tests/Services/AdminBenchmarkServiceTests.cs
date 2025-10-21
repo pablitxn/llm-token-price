@@ -4,6 +4,7 @@ using LlmTokenPrice.Application.Services;
 using LlmTokenPrice.Domain.Entities;
 using LlmTokenPrice.Domain.Enums;
 using LlmTokenPrice.Domain.Repositories;
+using LlmTokenPrice.Domain.Services;
 using Moq;
 using Xunit;
 
@@ -17,12 +18,19 @@ namespace LlmTokenPrice.Application.Tests.Services;
 public class AdminBenchmarkServiceTests
 {
     private readonly Mock<IBenchmarkRepository> _benchmarkRepositoryMock;
+    private readonly Mock<IAdminModelRepository> _adminModelRepositoryMock;
+    private readonly BenchmarkNormalizer _benchmarkNormalizer;
     private readonly AdminBenchmarkService _service;
 
     public AdminBenchmarkServiceTests()
     {
         _benchmarkRepositoryMock = new Mock<IBenchmarkRepository>();
-        _service = new AdminBenchmarkService(_benchmarkRepositoryMock.Object);
+        _adminModelRepositoryMock = new Mock<IAdminModelRepository>();
+        _benchmarkNormalizer = new BenchmarkNormalizer();
+        _service = new AdminBenchmarkService(
+            _benchmarkRepositoryMock.Object,
+            _adminModelRepositoryMock.Object,
+            _benchmarkNormalizer);
     }
 
     #region CreateBenchmarkAsync Tests
@@ -442,6 +450,488 @@ public class AdminBenchmarkServiceTests
 
         // THEN: Should return null
         result.Should().BeNull();
+    }
+
+    #endregion
+
+    #region AddScoreAsync Tests (Story 2.10)
+
+    /// <summary>
+    /// [P0] Should add benchmark score successfully when score is unique
+    /// Story 2.10 AC#1: Admins can add benchmark scores to models
+    /// </summary>
+    [Fact]
+    public async Task AddScoreAsync_WithUniqueScore_ShouldAddScoreWithNormalization()
+    {
+        // GIVEN: Valid score request with no duplicate
+        var modelId = Guid.NewGuid();
+        var benchmarkId = Guid.NewGuid();
+        var benchmark = new Benchmark
+        {
+            Id = benchmarkId,
+            BenchmarkName = "MMLU",
+            FullName = "Massive Multitask Language Understanding",
+            Category = BenchmarkCategory.Reasoning,
+            TypicalRangeMin = 0,
+            TypicalRangeMax = 100,
+            WeightInQaps = 0.30m,
+            IsActive = true
+        };
+
+        var request = new CreateBenchmarkScoreDto
+        {
+            BenchmarkId = benchmarkId,
+            Score = 87.5m,
+            MaxScore = 100m,
+            TestDate = DateTime.UtcNow,
+            SourceUrl = "https://example.com/results",
+            Verified = true,
+            Notes = "Official test results"
+        };
+
+        _benchmarkRepositoryMock
+            .Setup(r => r.GetScoreAsync(modelId, benchmarkId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((BenchmarkScore?)null); // No duplicate
+
+        _benchmarkRepositoryMock
+            .Setup(r => r.GetByIdAsync(benchmarkId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(benchmark);
+
+        _benchmarkRepositoryMock
+            .Setup(r => r.AddScoreAsync(It.IsAny<BenchmarkScore>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        _benchmarkRepositoryMock
+            .Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        // WHEN: Adding score
+        var scoreId = await _service.AddScoreAsync(modelId, request);
+
+        // THEN: Score is created with correct normalization
+        scoreId.Should().NotBe(Guid.Empty);
+        _benchmarkRepositoryMock.Verify(r => r.AddScoreAsync(It.Is<BenchmarkScore>(s =>
+            s.ModelId == modelId &&
+            s.BenchmarkId == benchmarkId &&
+            s.Score == 87.5m &&
+            s.MaxScore == 100m &&
+            s.NormalizedScore == 0.875m && // (87.5 - 0) / (100 - 0) = 0.875
+            s.Verified == true &&
+            s.Notes == "Official test results"
+        ), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>
+    /// [P0] Should throw InvalidOperationException when duplicate score exists
+    /// Story 2.10 AC#3: Validation prevents duplicate scores (one per model-benchmark pair)
+    /// </summary>
+    [Fact]
+    public async Task AddScoreAsync_WithDuplicateScore_ShouldThrowException()
+    {
+        // GIVEN: Score already exists for this model-benchmark pair
+        var modelId = Guid.NewGuid();
+        var benchmarkId = Guid.NewGuid();
+
+        var existingScore = new BenchmarkScore
+        {
+            Id = Guid.NewGuid(),
+            ModelId = modelId,
+            BenchmarkId = benchmarkId,
+            Score = 85.0m,
+            NormalizedScore = 0.85m
+        };
+
+        var request = new CreateBenchmarkScoreDto
+        {
+            BenchmarkId = benchmarkId,
+            Score = 90.0m
+        };
+
+        _benchmarkRepositoryMock
+            .Setup(r => r.GetScoreAsync(modelId, benchmarkId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingScore); // Duplicate exists
+
+        // WHEN: Attempting to add duplicate score
+        // THEN: Should throw InvalidOperationException
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
+            async () => await _service.AddScoreAsync(modelId, request)
+        );
+
+        exception.Message.Should().Contain("already exists");
+        _benchmarkRepositoryMock.Verify(r => r.AddScoreAsync(It.IsAny<BenchmarkScore>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>
+    /// [P1] Should calculate normalized score correctly for different ranges
+    /// Story 2.10 AC#2: Server-side normalization using benchmark's typical range
+    /// </summary>
+    [Theory]
+    [InlineData(87.5, 0, 100, 0.875)]  // Typical 0-100 range
+    [InlineData(0.85, 0, 1, 0.85)]     // Already normalized (0-1)
+    [InlineData(650, 200, 800, 0.75)]  // SAT-style range
+    [InlineData(50, 0, 100, 0.5)]      // Mid-range
+    public async Task AddScoreAsync_ShouldNormalizeScoreCorrectly(
+        decimal score,
+        decimal rangeMin,
+        decimal rangeMax,
+        decimal expectedNormalized)
+    {
+        // GIVEN: Benchmark with specific range and score to normalize
+        var modelId = Guid.NewGuid();
+        var benchmarkId = Guid.NewGuid();
+        var benchmark = new Benchmark
+        {
+            Id = benchmarkId,
+            BenchmarkName = "TestBenchmark",
+            Category = BenchmarkCategory.Reasoning,
+            TypicalRangeMin = rangeMin,
+            TypicalRangeMax = rangeMax,
+            WeightInQaps = 0.30m,
+            IsActive = true
+        };
+
+        var request = new CreateBenchmarkScoreDto
+        {
+            BenchmarkId = benchmarkId,
+            Score = score
+        };
+
+        _benchmarkRepositoryMock
+            .Setup(r => r.GetScoreAsync(modelId, benchmarkId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((BenchmarkScore?)null);
+
+        _benchmarkRepositoryMock
+            .Setup(r => r.GetByIdAsync(benchmarkId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(benchmark);
+
+        _benchmarkRepositoryMock
+            .Setup(r => r.AddScoreAsync(It.IsAny<BenchmarkScore>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        _benchmarkRepositoryMock
+            .Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        // WHEN: Adding score
+        await _service.AddScoreAsync(modelId, request);
+
+        // THEN: Normalized score is calculated correctly
+        _benchmarkRepositoryMock.Verify(r => r.AddScoreAsync(It.Is<BenchmarkScore>(s =>
+            s.NormalizedScore == expectedNormalized
+        ), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>
+    /// [P1] Should throw KeyNotFoundException when benchmark does not exist
+    /// </summary>
+    [Fact]
+    public async Task AddScoreAsync_WithNonExistentBenchmark_ShouldThrowException()
+    {
+        // GIVEN: Request referencing non-existent benchmark
+        var modelId = Guid.NewGuid();
+        var benchmarkId = Guid.NewGuid();
+
+        var request = new CreateBenchmarkScoreDto
+        {
+            BenchmarkId = benchmarkId,
+            Score = 87.5m
+        };
+
+        _benchmarkRepositoryMock
+            .Setup(r => r.GetScoreAsync(modelId, benchmarkId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((BenchmarkScore?)null);
+
+        _benchmarkRepositoryMock
+            .Setup(r => r.GetByIdAsync(benchmarkId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Benchmark?)null); // Benchmark doesn't exist
+
+        // WHEN: Attempting to add score with non-existent benchmark
+        // THEN: Should throw KeyNotFoundException
+        await Assert.ThrowsAsync<KeyNotFoundException>(
+            async () => await _service.AddScoreAsync(modelId, request)
+        );
+    }
+
+    #endregion
+
+    #region GetScoresByModelIdAsync Tests (Story 2.10)
+
+    /// <summary>
+    /// [P1] Should return all scores for a model with denormalized benchmark data
+    /// Story 2.10 AC#4: Display list of benchmark scores in model edit page
+    /// </summary>
+    [Fact]
+    public async Task GetScoresByModelIdAsync_ShouldReturnScoresWithBenchmarkData()
+    {
+        // GIVEN: Model with multiple benchmark scores
+        var modelId = Guid.NewGuid();
+        var benchmark1 = new Benchmark
+        {
+            Id = Guid.NewGuid(),
+            BenchmarkName = "MMLU",
+            FullName = "Massive Multitask Language Understanding",
+            Category = BenchmarkCategory.Reasoning,
+            TypicalRangeMin = 0,
+            TypicalRangeMax = 100,
+            IsActive = true
+        };
+
+        var benchmark2 = new Benchmark
+        {
+            Id = Guid.NewGuid(),
+            BenchmarkName = "HumanEval",
+            FullName = "Human Eval Code Benchmark",
+            Category = BenchmarkCategory.Code,
+            TypicalRangeMin = 0,
+            TypicalRangeMax = 100,
+            IsActive = true
+        };
+
+        var scores = new List<BenchmarkScore>
+        {
+            new()
+            {
+                Id = Guid.NewGuid(),
+                ModelId = modelId,
+                BenchmarkId = benchmark1.Id,
+                Benchmark = benchmark1,
+                Score = 87.5m,
+                MaxScore = 100m,
+                NormalizedScore = 0.875m,
+                Verified = true,
+                CreatedAt = DateTime.UtcNow
+            },
+            new()
+            {
+                Id = Guid.NewGuid(),
+                ModelId = modelId,
+                BenchmarkId = benchmark2.Id,
+                Benchmark = benchmark2,
+                Score = 75.0m,
+                NormalizedScore = 0.75m,
+                Verified = false,
+                CreatedAt = DateTime.UtcNow
+            }
+        };
+
+        _benchmarkRepositoryMock
+            .Setup(r => r.GetScoresByModelIdAsync(modelId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(scores);
+
+        // WHEN: Getting scores for model
+        var result = await _service.GetScoresByModelIdAsync(modelId);
+
+        // THEN: Should return DTOs with denormalized data
+        result.Should().HaveCount(2);
+        result.First().BenchmarkName.Should().Be("MMLU");
+        result.First().Category.Should().Be("Reasoning");
+        result.First().Score.Should().Be(87.5m);
+        result.First().NormalizedScore.Should().Be(0.875m);
+        result.First().Verified.Should().BeTrue();
+    }
+
+    /// <summary>
+    /// [P1] Should mark scores as out-of-range when they exceed typical bounds
+    /// Story 2.10 AC#5: Display warning when score is outside typical range
+    /// </summary>
+    [Fact]
+    public async Task GetScoresByModelIdAsync_ShouldFlagOutOfRangeScores()
+    {
+        // GIVEN: Scores both within and outside typical range
+        var modelId = Guid.NewGuid();
+        var benchmark = new Benchmark
+        {
+            Id = Guid.NewGuid(),
+            BenchmarkName = "MMLU",
+            Category = BenchmarkCategory.Reasoning,
+            TypicalRangeMin = 60m,
+            TypicalRangeMax = 95m,
+            IsActive = true
+        };
+
+        var scores = new List<BenchmarkScore>
+        {
+            new()
+            {
+                Id = Guid.NewGuid(),
+                ModelId = modelId,
+                BenchmarkId = benchmark.Id,
+                Benchmark = benchmark,
+                Score = 87.5m, // Within range
+                NormalizedScore = 0.875m,
+                CreatedAt = DateTime.UtcNow
+            },
+            new()
+            {
+                Id = Guid.NewGuid(),
+                ModelId = modelId,
+                BenchmarkId = benchmark.Id,
+                Benchmark = benchmark,
+                Score = 45.2m, // Below typical min
+                NormalizedScore = 0.452m,
+                CreatedAt = DateTime.UtcNow
+            }
+        };
+
+        _benchmarkRepositoryMock
+            .Setup(r => r.GetScoresByModelIdAsync(modelId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(scores);
+
+        // WHEN: Getting scores
+        var result = await _service.GetScoresByModelIdAsync(modelId);
+
+        // THEN: Out-of-range scores should be flagged
+        result.Should().HaveCount(2);
+        result.First().IsOutOfRange.Should().BeFalse(); // 87.5 is within [60, 95]
+        result.Last().IsOutOfRange.Should().BeTrue();   // 45.2 is below 60
+    }
+
+    #endregion
+
+    #region UpdateScoreAsync Tests (Story 2.10)
+
+    /// <summary>
+    /// [P1] Should update score and recalculate normalized value
+    /// Story 2.10 AC#6: Admins can edit existing scores
+    /// </summary>
+    [Fact]
+    public async Task UpdateScoreAsync_ShouldUpdateScoreWithRecalculation()
+    {
+        // GIVEN: Existing score and update request
+        var modelId = Guid.NewGuid();
+        var scoreId = Guid.NewGuid();
+        var benchmarkId = Guid.NewGuid();
+
+        var benchmark = new Benchmark
+        {
+            Id = benchmarkId,
+            BenchmarkName = "MMLU",
+            Category = BenchmarkCategory.Reasoning,
+            TypicalRangeMin = 0,
+            TypicalRangeMax = 100,
+            IsActive = true
+        };
+
+        var existingScore = new BenchmarkScore
+        {
+            Id = scoreId,
+            ModelId = modelId,
+            BenchmarkId = benchmarkId,
+            Benchmark = benchmark,
+            Score = 85.0m,
+            NormalizedScore = 0.85m,
+            Verified = false
+        };
+
+        var updateRequest = new CreateBenchmarkScoreDto
+        {
+            BenchmarkId = benchmarkId,
+            Score = 92.5m,
+            MaxScore = 100m,
+            Verified = true,
+            Notes = "Updated results"
+        };
+
+        _benchmarkRepositoryMock
+            .Setup(r => r.GetScoreByIdAsync(scoreId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingScore);
+
+        _benchmarkRepositoryMock
+            .Setup(r => r.UpdateScoreAsync(It.IsAny<BenchmarkScore>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        _benchmarkRepositoryMock
+            .Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        // WHEN: Updating score
+        var result = await _service.UpdateScoreAsync(modelId, scoreId, updateRequest);
+
+        // THEN: Score is updated with recalculated normalization
+        result.Should().NotBeNull();
+        _benchmarkRepositoryMock.Verify(r => r.UpdateScoreAsync(It.Is<BenchmarkScore>(s =>
+            s.Id == scoreId &&
+            s.Score == 92.5m &&
+            s.MaxScore == 100m &&
+            s.NormalizedScore == 0.925m && // Recalculated
+            s.Verified == true &&
+            s.Notes == "Updated results"
+        ), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>
+    /// [P2] Should return null when score does not exist
+    /// </summary>
+    [Fact]
+    public async Task UpdateScoreAsync_WithNonExistentScore_ShouldReturnNull()
+    {
+        // GIVEN: Non-existent score ID
+        var modelId = Guid.NewGuid();
+        var scoreId = Guid.NewGuid();
+        var updateRequest = new CreateBenchmarkScoreDto
+        {
+            BenchmarkId = Guid.NewGuid(),
+            Score = 90.0m
+        };
+
+        _benchmarkRepositoryMock
+            .Setup(r => r.GetScoreByIdAsync(scoreId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((BenchmarkScore?)null);
+
+        // WHEN: Attempting to update non-existent score
+        var result = await _service.UpdateScoreAsync(modelId, scoreId, updateRequest);
+
+        // THEN: Should return null
+        result.Should().BeNull();
+        _benchmarkRepositoryMock.Verify(r => r.UpdateScoreAsync(It.IsAny<BenchmarkScore>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    #endregion
+
+    #region DeleteScoreAsync Tests (Story 2.10)
+
+    /// <summary>
+    /// [P1] Should delete score successfully when it exists
+    /// Story 2.10 AC#7: Admins can delete benchmark scores
+    /// </summary>
+    [Fact]
+    public async Task DeleteScoreAsync_WithValidId_ShouldDeleteScore()
+    {
+        // GIVEN: Existing score
+        var modelId = Guid.NewGuid();
+        var scoreId = Guid.NewGuid();
+
+        _benchmarkRepositoryMock
+            .Setup(r => r.DeleteScoreAsync(scoreId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        // WHEN: Deleting score
+        var result = await _service.DeleteScoreAsync(modelId, scoreId);
+
+        // THEN: Score is deleted successfully
+        result.Should().BeTrue();
+        _benchmarkRepositoryMock.Verify(r => r.DeleteScoreAsync(scoreId, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>
+    /// [P2] Should return false when score does not exist
+    /// </summary>
+    [Fact]
+    public async Task DeleteScoreAsync_WithNonExistentId_ShouldReturnFalse()
+    {
+        // GIVEN: Non-existent score ID
+        var modelId = Guid.NewGuid();
+        var scoreId = Guid.NewGuid();
+
+        _benchmarkRepositoryMock
+            .Setup(r => r.DeleteScoreAsync(scoreId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+
+        // WHEN: Attempting to delete non-existent score
+        var result = await _service.DeleteScoreAsync(modelId, scoreId);
+
+        // THEN: Should return false
+        result.Should().BeFalse();
     }
 
     #endregion

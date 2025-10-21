@@ -22,6 +22,7 @@ namespace LlmTokenPrice.API.Controllers.Admin;
 public class AdminBenchmarksController : ControllerBase
 {
     private readonly IAdminBenchmarkService _benchmarkService;
+    private readonly CSVImportService _csvImportService;
     private readonly IValidator<CreateBenchmarkRequest> _createValidator;
     private readonly IValidator<UpdateBenchmarkRequest> _updateValidator;
     private readonly ILogger<AdminBenchmarksController> _logger;
@@ -30,16 +31,19 @@ public class AdminBenchmarksController : ControllerBase
     /// Initializes a new instance of the AdminBenchmarksController.
     /// </summary>
     /// <param name="benchmarkService">The admin benchmark service for data operations.</param>
+    /// <param name="csvImportService">The CSV import service for bulk score import (Story 2.11).</param>
     /// <param name="createValidator">FluentValidation validator for create requests.</param>
     /// <param name="updateValidator">FluentValidation validator for update requests.</param>
     /// <param name="logger">Logger for request tracking and diagnostics.</param>
     public AdminBenchmarksController(
         IAdminBenchmarkService benchmarkService,
+        CSVImportService csvImportService,
         IValidator<CreateBenchmarkRequest> createValidator,
         IValidator<UpdateBenchmarkRequest> updateValidator,
         ILogger<AdminBenchmarksController> logger)
     {
         _benchmarkService = benchmarkService ?? throw new ArgumentNullException(nameof(benchmarkService));
+        _csvImportService = csvImportService ?? throw new ArgumentNullException(nameof(csvImportService));
         _createValidator = createValidator ?? throw new ArgumentNullException(nameof(createValidator));
         _updateValidator = updateValidator ?? throw new ArgumentNullException(nameof(updateValidator));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -243,6 +247,86 @@ public class AdminBenchmarksController : ControllerBase
         {
             _logger.LogWarning("Admin: Cannot delete benchmark {BenchmarkId}: {Reason}", id, ex.Message);
             return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Imports multiple benchmark scores via CSV file upload (Story 2.11 AC#3).
+    /// Validates each row, imports valid scores in batch, returns detailed results.
+    /// </summary>
+    /// <param name="file">CSV file with columns: model_id, benchmark_name, score, max_score, test_date, source_url, verified, notes</param>
+    /// <param name="cancellationToken">Cancellation token for async operation</param>
+    /// <returns>
+    /// 200 OK: Import result with success/failure counts and error details (partial success allowed)
+    /// 400 Bad Request: No file uploaded, invalid file format, or parsing completely failed
+    /// 401 Unauthorized: Missing or invalid JWT token
+    /// 413 Payload Too Large: File exceeds 10MB limit (handled by [RequestSizeLimit] attribute)
+    /// </returns>
+    /// <remarks>
+    /// Partial success pattern: Valid rows are imported even if some rows fail validation.
+    /// Returns 200 OK with detailed error list for failed rows.
+    /// Returns 400 only if the file itself is invalid or cannot be parsed at all.
+    /// </remarks>
+    [HttpPost("import-csv")]
+    [RequestSizeLimit(10_485_760)] // 10MB file size limit
+    [ProducesResponseType(typeof(CSVImportResultDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> ImportBenchmarkScoresCSV(
+        IFormFile file,
+        CancellationToken cancellationToken = default)
+    {
+        // Validate file presence
+        if (file == null || file.Length == 0)
+        {
+            _logger.LogWarning("Admin: CSV import attempted with no file");
+            return BadRequest(new { error = "No file uploaded" });
+        }
+
+        // Validate file extension
+        if (!file.FileName.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
+        {
+            _logger.LogWarning("Admin: CSV import attempted with invalid file format: {FileName}", file.FileName);
+            return BadRequest(new { error = "File must be CSV format" });
+        }
+
+        _logger.LogInformation(
+            "Admin: Starting CSV import - File: {FileName}, Size: {FileSize} bytes",
+            file.FileName,
+            file.Length);
+
+        try
+        {
+            // Process CSV file
+            using var stream = file.OpenReadStream();
+            var result = await _csvImportService.ImportBenchmarkScoresAsync(
+                stream,
+                skipDuplicates: true, // Task 9: Default to skip duplicates
+                cancellationToken);
+
+            _logger.LogInformation(
+                "Admin: CSV import completed - Total: {Total}, Successful: {Success}, Failed: {Failed}, Skipped: {Skipped}",
+                result.TotalRows,
+                result.SuccessfulImports,
+                result.FailedImports,
+                result.SkippedDuplicates);
+
+            // Return 200 OK even with partial failures (Story 2.11 AC#6)
+            return Ok(new
+            {
+                data = result,
+                meta = new
+                {
+                    message = $"Import completed: {result.SuccessfulImports} successful, {result.FailedImports} failed, {result.SkippedDuplicates} skipped",
+                    timestamp = DateTime.UtcNow,
+                    cached = false
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Admin: Fatal error during CSV import - File: {FileName}", file.FileName);
+            return BadRequest(new { error = "CSV file could not be processed. Please check file format and try again." });
         }
     }
 }
