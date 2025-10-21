@@ -517,7 +517,9 @@ public class AdminBenchmarksApiTests : IClassFixture<TestWebApplicationFactory>
         // THEN: Should return 200 OK with import results
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var result = await response.Content.ReadFromJsonAsync<CSVImportResultDto>();
+        var wrapper = await response.Content.ReadFromJsonAsync<CSVImportResponse>();
+        wrapper.Should().NotBeNull();
+        var result = wrapper!.Data;
         result.Should().NotBeNull();
         result!.TotalRows.Should().Be(3);
         result.SuccessfulImports.Should().BeGreaterThan(0);
@@ -548,7 +550,9 @@ public class AdminBenchmarksApiTests : IClassFixture<TestWebApplicationFactory>
         // THEN: Should return success
         importResponse.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var result = await importResponse.Content.ReadFromJsonAsync<CSVImportResultDto>();
+        var wrapper = await importResponse.Content.ReadFromJsonAsync<CSVImportResponse>();
+        wrapper.Should().NotBeNull();
+        var result = wrapper!.Data;
         result.Should().NotBeNull();
 
         // AND: Score should be retrievable from database
@@ -584,7 +588,9 @@ invalid-uuid-format,HumanEval,0.72,1,2025-10-02,https://example.com,false,Invali
         // THEN: Should return 200 OK (partial success is allowed)
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var result = await response.Content.ReadFromJsonAsync<CSVImportResultDto>();
+        var wrapper = await response.Content.ReadFromJsonAsync<CSVImportResponse>();
+        wrapper.Should().NotBeNull();
+        var result = wrapper!.Data;
         result.Should().NotBeNull();
         result!.TotalRows.Should().Be(5);
 
@@ -617,7 +623,8 @@ invalid-uuid-format,HumanEval,0.72,1,2025-10-02,https://example.com,false,Invali
         content1.Add(fileContent1, "file", "duplicate_test1.csv");
 
         var firstResponse = await _client.PostAsync("/api/admin/benchmarks/import-csv", content1);
-        var firstResult = await firstResponse.Content.ReadFromJsonAsync<CSVImportResultDto>();
+        var firstWrapper = await firstResponse.Content.ReadFromJsonAsync<CSVImportResponse>();
+        var firstResult = firstWrapper!.Data;
 
         // AND: Import same CSV second time (duplicate)
         var content2 = new MultipartFormDataContent();
@@ -631,7 +638,9 @@ invalid-uuid-format,HumanEval,0.72,1,2025-10-02,https://example.com,false,Invali
         // THEN: Should return 200 OK but with skipped duplicates
         secondResponse.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var secondResult = await secondResponse.Content.ReadFromJsonAsync<CSVImportResultDto>();
+        var secondWrapper = await secondResponse.Content.ReadFromJsonAsync<CSVImportResponse>();
+        secondWrapper.Should().NotBeNull();
+        var secondResult = secondWrapper!.Data;
         secondResult.Should().NotBeNull();
         secondResult!.TotalRows.Should().Be(1);
 
@@ -721,7 +730,9 @@ invalid-uuid-format,HumanEval,0.72,1,2025-10-02,https://example.com,false,Invali
         // THEN: Should return 200 OK (don't crash) with all rows marked as failed
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var result = await response.Content.ReadFromJsonAsync<CSVImportResultDto>();
+        var wrapper = await response.Content.ReadFromJsonAsync<CSVImportResponse>();
+        wrapper.Should().NotBeNull();
+        var result = wrapper!.Data;
         result.Should().NotBeNull();
         result!.TotalRows.Should().Be(2);
         result.SuccessfulImports.Should().Be(0);
@@ -732,4 +743,13 @@ invalid-uuid-format,HumanEval,0.72,1,2025-10-02,https://example.com,false,Invali
     }
 
     #endregion
+}
+
+/// <summary>
+/// Response structure for CSV import endpoint (matches backend response structure with data + meta)
+/// </summary>
+internal class CSVImportResponse
+{
+    public CSVImportResultDto? Data { get; set; }
+    public object? Meta { get; set; }
 }
