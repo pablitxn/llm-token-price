@@ -12,6 +12,7 @@ import { EditModelPage } from './pages/admin/EditModelPage'
 import AdminBenchmarksPage from './pages/admin/AdminBenchmarksPage'
 import { AddBenchmarkPage } from './pages/admin/AddBenchmarkPage'
 import { EditBenchmarkPage } from './pages/admin/EditBenchmarkPage'
+import AdminAuditLogPage from './pages/admin/AdminAuditLogPage'
 import AdminLayout from './components/layout/AdminLayout'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 
@@ -44,6 +45,7 @@ export default function App() {
         <Route path="benchmarks" element={<AdminBenchmarksPage />} />
         <Route path="benchmarks/new" element={<AddBenchmarkPage />} />
         <Route path="benchmarks/:id/edit" element={<EditBenchmarkPage />} />
+        <Route path="audit-log" element={<AdminAuditLogPage />} />
       </Route>
 
       {/* 404 Not Found */}
