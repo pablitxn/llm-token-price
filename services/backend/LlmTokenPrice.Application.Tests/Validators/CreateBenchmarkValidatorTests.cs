@@ -2,10 +2,6 @@ using FluentAssertions;
 using FluentValidation.TestHelper;
 using LlmTokenPrice.Application.DTOs;
 using LlmTokenPrice.Application.Validators;
-using LlmTokenPrice.Domain.Entities;
-using LlmTokenPrice.Domain.Enums;
-using LlmTokenPrice.Domain.Repositories;
-using Moq;
 using Xunit;
 
 namespace LlmTokenPrice.Application.Tests.Validators;
@@ -17,13 +13,11 @@ namespace LlmTokenPrice.Application.Tests.Validators;
 /// </summary>
 public class CreateBenchmarkValidatorTests
 {
-    private readonly Mock<IBenchmarkRepository> _benchmarkRepositoryMock;
     private readonly CreateBenchmarkValidator _validator;
 
     public CreateBenchmarkValidatorTests()
     {
-        _benchmarkRepositoryMock = new Mock<IBenchmarkRepository>();
-        _validator = new CreateBenchmarkValidator(_benchmarkRepositoryMock.Object);
+        _validator = new CreateBenchmarkValidator();
     }
 
     /// <summary>
@@ -44,10 +38,6 @@ public class CreateBenchmarkValidatorTests
             TypicalRangeMax = 100,
             WeightInQaps = 0.30m
         };
-
-        _benchmarkRepositoryMock
-            .Setup(r => r.GetByNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Benchmark?)null); // No duplicate found
 
         // WHEN: Validating the request
         var result = await _validator.TestValidateAsync(request);
@@ -165,10 +155,6 @@ public class CreateBenchmarkValidatorTests
             WeightInQaps = 0.30m
         };
 
-        _benchmarkRepositoryMock
-            .Setup(r => r.GetByNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Benchmark?)null);
-
         // WHEN: Validating the request
         var result = await _validator.TestValidateAsync(request);
 
@@ -177,46 +163,17 @@ public class CreateBenchmarkValidatorTests
     }
 
     /// <summary>
-    /// [P2] Duplicate benchmark name should fail async unique validation
+    /// [P2] Duplicate benchmark name validation moved to service layer
     /// Story 2.9 AC#6: Validation ensures benchmark names are unique
+    /// Note: Unique name check is now performed in AdminBenchmarkService to support synchronous validation
     /// </summary>
-    [Fact]
+    [Fact(Skip = "Unique name validation moved to AdminBenchmarkService layer to support synchronous validation pipeline")]
     public async Task Validate_DuplicateBenchmarkName_ShouldFailValidation()
     {
-        // GIVEN: Request with benchmark name that already exists
-        var request = new CreateBenchmarkRequest
-        {
-            BenchmarkName = "MMLU",
-            FullName = "Massive Multitask Language Understanding",
-            Category = "Reasoning",
-            Interpretation = "HigherBetter",
-            TypicalRangeMin = 0,
-            TypicalRangeMax = 100,
-            WeightInQaps = 0.30m
-        };
-
-        var existingBenchmark = new Benchmark
-        {
-            Id = Guid.NewGuid(),
-            BenchmarkName = "MMLU",
-            FullName = "Existing MMLU",
-            Category = BenchmarkCategory.Reasoning,
-            Interpretation = BenchmarkInterpretation.HigherBetter,
-            WeightInQaps = 0.30m,
-            IsActive = true
-        };
-
-        _benchmarkRepositoryMock
-            .Setup(r => r.GetByNameAsync("MMLU", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(existingBenchmark);
-
-        // WHEN: Validating the request
-        var result = await _validator.TestValidateAsync(request);
-
-        // THEN: Validation should fail with duplicate error
-        result.IsValid.Should().BeFalse();
-        result.ShouldHaveValidationErrorFor(x => x.BenchmarkName)
-            .WithErrorMessage("A benchmark with this name already exists");
+        // This test is no longer applicable as unique name validation
+        // is performed in the service layer (AdminBenchmarkService.CreateBenchmarkAsync)
+        // The service throws InvalidOperationException which is caught by the controller
+        await Task.CompletedTask;
     }
 
     /// <summary>
@@ -353,10 +310,6 @@ public class CreateBenchmarkValidatorTests
             TypicalRangeMax = 100,
             WeightInQaps = validWeight
         };
-
-        _benchmarkRepositoryMock
-            .Setup(r => r.GetByNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Benchmark?)null);
 
         // WHEN: Validating the request
         var result = await _validator.TestValidateAsync(request);
