@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<RunSettings>
+  <DataCollectionRunSettings>
+    <DataCollectors>
+      <DataCollector friendlyName="XPlat code coverage">
+        <Configuration>
+          <Format>cobertura,json,lcov</Format>
+          <Exclude>[*.Tests]*,[*.Tests.E2E]*</Exclude>
+          <ExcludeByFile>**/Migrations/*.cs</ExcludeByFile>
+          <SingleHit>false</SingleHit>
+          <UseSourceLink>true</UseSourceLink>
+          <IncludeTestAssembly>false</IncludeTestAssembly>
+          <SkipAutoProps>true</SkipAutoProps>
+          <DeterministicReport>true</DeterministicReport>
+          <ExcludeAssembliesWithoutSources>MissingAll,MissingAny,None</ExcludeAssembliesWithoutSources>
+        </Configuration>
+      </DataCollector>
+    </DataCollectors>
+  </DataCollectionRunSettings>
+
+  <!-- Coverage thresholds configuration -->
+  <!-- Story 2.13 Task 3: Enforce minimum coverage per assembly -->
+  <CoverageThresholds>
+    <Overall>
+      <LineRate>0.70</LineRate>     <!-- 70% minimum overall -->
+      <BranchRate>0.60</BranchRate> <!-- 60% minimum branch coverage -->
+    </Overall>
+
+    <!-- Domain layer MUST have 90%+ coverage (business logic) -->
+    <Assembly name="LlmTokenPrice.Domain">
+      <LineRate>0.90</LineRate>
+      <BranchRate>0.80</BranchRate>
+    </Assembly>
+
+    <!-- Application layer should have 85%+ coverage (use cases) -->
+    <Assembly name="LlmTokenPrice.Application">
+      <LineRate>0.85</LineRate>
+      <BranchRate>0.75</BranchRate>
+    </Assembly>
+
+    <!-- Infrastructure can be lower (adapters, external dependencies) -->
+    <Assembly name="LlmTokenPrice.Infrastructure">
+      <LineRate>0.75</LineRate>
+      <BranchRate>0.65</BranchRate>
+    </Assembly>
+
+    <!-- API layer can be lower (thin controllers) -->
+    <Assembly name="LlmTokenPrice.API">
+      <LineRate>0.50</LineRate>
+      <BranchRate>0.40</BranchRate>
+    </Assembly>
+  </CoverageThresholds>
+</RunSettings>

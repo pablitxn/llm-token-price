@@ -105,6 +105,52 @@ jobs:
           echo "📊 Test Results: $PASSED/$TOTAL passed ($PASS_RATE%)"
         working-directory: ./services/backend
 
+      - name: Parse coverage results
+        id: coverage-results
+        if: always()
+        run: |
+          # Find coverage files
+          COVERAGE_FILES=$(find ./coverage -name "coverage.cobertura.xml" | head -1)
+
+          if [ -z "$COVERAGE_FILES" ]; then
+            echo "⚠️  No coverage files found"
+            echo "line_coverage=0" >> $GITHUB_OUTPUT
+            echo "branch_coverage=0" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Parse Cobertura XML to extract metrics
+          # Line coverage: lines-covered / lines-valid
+          LINES_COVERED=$(grep -oP 'lines-covered="\K[0-9]+' "$COVERAGE_FILES" | head -1)
+          LINES_VALID=$(grep -oP 'lines-valid="\K[0-9]+' "$COVERAGE_FILES" | head -1)
+
+          # Branch coverage: branches-covered / branches-valid
+          BRANCHES_COVERED=$(grep -oP 'branches-covered="\K[0-9]+' "$COVERAGE_FILES" | head -1)
+          BRANCHES_VALID=$(grep -oP 'branches-valid="\K[0-9]+' "$COVERAGE_FILES" | head -1)
+
+          # Calculate percentages
+          if [ "$LINES_VALID" -gt 0 ]; then
+            LINE_COV=$(awk "BEGIN {printf \"%.1f\", ($LINES_COVERED/$LINES_VALID)*100}")
+          else
+            LINE_COV=0
+          fi
+
+          if [ "$BRANCHES_VALID" -gt 0 ]; then
+            BRANCH_COV=$(awk "BEGIN {printf \"%.1f\", ($BRANCHES_COVERED/$BRANCHES_VALID)*100}")
+          else
+            BRANCH_COV=0
+          fi
+
+          echo "line_coverage=$LINE_COV" >> $GITHUB_OUTPUT
+          echo "branch_coverage=$BRANCH_COV" >> $GITHUB_OUTPUT
+          echo "lines_covered=$LINES_COVERED" >> $GITHUB_OUTPUT
+          echo "lines_valid=$LINES_VALID" >> $GITHUB_OUTPUT
+          echo "branches_covered=$BRANCHES_COVERED" >> $GITHUB_OUTPUT
+          echo "branches_valid=$BRANCHES_VALID" >> $GITHUB_OUTPUT
+
+          echo "📊 Coverage Results: Line $LINE_COV%, Branch $BRANCH_COV%"
+        working-directory: ./services/backend
+
       - name: Comment test results on PR
         if: github.event_name == 'pull_request' && always()
         uses: actions/github-script@v7
@@ -127,27 +173,52 @@ jobs:
             const failed = '${{ steps.test-results.outputs.failed }}';
             const skipped = '${{ steps.test-results.outputs.skipped }}';
             const passRate = '${{ steps.test-results.outputs.pass_rate }}';
-            const status = parseFloat(passRate) >= 95.0 ? '✅' : '❌';
+            const lineCov = '${{ steps.coverage-results.outputs.line_coverage }}';
+            const branchCov = '${{ steps.coverage-results.outputs.branch_coverage }}';
+            const linesCovered = '${{ steps.coverage-results.outputs.lines_covered }}';
+            const linesValid = '${{ steps.coverage-results.outputs.lines_valid }}';
 
-            const body = `### ${status} Backend Test Results
+            const testStatus = parseFloat(passRate) >= 95.0 ? '✅' : '❌';
+            const covStatus = parseFloat(lineCov) >= 70.0 ? '✅' : '⚠️';
 
-            | Metric | Value |
-            |--------|-------|
-            | **Total Tests** | ${total} |
-            | **Passed** | ${passed} ✅ |
-            | **Failed** | ${failed} ❌ |
-            | **Skipped** | ${skipped} ⏭️ |
-            | **Pass Rate** | **${passRate}%** |
-            | **Required** | 95.0% |
+            const body = `### ${testStatus} Backend Test Results & Coverage
+
+            #### 🧪 Test Results
+
+            | Metric | Value | Target |
+            |--------|-------|--------|
+            | **Total Tests** | ${total} | - |
+            | **Passed** | ${passed} ✅ | - |
+            | **Failed** | ${failed} ❌ | 0 |
+            | **Skipped** | ${skipped} ⏭️ | - |
+            | **Pass Rate** | **${passRate}%** | ≥95.0% |
 
             ${parseFloat(passRate) >= 95.0
               ? '✅ **All tests passed!** Test suite is production-ready.'
               : '❌ **Tests failed!** Pass rate below required 95.0% threshold.'}
 
-            <details>
-            <summary>Coverage Report</summary>
+            #### 📊 Code Coverage
 
-            Coverage reports will be available on [Codecov](https://codecov.io/gh/${{ github.repository }})
+            | Metric | Value | Target |
+            |--------|-------|--------|
+            | **Line Coverage** | **${lineCov}%** | ≥70.0% |
+            | **Branch Coverage** | ${branchCov}% | ≥60.0% |
+            | **Lines Covered** | ${linesCovered}/${linesValid} | - |
+
+            ${parseFloat(lineCov) >= 70.0
+              ? '✅ **Coverage meets target!** Code is well-tested.'
+              : '⚠️ **Coverage below target.** Consider adding more tests.'}
+
+            <details>
+            <summary>📈 Coverage by Layer</summary>
+
+            **Target Coverage by Assembly:**
+            - Domain: ≥90% (business logic)
+            - Application: ≥85% (use cases)
+            - Infrastructure: ≥75% (adapters)
+            - API: ≥50% (thin controllers)
+
+            Full coverage reports available on [Codecov](https://codecov.io/gh/${{ github.repository }})
             </details>
 
             ---
