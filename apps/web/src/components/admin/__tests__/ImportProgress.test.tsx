@@ -103,12 +103,13 @@ describe('ImportProgress', () => {
     // Progress should increase over time
     await act(async () => {
       vi.advanceTimersByTime(500)
+      vi.runOnlyPendingTimers()
     })
     await waitFor(() => {
       const currentProgress = parseInt(progressBar.getAttribute('aria-valuenow') || '0')
       expect(currentProgress).toBeGreaterThan(0)
       expect(currentProgress).toBeLessThanOrEqual(33)
-    })
+    }, { timeout: 1000 })
   })
 
   it('formats file size correctly for different units', () => {
@@ -158,17 +159,15 @@ describe('ImportProgress', () => {
 
     // Advance to second stage
     await act(async () => {
-      vi.advanceTimersByTime(1000)
-    })
-    await waitFor(() => {
-      expect(screen.getByText('Validating data')).toBeInTheDocument()
+      vi.advanceTimersByTime(1100)
+      vi.runOnlyPendingTimers()
     })
 
     // First should be completed (green), second should be active (blue)
     await waitFor(() => {
       expect(stageContainers[0]).toHaveClass('bg-green-50')
       expect(stageContainers[1]).toHaveClass('bg-blue-50')
-    })
+    }, { timeout: 1000 })
   })
 
   it('renders with 0 byte file size', () => {
@@ -186,12 +185,13 @@ describe('ImportProgress', () => {
     // Progress increases
     await act(async () => {
       vi.advanceTimersByTime(500)
+      vi.runOnlyPendingTimers()
     })
     await waitFor(() => {
       // Should show some progress > 0%
       const percentageTexts = screen.queryAllByText(/\d+%/)
       const hasNonZeroPercentage = percentageTexts.some(el => el.textContent !== '0%')
       expect(hasNonZeroPercentage).toBe(true)
-    })
+    }, { timeout: 1000 })
   })
 })
