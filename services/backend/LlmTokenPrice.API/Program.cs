@@ -150,6 +150,7 @@ builder.Services.AddScoped<IAdminModelService, AdminModelService>();
 builder.Services.AddScoped<IAdminBenchmarkService, AdminBenchmarkService>();
 builder.Services.AddScoped<CSVImportService>(); // Story 2.11: CSV bulk import service
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IAuditLogService, AuditLogService>(); // Story 2.13 Task 14: Audit log service
 
 // JWT Authentication configuration
 // Task 19: Read JWT secret from environment variable (preferred) or configuration (fallback)
