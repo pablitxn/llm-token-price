@@ -1,42 +1,39 @@
 using FluentValidation;
 using LlmTokenPrice.Application.DTOs;
-using LlmTokenPrice.Domain.Repositories;
 
 namespace LlmTokenPrice.Application.Validators;
 
 /// <summary>
 /// FluentValidation validator for CreateBenchmarkRequest DTO.
-/// Validates all required fields, unique name constraint, enum values, and range validation.
+/// Validates all required fields, enum values, and range validation.
 /// </summary>
 /// <remarks>
 /// Key validation rules:
-/// - BenchmarkName: Required, max 50 chars, alphanumeric + underscore, unique (case-insensitive)
+/// - BenchmarkName: Required, max 50 chars, alphanumeric + underscore
 /// - Category: Must be valid enum value
 /// - Interpretation: Must be valid enum value
 /// - TypicalRangeMin must be less than TypicalRangeMax
 /// - WeightInQaps: 0.00 to 1.00, max 2 decimal places
+/// Unique name validation is performed in AdminBenchmarkService layer.
 /// </remarks>
 public class CreateBenchmarkValidator : AbstractValidator<CreateBenchmarkRequest>
 {
     private static readonly string[] ValidCategories = ["Reasoning", "Code", "Math", "Language", "Multimodal"];
     private static readonly string[] ValidInterpretations = ["HigherBetter", "LowerBetter"];
 
-    private readonly IBenchmarkRepository _benchmarkRepository;
-
     /// <summary>
     /// Initializes a new instance of the CreateBenchmarkValidator.
     /// </summary>
-    /// <param name="benchmarkRepository">Repository for duplicate name checking.</param>
-    public CreateBenchmarkValidator(IBenchmarkRepository benchmarkRepository)
+    public CreateBenchmarkValidator()
     {
-        _benchmarkRepository = benchmarkRepository ?? throw new ArgumentNullException(nameof(benchmarkRepository));
 
         // BenchmarkName validation
+        // Note: Unique name check moved to service layer (AdminBenchmarkService)
+        // to allow synchronous validation pipeline
         RuleFor(x => x.BenchmarkName)
             .NotEmpty().WithMessage("Benchmark name is required")
             .MaximumLength(50).WithMessage("Benchmark name cannot exceed 50 characters")
-            .Matches(@"^[a-zA-Z0-9_]+$").WithMessage("Benchmark name can only contain letters, numbers, and underscores")
-            .MustAsync(BeUniqueNameAsync).WithMessage("A benchmark with this name already exists");
+            .Matches(@"^[a-zA-Z0-9_]+$").WithMessage("Benchmark name can only contain letters, numbers, and underscores");
 
         // FullName validation
         RuleFor(x => x.FullName)
@@ -79,17 +76,5 @@ public class CreateBenchmarkValidator : AbstractValidator<CreateBenchmarkRequest
             .NotNull().WithMessage("QAPS weight is required")
             .InclusiveBetween(0m, 1m).WithMessage("QAPS weight must be between 0.00 and 1.00")
             .PrecisionScale(3, 2, ignoreTrailingZeros: true).WithMessage("QAPS weight can have maximum 2 decimal places");
-    }
-
-    /// <summary>
-    /// Validates that the benchmark name is unique (case-insensitive).
-    /// </summary>
-    /// <param name="benchmarkName">The benchmark name to check.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>True if name is unique, false if duplicate exists.</returns>
-    private async Task<bool> BeUniqueNameAsync(string benchmarkName, CancellationToken cancellationToken)
-    {
-        var existing = await _benchmarkRepository.GetByNameAsync(benchmarkName, cancellationToken);
-        return existing == null;
     }
 }
