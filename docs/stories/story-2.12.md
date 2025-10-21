@@ -1,6 +1,6 @@
 # Story 2.12: Add Timestamp Tracking and Display
 
-Status: Ready for Review
+Status: Done
 
 ## Story
 
