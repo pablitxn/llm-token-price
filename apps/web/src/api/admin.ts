@@ -3,6 +3,10 @@ import type {
   AdminModelsResponse,
   AdminModelResponse,
   CreateModelRequest,
+  BenchmarkScoresResponse,
+  BenchmarkScoreResponse,
+  CreateBenchmarkScoreDto,
+  CSVImportResultDto,
 } from '@/types/admin'
 import type {
   BenchmarkResponseDto,
@@ -242,4 +246,127 @@ export const updateBenchmark = async (
  */
 export const deleteBenchmark = async (id: string): Promise<void> => {
   await apiClient.delete(`/admin/benchmarks/${id}`)
+}
+
+// ============================================================================
+// Benchmark Score Management API Functions
+// ============================================================================
+
+/**
+ * Fetches all benchmark scores for a specific model
+ * Returns denormalized data including benchmark name and category for display.
+ *
+ * @param modelId - Model unique identifier (GUID)
+ * @returns Promise resolving to array of benchmark score response DTOs (ordered alphabetically by benchmark name)
+ * @throws Error if request fails (401 Unauthorized if not authenticated, 500 Internal Server Error)
+ */
+export const getModelBenchmarkScores = async (
+  modelId: string
+): Promise<BenchmarkScoresResponse> => {
+  const response = await apiClient.get<BenchmarkScoresResponse>(
+    `/admin/models/${modelId}/benchmarks`
+  )
+  return response.data
+}
+
+/**
+ * Adds a new benchmark score to a model
+ * Validates model and benchmark existence, prevents duplicates, calculates normalized score server-side.
+ * Displays warning in UI if score falls outside benchmark's typical range (but allows submission).
+ * On success, cache:model:{modelId}:*, cache:qaps:*, cache:bestvalue:* patterns are invalidated server-side.
+ *
+ * @param modelId - Model unique identifier (GUID)
+ * @param score - Create benchmark score request payload with all required fields
+ * @returns Promise resolving to created benchmark score with normalized score and isOutOfRange flag
+ * @throws Error if model/benchmark not found (400 Bad Request), duplicate score exists (400 Bad Request), unauthorized (401), or server error (500)
+ */
+export const addBenchmarkScore = async (
+  modelId: string,
+  score: CreateBenchmarkScoreDto
+): Promise<BenchmarkScoreResponse> => {
+  const response = await apiClient.post<BenchmarkScoreResponse>(
+    `/admin/models/${modelId}/benchmarks`,
+    score
+  )
+  return response.data
+}
+
+/**
+ * Updates an existing benchmark score for a model
+ * Recalculates normalized score server-side and invalidates cache.
+ * If benchmarkId changes, enforces unique constraint (one score per model+benchmark).
+ *
+ * @param modelId - Model unique identifier (GUID)
+ * @param scoreId - Benchmark score unique identifier (GUID)
+ * @param score - Update benchmark score request payload with fields to update
+ * @returns Promise resolving to updated benchmark score with refreshed normalized score
+ * @throws Error if score not found or doesn't belong to model (404), benchmark not found (400), duplicate exists (400), unauthorized (401), or server error (500)
+ */
+export const updateBenchmarkScore = async (
+  modelId: string,
+  scoreId: string,
+  score: CreateBenchmarkScoreDto
+): Promise<BenchmarkScoreResponse> => {
+  const response = await apiClient.put<BenchmarkScoreResponse>(
+    `/admin/models/${modelId}/benchmarks/${scoreId}`,
+    score
+  )
+  return response.data
+}
+
+/**
+ * Deletes a benchmark score from a model (hard delete - physical removal)
+ * Unlike models/benchmarks, scores don't use soft delete.
+ * On success, cache:model:{modelId}:*, cache:qaps:*, cache:bestvalue:* patterns are invalidated server-side.
+ *
+ * @param modelId - Model unique identifier (GUID)
+ * @param scoreId - Benchmark score unique identifier (GUID)
+ * @returns Promise resolving when deletion is successful
+ * @throws Error if score not found or doesn't belong to model (404), unauthorized (401), or request fails (500)
+ */
+export const deleteBenchmarkScore = async (
+  modelId: string,
+  scoreId: string
+): Promise<void> => {
+  await apiClient.delete(`/admin/models/${modelId}/benchmarks/${scoreId}`)
+}
+
+/**
+ * Imports multiple benchmark scores via CSV file upload (Story 2.11)
+ * Accepts multipart/form-data with CSV file, validates each row, imports valid scores
+ * Returns detailed results with success/failure counts and error details
+ *
+ * CSV Format:
+ * - model_id: UUID (required)
+ * - benchmark_name: string (required)
+ * - score: decimal (required)
+ * - max_score: decimal (optional)
+ * - test_date: YYYY-MM-DD (optional)
+ * - source_url: URL (optional)
+ * - verified: true/false (optional)
+ * - notes: string (optional)
+ *
+ * Features:
+ * - Partial success: valid rows imported even if some fail
+ * - Row-by-row validation with detailed error messages
+ * - Duplicate detection (skips by default)
+ * - File size limit: 10MB max
+ *
+ * @param formData - FormData containing CSV file (key: 'file')
+ * @returns Promise resolving to import result with success/failure counts and errors
+ * @throws Error if file is invalid format, exceeds size limit, or server error occurs
+ */
+export const importBenchmarkCSV = async (
+  formData: FormData
+): Promise<CSVImportResultDto> => {
+  const response = await apiClient.post<CSVImportResultDto>(
+    '/admin/benchmarks/import-csv',
+    formData,
+    {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    }
+  )
+  return response.data
 }

@@ -4,6 +4,7 @@ using FluentValidation.AspNetCore;
 using LlmTokenPrice.Application.Services;
 using LlmTokenPrice.Application.Validators;
 using LlmTokenPrice.Domain.Repositories;
+using LlmTokenPrice.Domain.Services;
 using LlmTokenPrice.Infrastructure.Auth;
 using LlmTokenPrice.Infrastructure.Caching;
 using LlmTokenPrice.Infrastructure.Data;
@@ -112,10 +113,14 @@ builder.Services.AddScoped<IModelRepository, ModelRepository>();
 builder.Services.AddScoped<IAdminModelRepository, AdminModelRepository>();
 builder.Services.AddScoped<IBenchmarkRepository, BenchmarkRepository>();
 
+// Domain services (transient - pure business logic, no state)
+builder.Services.AddTransient<BenchmarkNormalizer>();
+
 // Application services (scoped)
 builder.Services.AddScoped<IModelQueryService, ModelQueryService>();
 builder.Services.AddScoped<IAdminModelService, AdminModelService>();
 builder.Services.AddScoped<IAdminBenchmarkService, AdminBenchmarkService>();
+builder.Services.AddScoped<CSVImportService>(); // Story 2.11: CSV bulk import service
 builder.Services.AddScoped<IAuthService, AuthService>();
 
 // JWT Authentication configuration

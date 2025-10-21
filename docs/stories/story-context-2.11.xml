@@ -1,0 +1,277 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>2.11</storyId>
+    <title>Add Bulk Benchmark Import via CSV</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-20</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-2.11.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>an administrator</asA>
+    <iWant>to import multiple benchmark scores via CSV</iWant>
+    <soThat>I can efficiently add data for new models</soThat>
+    <tasks>
+- Task 1: Create CSV upload UI (AC: #1)
+- Task 2: Create CSV template and documentation (AC: #2)
+- Task 3: Implement file upload endpoint (AC: #3)
+- Task 4: Create CSV parsing service (AC: #4)
+- Task 5: Implement row validation (AC: #4)
+- Task 6: Implement bulk import logic (AC: #5)
+- Task 7: Implement import results response (AC: #6)
+- Task 8: Display import results in UI (AC: #6)
+- Task 9: Add import options
+- Task 10: Add testing
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. CSV upload form created on benchmarks page
+2. CSV template documented (model_id, benchmark_name, score, test_date, source_url)
+3. File upload processed in backend
+4. CSV parsed and validated (check model/benchmark exist, scores valid)
+5. Valid rows imported to database
+6. Import results shown (X successful, Y failed with reasons)
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/tech-spec-epic-2.md</path>
+        <title>Tech Spec Epic 2 - Admin API Contracts</title>
+        <section>7.2: Admin Benchmark Management Endpoints</section>
+        <snippet>POST /api/admin/benchmarks/import-csv with multipart/form-data. Validates each row, imports valid, collects errors for failed rows. Returns CsvImportResultDto with totalRows, successfulImports, failedImports, and detailed error list.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-2.md</path>
+        <title>Tech Spec Epic 2 - Workflow Design</title>
+        <section>3: Workflow 4 - Bulk Benchmark Import via CSV</section>
+        <snippet>Complete sequence diagram: Upload CSV → Parse rows → Validate (model exists, benchmark exists, score valid) → Batch insert valid rows → Invalidate cache → Return results. Uses BenchmarkNormalizer for score calculation.</snippet>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture - API Response Format</title>
+        <section>7.2: Admin API Contracts</section>
+        <snippet>Standard API response wrapper: {data: {...}, meta: {message: "..."}}}. Admin responses follow this structure with data containing import results.</snippet>
+      </doc>
+      <doc>
+        <path>docs/test-design-epic-2.md</path>
+        <title>Test Design Epic 2 - CSV Import Testing</title>
+        <section>3: Test Coverage Plan - P1 Tests</section>
+        <snippet>5 key tests required: partial success handling, row-by-row validation, file size limits (10MB max), invalid format handling. Valid rows must persist even if some fail.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-2.md</path>
+        <title>Tech Spec Epic 2 - Risk Mitigation</title>
+        <section>3: Risks to Plan</section>
+        <snippet>Risk R-006: Memory overflow with large CSV. Mitigation: Stream parsing with CsvHelper, 5-10MB file limit. Risk R-008: Accidental overwrite. Mitigation: Confirmation dialog, audit logging.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>services/backend/LlmTokenPrice.Application/Services/IAdminBenchmarkService.cs</path>
+        <kind>service-interface</kind>
+        <symbol>IAdminBenchmarkService</symbol>
+        <lines>1-116</lines>
+        <reason>Existing service interface for benchmark management. AddScoreAsync method provides pattern for individual score creation. New bulk import method should be added here.</reason>
+      </artifact>
+      <artifact>
+        <path>services/backend/LlmTokenPrice.Domain/Repositories/IBenchmarkRepository.cs</path>
+        <kind>repository-interface</kind>
+        <symbol>IBenchmarkRepository</symbol>
+        <lines>120-151</lines>
+        <reason>Repository interface with GetScoreAsync, AddScoreAsync, SaveChangesAsync methods. Bulk import will need new BulkAddScoresAsync method or use existing AddScoreAsync in loop with single SaveChanges.</reason>
+      </artifact>
+      <artifact>
+        <path>services/backend/LlmTokenPrice.Domain/Services/BenchmarkNormalizer.cs</path>
+        <kind>domain-service</kind>
+        <symbol>BenchmarkNormalizer</symbol>
+        <lines>30-47</lines>
+        <reason>Domain service for normalizing benchmark scores to 0-1 scale. CSV import must use Normalize() method for each imported score using benchmark's TypicalRangeMin/Max.</reason>
+      </artifact>
+      <artifact>
+        <path>services/backend/LlmTokenPrice.API/Controllers/Admin/AdminBenchmarksController.cs</path>
+        <kind>controller</kind>
+        <symbol>AdminBenchmarksController</symbol>
+        <lines>1-100</lines>
+        <reason>Existing admin controller with [Authorize] pattern, FluentValidation, and standard response format. New POST import-csv endpoint should follow same patterns.</reason>
+      </artifact>
+      <artifact>
+        <path>services/backend/LlmTokenPrice.Application/DTOs/CreateBenchmarkScoreDto.cs</path>
+        <kind>dto</kind>
+        <symbol>CreateBenchmarkScoreDto</symbol>
+        <lines></lines>
+        <reason>Existing DTO for creating benchmark scores. CSV import will need similar BenchmarkScoreImportRow DTO with string fields for parsing, and CSVImportResultDto for response.</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/api/admin.ts</path>
+        <kind>api-client</kind>
+        <symbol>admin API functions</symbol>
+        <lines>1-80</lines>
+        <reason>Frontend API client module. New importBenchmarkCSV function should follow existing pattern using apiClient.post with FormData for file upload.</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/components/admin/BenchmarkForm.tsx</path>
+        <kind>component</kind>
+        <symbol>BenchmarkForm</symbol>
+        <lines></lines>
+        <reason>Existing benchmark form component. CSV import UI should follow similar structure with form validation and loading states.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <backend>
+        <package name="CsvHelper" version="30.0.1+" ecosystem="nuget" />
+        <package name="FluentValidation" ecosystem="nuget" notes="Already in use for request validation" />
+        <package name="Microsoft.AspNetCore.Mvc" ecosystem="nuget" notes="For [RequestSizeLimit] attribute" />
+      </backend>
+      <frontend>
+        <package name="react" version="19.x" ecosystem="npm" />
+        <package name="@tanstack/react-query" version="5.x" ecosystem="npm" notes="For useImportBenchmarkCSV mutation hook" />
+        <package name="axios" ecosystem="npm" notes="apiClient for multipart/form-data upload" />
+      </frontend>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="architecture">Hexagonal Architecture: CSV parsing service belongs in Application layer (LlmTokenPrice.Application/Services/). Domain layer (BenchmarkNormalizer) has NO dependencies on Infrastructure/Application.</constraint>
+    <constraint type="architecture">Repository pattern: BenchmarkRepository in Infrastructure layer implements IBenchmarkRepository port from Domain layer. CSV import service calls repository through interface only.</constraint>
+    <constraint type="security">All admin endpoints require [Authorize] attribute with JWT authentication. CSV upload endpoint must validate file format, size limit (10MB), and user authorization.</constraint>
+    <constraint type="performance">Stream CSV parsing with CsvHelper (no full file load in memory). Batch insert valid rows in single transaction for efficiency. File size limit prevents memory overflow.</constraint>
+    <constraint type="error-handling">Partial success strategy: Valid rows imported even if some fail. Return 200 OK with detailed error list per failed row. Only return 400 if file is completely unparseable.</constraint>
+    <constraint type="caching">Cache invalidation required after successful import. Invalidate patterns: cache:model:*:v1, cache:benchmarks:*, cache:qaps:*, cache:bestvalue:*</constraint>
+    <constraint type="testing">70%+ test coverage required. P1 priority tests: partial success, row validation, file size limit, invalid format handling. Integration tests verify database persistence.</constraint>
+    <constraint type="typescript">Zero `any` types in strict mode. All CSV import types must be strongly typed with interfaces matching backend DTOs.</constraint>
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>IAdminBenchmarkService.AddScoreAsync</name>
+      <kind>service-method</kind>
+      <signature>Task&lt;BenchmarkScoreResponseDto&gt; AddScoreAsync(Guid modelId, CreateBenchmarkScoreDto dto, CancellationToken cancellationToken)</signature>
+      <path>services/backend/LlmTokenPrice.Application/Services/IAdminBenchmarkService.cs:79-82</path>
+      <notes>Existing method for single score creation. New bulk import method should follow similar validation pattern but process multiple rows in batch.</notes>
+    </interface>
+    <interface>
+      <name>IBenchmarkRepository.GetByNameAsync</name>
+      <kind>repository-method</kind>
+      <signature>Task&lt;Benchmark?&gt; GetByNameAsync(string benchmarkName, CancellationToken cancellationToken)</signature>
+      <path>services/backend/LlmTokenPrice.Domain/Repositories/IBenchmarkRepository.cs:59</path>
+      <notes>Case-insensitive benchmark lookup. CSV import validation must use this to verify benchmark names exist in database.</notes>
+    </interface>
+    <interface>
+      <name>BenchmarkNormalizer.Normalize</name>
+      <kind>domain-service-method</kind>
+      <signature>decimal Normalize(decimal score, decimal min, decimal max)</signature>
+      <path>services/backend/LlmTokenPrice.Domain/Services/BenchmarkNormalizer.cs:30</path>
+      <notes>Normalizes raw scores to 0-1 scale. CSV import MUST call this for each score using benchmark's TypicalRangeMin/Max values before persisting.</notes>
+    </interface>
+    <interface>
+      <name>POST /api/admin/benchmarks/import-csv</name>
+      <kind>rest-endpoint</kind>
+      <signature>POST /api/admin/benchmarks/import-csv (multipart/form-data)</signature>
+      <path>services/backend/LlmTokenPrice.API/Controllers/Admin/AdminBenchmarksController.cs (new endpoint)</path>
+      <notes>New endpoint to create. Request: IFormFile. Response: 200 OK + CSVImportResultDto. Requires [Authorize] and [RequestSizeLimit(10_485_760)].</notes>
+    </interface>
+    <interface>
+      <name>importBenchmarkCSV</name>
+      <kind>frontend-api-function</kind>
+      <signature>async function importBenchmarkCSV(formData: FormData): Promise&lt;CSVImportResultDto&gt;</signature>
+      <path>apps/web/src/api/admin.ts (new function)</path>
+      <notes>New frontend function to create. Uses apiClient.post with FormData containing CSV file. Returns import results with success/failure counts.</notes>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>
+Backend: xUnit 2.9.2+ for test framework, FluentAssertions 6.12+ for readable assertions, Moq for mocking dependencies. Test pattern: GIVEN-WHEN-THEN structure with descriptive test names. Story references in test comments (e.g., "Story 2.11 AC#3"). Priority tags ([P1], [P2]) indicating criticality. TestContainers 3.10+ for integration tests with real PostgreSQL/Redis. Bogus 35.6+ for test data generation.
+
+Frontend: Vitest for unit/integration tests, Testing Library for component testing, MSW for API mocking. Test pattern: Arrange-Act-Assert with user-centric queries (getByRole, getByLabelText). Coverage goal: 70%+ overall, 90%+ domain layer.
+
+Test pyramid: 70% unit (domain/service logic), 25% integration (database/API), 5% E2E (critical flows).
+    </standards>
+    <locations>
+      <backend>
+        <location>services/backend/LlmTokenPrice.Application.Tests/Services/CSVImportServiceTests.cs</location>
+        <location>services/backend/LlmTokenPrice.Tests.E2E/AdminBenchmarksApiTests.cs</location>
+        <location>services/backend/LlmTokenPrice.Application.Tests/Validators/CreateBenchmarkScoreValidator.cs</location>
+      </backend>
+      <frontend>
+        <location>apps/web/src/components/admin/__tests__/CSVImport.test.tsx</location>
+        <location>apps/web/src/components/admin/__tests__/ImportResults.test.tsx</location>
+        <location>apps/web/src/hooks/__tests__/useImportBenchmarkCSV.test.ts</location>
+      </frontend>
+    </locations>
+    <ideas>
+      <test id="1" ac="AC#3,4" priority="P1" type="unit">
+        <name>CSVImportService: Parse valid CSV successfully</name>
+        <description>Given a valid CSV with 3 rows (model_id, benchmark_name, score), when ImportBenchmarkScoresAsync is called, then all 3 rows should be parsed into BenchmarkScoreImportRow DTOs with correct field mapping.</description>
+        <path>services/backend/LlmTokenPrice.Application.Tests/Services/CSVImportServiceTests.cs</path>
+      </test>
+      <test id="2" ac="AC#4" priority="P1" type="unit">
+        <name>CSVImportService: Handle malformed CSV gracefully</name>
+        <description>Given a CSV with missing columns or invalid structure, when parsing, then service should collect errors per row without crashing and return CSVImportResultDto with all failures.</description>
+        <path>services/backend/LlmTokenPrice.Application.Tests/Services/CSVImportServiceTests.cs</path>
+      </test>
+      <test id="3" ac="AC#4" priority="P1" type="unit">
+        <name>CSVImportService: Validate invalid model_id format</name>
+        <description>Given a CSV row with model_id="invalid-uuid", when validation runs, then error should be "Invalid model_id format (must be UUID)" for that row.</description>
+        <path>services/backend/LlmTokenPrice.Application.Tests/Services/CSVImportServiceTests.cs</path>
+      </test>
+      <test id="4" ac="AC#4" priority="P1" type="unit">
+        <name>CSVImportService: Validate model_id exists in database</name>
+        <description>Given a CSV row with valid UUID format but model doesn't exist in DB, when validation runs, then error should be "Model not found: {id}" for that row.</description>
+        <path>services/backend/LlmTokenPrice.Application.Tests/Services/CSVImportServiceTests.cs</path>
+      </test>
+      <test id="5" ac="AC#4" priority="P1" type="unit">
+        <name>CSVImportService: Validate benchmark_name exists (case-insensitive)</name>
+        <description>Given a CSV row with benchmark_name="mmlu" (lowercase) and DB has "MMLU", when validation runs using GetByNameAsync, then validation should PASS (case-insensitive match).</description>
+        <path>services/backend/LlmTokenPrice.Application.Tests/Services/CSVImportServiceTests.cs</path>
+      </test>
+      <test id="6" ac="AC#4" priority="P1" type="unit">
+        <name>CSVImportService: Validate score is valid decimal</name>
+        <description>Given a CSV row with score="abc", when validation runs, then error should be "Invalid score (must be a number)".</description>
+        <path>services/backend/LlmTokenPrice.Application.Tests/Services/CSVImportServiceTests.cs</path>
+      </test>
+      <test id="7" ac="AC#5" priority="P1" type="unit">
+        <name>CSVImportService: Calculate normalized score using BenchmarkNormalizer</name>
+        <description>Given a valid row with score=75 and benchmark range 0-100, when creating BenchmarkScore entity, then NormalizedScore should be 0.75 (calculated via BenchmarkNormalizer.Normalize).</description>
+        <path>services/backend/LlmTokenPrice.Application.Tests/Services/CSVImportServiceTests.cs</path>
+      </test>
+      <test id="8" ac="AC#5,6" priority="P1" type="integration">
+        <name>Import API: Partial success - some valid, some invalid rows</name>
+        <description>Given a CSV with 5 rows (3 valid, 2 invalid model_id), when POST /api/admin/benchmarks/import-csv, then response should be 200 OK with successfulImports=3, failedImports=2, and errors array listing 2 failed rows with reasons.</description>
+        <path>services/backend/LlmTokenPrice.Tests.E2E/AdminBenchmarksApiTests.cs</path>
+      </test>
+      <test id="9" ac="AC#5" priority="P1" type="integration">
+        <name>Import API: Valid rows persisted to database</name>
+        <description>Given a CSV with 2 valid rows, when import succeeds, then 2 BenchmarkScore entities should exist in database with correct ModelId, BenchmarkId, Score, and NormalizedScore values.</description>
+        <path>services/backend/LlmTokenPrice.Tests.E2E/AdminBenchmarksApiTests.cs</path>
+      </test>
+      <test id="10" ac="AC#3" priority="P1" type="integration">
+        <name>Import API: File size limit enforced (10MB max)</name>
+        <description>Given a CSV file larger than 10MB, when POST import-csv, then response should be 413 Payload Too Large or 400 Bad Request with error message.</description>
+        <path>services/backend/LlmTokenPrice.Tests.E2E/AdminBenchmarksApiTests.cs</path>
+      </test>
+      <test id="11" ac="AC#3" priority="P2" type="integration">
+        <name>Import API: Invalid file format returns 400</name>
+        <description>Given a non-CSV file (e.g., .txt), when POST import-csv, then response should be 400 Bad Request with error "File must be CSV format".</description>
+        <path>services/backend/LlmTokenPrice.Tests.E2E/AdminBenchmarksApiTests.cs</path>
+      </test>
+      <test id="12" ac="AC#4" priority="P2" type="unit">
+        <name>CSVImportService: Skip duplicate model+benchmark combination</name>
+        <description>Given a CSV row where model+benchmark score already exists in DB and skipDuplicates=true, when import runs, then that row should be skipped (not in errors, counted in skippedDuplicates).</description>
+        <path>services/backend/LlmTokenPrice.Application.Tests/Services/CSVImportServiceTests.cs</path>
+      </test>
+      <test id="13" ac="AC#1,6" priority="P2" type="component">
+        <name>CSVImport component: Display file input and upload button</name>
+        <description>Given CSVImport component renders, when user selects a CSV file, then file name and size should display, and upload button should be enabled.</description>
+        <path>apps/web/src/components/admin/__tests__/CSVImport.test.tsx</path>
+      </test>
+      <test id="14" ac="AC#6" priority="P2" type="component">
+        <name>ImportResults component: Display success and failure counts</name>
+        <description>Given import result with 8 successful and 2 failed rows, when ImportResults component renders, then should display "8 of 10 rows imported successfully" and list 2 failed rows in table.</description>
+        <path>apps/web/src/components/admin/__tests__/ImportResults.test.tsx</path>
+      </test>
+    </ideas>
+  </tests>
+</story-context>

@@ -20,18 +20,22 @@ namespace LlmTokenPrice.API.Controllers.Admin;
 public class AdminModelsController : ControllerBase
 {
     private readonly IAdminModelService _adminModelService;
+    private readonly IAdminBenchmarkService _adminBenchmarkService;
     private readonly ILogger<AdminModelsController> _logger;
 
     /// <summary>
     /// Initializes a new instance of the AdminModelsController.
     /// </summary>
     /// <param name="adminModelService">The admin model service for data operations.</param>
+    /// <param name="adminBenchmarkService">The admin benchmark service for score operations.</param>
     /// <param name="logger">Logger for request tracking and diagnostics.</param>
     public AdminModelsController(
         IAdminModelService adminModelService,
+        IAdminBenchmarkService adminBenchmarkService,
         ILogger<AdminModelsController> logger)
     {
         _adminModelService = adminModelService ?? throw new ArgumentNullException(nameof(adminModelService));
+        _adminBenchmarkService = adminBenchmarkService ?? throw new ArgumentNullException(nameof(adminBenchmarkService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -463,6 +467,291 @@ public class AdminModelsController : ControllerBase
                 {
                     code = "INTERNAL_ERROR",
                     message = "An error occurred while deleting the model",
+                    details = ex.Message
+                }
+            });
+        }
+    }
+
+    // ========== Benchmark Score Management Endpoints ==========
+
+    /// <summary>
+    /// Adds a benchmark score to a model.
+    /// Validates model and benchmark existence, prevents duplicates, calculates normalized score.
+    /// </summary>
+    /// <param name="modelId">The unique identifier (GUID) of the model.</param>
+    /// <param name="dto">The benchmark score creation request with score data.</param>
+    /// <param name="cancellationToken">Cancellation token for async operation.</param>
+    /// <returns>The created benchmark score with normalized score and out-of-range flag.</returns>
+    /// <response code="201">Returns the newly created benchmark score.</response>
+    /// <response code="400">If model/benchmark not found or duplicate score exists.</response>
+    /// <response code="401">If JWT token is missing, invalid, or expired.</response>
+    /// <response code="500">If an unexpected error occurs during processing.</response>
+    [HttpPost("{modelId}/benchmarks")]
+    [ProducesResponseType(typeof(AdminApiResponse<BenchmarkScoreResponseDto>), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> AddBenchmarkScore(
+        Guid modelId,
+        [FromBody] CreateBenchmarkScoreDto dto,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogInformation(
+                "Adding benchmark score for model {ModelId}, benchmark {BenchmarkId}",
+                modelId,
+                dto.BenchmarkId);
+
+            var score = await _adminBenchmarkService.AddScoreAsync(modelId, dto, cancellationToken);
+
+            _logger.LogInformation(
+                "Successfully added benchmark score {ScoreId} for model {ModelId}",
+                score.Id,
+                modelId);
+
+            return CreatedAtAction(
+                nameof(GetModelBenchmarkScores),
+                new { modelId },
+                new AdminApiResponse<BenchmarkScoreResponseDto>
+                {
+                    Data = score,
+                    Meta = new AdminApiResponseMeta
+                    {
+                        TotalCount = null,
+                        Cached = false,
+                        Timestamp = DateTime.UtcNow
+                    }
+                });
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, "Invalid operation while adding benchmark score for model {ModelId}", modelId);
+            return BadRequest(new
+            {
+                error = new
+                {
+                    code = ex.Message.Contains("not found") ? "NOT_FOUND" : "DUPLICATE_SCORE",
+                    message = ex.Message
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while adding benchmark score for model {ModelId}", modelId);
+            return StatusCode(StatusCodes.Status500InternalServerError, new
+            {
+                error = new
+                {
+                    code = "INTERNAL_ERROR",
+                    message = "An error occurred while adding the benchmark score",
+                    details = ex.Message
+                }
+            });
+        }
+    }
+
+    /// <summary>
+    /// Retrieves all benchmark scores for a specific model.
+    /// </summary>
+    /// <param name="modelId">The unique identifier (GUID) of the model.</param>
+    /// <param name="cancellationToken">Cancellation token for async operation.</param>
+    /// <returns>List of benchmark scores for the model.</returns>
+    /// <response code="200">Returns the list of benchmark scores.</response>
+    /// <response code="401">If JWT token is missing, invalid, or expired.</response>
+    /// <response code="500">If an unexpected error occurs during processing.</response>
+    [HttpGet("{modelId}/benchmarks")]
+    [ProducesResponseType(typeof(AdminApiResponse<List<BenchmarkScoreResponseDto>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> GetModelBenchmarkScores(
+        Guid modelId,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogInformation("Retrieving benchmark scores for model {ModelId}", modelId);
+
+            var scores = await _adminBenchmarkService.GetScoresByModelIdAsync(modelId, cancellationToken);
+
+            return Ok(new AdminApiResponse<List<BenchmarkScoreResponseDto>>
+            {
+                Data = scores,
+                Meta = new AdminApiResponseMeta
+                {
+                    TotalCount = scores.Count,
+                    Cached = false,
+                    Timestamp = DateTime.UtcNow
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while retrieving benchmark scores for model {ModelId}", modelId);
+            return StatusCode(StatusCodes.Status500InternalServerError, new
+            {
+                error = new
+                {
+                    code = "INTERNAL_ERROR",
+                    message = "An error occurred while retrieving benchmark scores",
+                    details = ex.Message
+                }
+            });
+        }
+    }
+
+    /// <summary>
+    /// Updates an existing benchmark score for a model.
+    /// Recalculates normalized score and invalidates cache.
+    /// </summary>
+    /// <param name="modelId">The unique identifier (GUID) of the model.</param>
+    /// <param name="scoreId">The unique identifier (GUID) of the score to update.</param>
+    /// <param name="dto">The benchmark score update request with new score data.</param>
+    /// <param name="cancellationToken">Cancellation token for async operation.</param>
+    /// <returns>The updated benchmark score.</returns>
+    /// <response code="200">Returns the updated benchmark score.</response>
+    /// <response code="400">If benchmark not found or duplicate exists.</response>
+    /// <response code="404">If score not found or doesn't belong to this model.</response>
+    /// <response code="401">If JWT token is missing, invalid, or expired.</response>
+    /// <response code="500">If an unexpected error occurs during processing.</response>
+    [HttpPut("{modelId}/benchmarks/{scoreId}")]
+    [ProducesResponseType(typeof(AdminApiResponse<BenchmarkScoreResponseDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> UpdateBenchmarkScore(
+        Guid modelId,
+        Guid scoreId,
+        [FromBody] CreateBenchmarkScoreDto dto,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogInformation(
+                "Updating benchmark score {ScoreId} for model {ModelId}",
+                scoreId,
+                modelId);
+
+            var score = await _adminBenchmarkService.UpdateScoreAsync(modelId, scoreId, dto, cancellationToken);
+
+            if (score == null)
+            {
+                _logger.LogWarning("Benchmark score {ScoreId} not found for model {ModelId}", scoreId, modelId);
+                return NotFound(new
+                {
+                    error = new
+                    {
+                        code = "NOT_FOUND",
+                        message = $"Benchmark score {scoreId} not found for model {modelId}"
+                    }
+                });
+            }
+
+            _logger.LogInformation(
+                "Successfully updated benchmark score {ScoreId} for model {ModelId}",
+                scoreId,
+                modelId);
+
+            return Ok(new AdminApiResponse<BenchmarkScoreResponseDto>
+            {
+                Data = score,
+                Meta = new AdminApiResponseMeta
+                {
+                    TotalCount = null,
+                    Cached = false,
+                    Timestamp = DateTime.UtcNow
+                }
+            });
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, "Invalid operation while updating benchmark score {ScoreId}", scoreId);
+            return BadRequest(new
+            {
+                error = new
+                {
+                    code = ex.Message.Contains("not found") ? "NOT_FOUND" : "DUPLICATE_SCORE",
+                    message = ex.Message
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while updating benchmark score {ScoreId}", scoreId);
+            return StatusCode(StatusCodes.Status500InternalServerError, new
+            {
+                error = new
+                {
+                    code = "INTERNAL_ERROR",
+                    message = "An error occurred while updating the benchmark score",
+                    details = ex.Message
+                }
+            });
+        }
+    }
+
+    /// <summary>
+    /// Deletes a benchmark score from a model (hard delete).
+    /// Invalidates cache after deletion.
+    /// </summary>
+    /// <param name="modelId">The unique identifier (GUID) of the model.</param>
+    /// <param name="scoreId">The unique identifier (GUID) of the score to delete.</param>
+    /// <param name="cancellationToken">Cancellation token for async operation.</param>
+    /// <returns>No content on successful deletion.</returns>
+    /// <response code="204">Score successfully deleted.</response>
+    /// <response code="404">If score not found or doesn't belong to this model.</response>
+    /// <response code="401">If JWT token is missing, invalid, or expired.</response>
+    /// <response code="500">If an unexpected error occurs during processing.</response>
+    [HttpDelete("{modelId}/benchmarks/{scoreId}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> DeleteBenchmarkScore(
+        Guid modelId,
+        Guid scoreId,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogInformation(
+                "Deleting benchmark score {ScoreId} for model {ModelId}",
+                scoreId,
+                modelId);
+
+            var success = await _adminBenchmarkService.DeleteScoreAsync(modelId, scoreId, cancellationToken);
+
+            if (!success)
+            {
+                _logger.LogWarning("Benchmark score {ScoreId} not found for model {ModelId}", scoreId, modelId);
+                return NotFound(new
+                {
+                    error = new
+                    {
+                        code = "NOT_FOUND",
+                        message = $"Benchmark score {scoreId} not found for model {modelId}"
+                    }
+                });
+            }
+
+            _logger.LogInformation(
+                "Successfully deleted benchmark score {ScoreId} for model {ModelId}",
+                scoreId,
+                modelId);
+
+            return NoContent(); // 204 No Content
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while deleting benchmark score {ScoreId}", scoreId);
+            return StatusCode(StatusCodes.Status500InternalServerError, new
+            {
+                error = new
+                {
+                    code = "INTERNAL_ERROR",
+                    message = "An error occurred while deleting the benchmark score",
                     details = ex.Message
                 }
             });

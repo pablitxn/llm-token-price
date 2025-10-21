@@ -117,6 +117,111 @@ public interface IBenchmarkRepository
     /// </remarks>
     Task<bool> HasDependentScoresAsync(Guid benchmarkId, CancellationToken cancellationToken = default);
 
+    // ========== Benchmark Score Management Methods ==========
+
+    /// <summary>
+    /// Retrieves a benchmark score for a specific model and benchmark combination.
+    /// Used for duplicate detection before adding a new score.
+    /// </summary>
+    /// <param name="modelId">The unique identifier (GUID) of the model.</param>
+    /// <param name="benchmarkId">The unique identifier (GUID) of the benchmark.</param>
+    /// <param name="cancellationToken">Cancellation token for async operation.</param>
+    /// <returns>BenchmarkScore if found, null otherwise.</returns>
+    /// <remarks>
+    /// Enforces unique constraint: one score per (ModelId, BenchmarkId) combination.
+    /// Returns null if no score exists (safe to create new).
+    /// Does not eagerly load navigation properties (Model, Benchmark) for performance.
+    /// </remarks>
+    Task<BenchmarkScore?> GetScoreAsync(Guid modelId, Guid benchmarkId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Adds a new benchmark score to the database.
+    /// Sets CreatedAt to DateTime.UtcNow.
+    /// </summary>
+    /// <param name="score">The benchmark score entity to create.</param>
+    /// <param name="cancellationToken">Cancellation token for async operation.</param>
+    /// <remarks>
+    /// This method:
+    /// 1. Sets CreatedAt = DateTime.UtcNow
+    /// 2. Adds score to DbContext
+    /// 3. Does NOT call SaveChangesAsync (caller responsible for transaction management)
+    /// Must call SaveChangesAsync separately to persist.
+    /// Unique constraint (ModelId, BenchmarkId) enforced at database level.
+    /// </remarks>
+    Task AddScoreAsync(BenchmarkScore score, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Bulk adds multiple benchmark scores to the database (Story 2.11).
+    /// Optimized for CSV import to avoid N individual insert operations.
+    /// Sets CreatedAt to DateTime.UtcNow for all scores.
+    /// </summary>
+    /// <param name="scores">Collection of benchmark score entities to create.</param>
+    /// <param name="cancellationToken">Cancellation token for async operation.</param>
+    /// <remarks>
+    /// This method:
+    /// 1. Sets CreatedAt = DateTime.UtcNow for all scores
+    /// 2. Adds scores to DbContext in batch using AddRangeAsync
+    /// 3. Does NOT call SaveChangesAsync (caller responsible for transaction management)
+    /// Must call SaveChangesAsync separately to persist all scores in single transaction.
+    /// Unique constraint (ModelId, BenchmarkId) enforced at database level (violators will cause SaveChangesAsync to fail).
+    /// Performance: Use this for importing multiple scores to reduce database round-trips.
+    /// </remarks>
+    Task BulkAddScoresAsync(IEnumerable<BenchmarkScore> scores, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Retrieves all benchmark scores for a specific model.
+    /// Eagerly loads related Benchmark entity for display purposes.
+    /// </summary>
+    /// <param name="modelId">The unique identifier (GUID) of the model.</param>
+    /// <param name="cancellationToken">Cancellation token for async operation.</param>
+    /// <returns>List of benchmark scores ordered by Benchmark.BenchmarkName ascending.</returns>
+    /// <remarks>
+    /// Eagerly loads Benchmark navigation property using Include().
+    /// Returns empty list if model has no scores.
+    /// Used for displaying scores list in model edit page.
+    /// Ordered alphabetically by BenchmarkName for consistent UI display.
+    /// </remarks>
+    Task<List<BenchmarkScore>> GetScoresByModelIdAsync(Guid modelId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Retrieves a single benchmark score by its unique identifier.
+    /// </summary>
+    /// <param name="scoreId">The unique identifier (GUID) of the benchmark score.</param>
+    /// <param name="cancellationToken">Cancellation token for async operation.</param>
+    /// <returns>BenchmarkScore if found, null otherwise.</returns>
+    /// <remarks>
+    /// Used for edit/delete operations on individual scores.
+    /// Eagerly loads Benchmark navigation property for denormalized display data.
+    /// </remarks>
+    Task<BenchmarkScore?> GetScoreByIdAsync(Guid scoreId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Updates an existing benchmark score.
+    /// EF Core change tracking handles UPDATE on SaveChangesAsync call.
+    /// </summary>
+    /// <param name="score">The benchmark score entity to update (must be tracked by DbContext).</param>
+    /// <param name="cancellationToken">Cancellation token for async operation.</param>
+    /// <remarks>
+    /// This method updates the score entity in the DbContext.
+    /// Does NOT call SaveChangesAsync (caller responsible for transaction management).
+    /// Must call SaveChangesAsync separately to persist.
+    /// </remarks>
+    Task UpdateScoreAsync(BenchmarkScore score, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Deletes a benchmark score from the database (hard delete).
+    /// </summary>
+    /// <param name="scoreId">The unique identifier (GUID) of the score to delete.</param>
+    /// <param name="cancellationToken">Cancellation token for async operation.</param>
+    /// <returns>True if score was found and deleted, false if not found.</returns>
+    /// <remarks>
+    /// Performs HARD delete (physical removal from database).
+    /// Unlike models/benchmarks, scores don't use soft delete.
+    /// Cascade delete: deleting Model or Benchmark automatically deletes scores.
+    /// Calls SaveChangesAsync to persist change.
+    /// </remarks>
+    Task<bool> DeleteScoreAsync(Guid scoreId, CancellationToken cancellationToken = default);
+
     /// <summary>
     /// Saves all pending changes to the database.
     /// Used for persisting entities added via AddAsync or updated via UpdateAsync.
