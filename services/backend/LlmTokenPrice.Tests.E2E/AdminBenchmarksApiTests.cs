@@ -14,12 +14,12 @@ namespace LlmTokenPrice.Tests.E2E;
 /// Story 2.11 - Task 10.6-10.10: Integration tests for CSV bulk import
 /// Priority: P1 (High - API contract testing)
 /// </summary>
-public class AdminBenchmarksApiTests : IClassFixture<WebApplicationFactory<LlmTokenPrice.API.Program>>
+public class AdminBenchmarksApiTests : IClassFixture<TestWebApplicationFactory>
 {
-    private readonly WebApplicationFactory<LlmTokenPrice.API.Program> _factory;
+    private readonly TestWebApplicationFactory _factory;
     private readonly HttpClient _client;
 
-    public AdminBenchmarksApiTests(WebApplicationFactory<LlmTokenPrice.API.Program> factory)
+    public AdminBenchmarksApiTests(TestWebApplicationFactory factory)
     {
         _factory = factory;
         _client = factory.CreateClient(new WebApplicationFactoryClientOptions
