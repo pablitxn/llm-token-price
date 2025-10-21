@@ -108,7 +108,7 @@ public class CreateBenchmarkValidatorTests
         // THEN: Validation should fail
         result.IsValid.Should().BeFalse();
         result.ShouldHaveValidationErrorFor(x => x.BenchmarkName)
-            .WithErrorMessage("Benchmark name must be 50 characters or less");
+            .WithErrorMessage("Benchmark name cannot exceed 50 characters");
     }
 
     /// <summary>
@@ -269,7 +269,7 @@ public class CreateBenchmarkValidatorTests
 
         // THEN: Validation should fail
         result.IsValid.Should().BeFalse();
-        result.ShouldHaveValidationErrorFor(x => x)
+        result.ShouldHaveValidationErrorFor(x => x.TypicalRangeMax)
             .WithErrorMessage("Typical range minimum must be less than maximum");
     }
 
@@ -328,7 +328,7 @@ public class CreateBenchmarkValidatorTests
         // THEN: Validation should fail
         result.IsValid.Should().BeFalse();
         result.ShouldHaveValidationErrorFor(x => x.WeightInQaps)
-            .WithErrorMessage("QAPS weight can have at most 2 decimal places");
+            .WithErrorMessage("QAPS weight can have maximum 2 decimal places");
     }
 
     /// <summary>
