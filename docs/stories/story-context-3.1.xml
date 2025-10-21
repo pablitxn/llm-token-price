@@ -1,0 +1,319 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>3.1</storyId>
+    <title>Create Public Homepage with Basic Layout</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-21</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-3.1.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user</asA>
+    <iWant>to access the platform homepage</iWant>
+    <soThat>I can begin comparing LLM models</soThat>
+    <tasks>
+      <task id="1" ac="1,2,15,16">Create Public Homepage Route and Layout Component</task>
+      <task id="2" ac="3">Implement Responsive Layout</task>
+      <task id="3" ac="4,5,6">Add Loading, Empty, and Error States</task>
+      <task id="4" ac="7,8,9,10">Optimize Performance</task>
+      <task id="5" ac="11,12">Implement TypeScript Strict Mode and Code Quality</task>
+      <task id="6" ac="13,14">Implement Accessibility</task>
+      <task id="7" ac="AC-Q2">Write Tests</task>
+      <task id="8" ac="15,16">Verify Integration with Epic 1</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criteria>
+      <ac id="1">Public Homepage Route - Route `/` created and accessible without authentication</ac>
+      <ac id="2">Page Layout Structure - Layout includes header with platform name/logo, main content area, footer with About/Contact links, navigation bar with search input placeholder</ac>
+      <ac id="3">Responsive Layout - Layout works on desktop (1920×1080, 1366×768), tablet (768×1024), and mobile (375×667)</ac>
+      <ac id="4">Loading State - Page displays loading spinner while initializing</ac>
+      <ac id="5">Empty State - If no models available, displays appropriate message</ac>
+      <ac id="6">Error State - If API fails, displays error message with retry button</ac>
+      <ac id="7">Initial Page Load - Page loads in &lt;2 seconds (cold cache)</ac>
+      <ac id="8">First Contentful Paint - FCP &lt;1.2s</ac>
+      <ac id="9">Largest Contentful Paint - LCP &lt;2.5s</ac>
+      <ac id="10">Cumulative Layout Shift - CLS &lt;0.1 (no layout jumps during load)</ac>
+      <ac id="11">TypeScript Strict Mode - Zero `any` types in all components</ac>
+      <ac id="12">Code Quality - Zero ESLint errors</ac>
+      <ac id="13">Accessibility - Keyboard navigation works for all interactive elements</ac>
+      <ac id="14">ARIA Labels - All navigation elements have appropriate ARIA labels</ac>
+      <ac id="15">Frontend Shell Extension - Extends Epic 1 Story 1.7 frontend shell (does not replace it)</ac>
+      <ac id="16">React Router Integration - Uses existing React Router configuration from Epic 1.7</ac>
+    </criteria>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/tech-spec-epic-3.md</path>
+        <title>Technical Specification: Epic 3 - Public Comparison Table Interface</title>
+        <section>Overview</section>
+        <snippet>Epic 3 delivers the primary user-facing interface of the LLM Cost Comparison Platform: a sophisticated, interactive comparison table. This epic transforms the foundational data infrastructure (Epic 1) and admin-managed content (Epic 2) into a high-performance, information-dense public interface optimized for developer users making data-driven model selection decisions.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-3.md</path>
+        <title>Technical Specification: Epic 3</title>
+        <section>Acceptance Criteria - AC-F1</section>
+        <snippet>Homepage displays table with 50+ models loaded from /api/models. Each row shows: name, provider, input price, output price, context window, top 3-5 benchmarks. Models load within 2 seconds on initial page visit (cold cache). Empty state displayed if database contains 0 models.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-3.md</path>
+        <title>Technical Specification: Epic 3</title>
+        <section>Performance - AC-P1</section>
+        <snippet>90% of page loads complete in &lt;2s (Lighthouse Performance Score ≥90). First Contentful Paint (FCP) &lt;1.2s. Largest Contentful Paint (LCP) &lt;2.5s. Cumulative Layout Shift (CLS) &lt;0.1.</snippet>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture Document</title>
+        <section>Frontend Architecture - React SPA</section>
+        <snippet>React 19 SPA with TypeScript strict mode. Vite build tool with code splitting. TailwindCSS 4 for styling. TanStack Query for server state management (5min stale time). Zustand for client state. Component-based architecture with lazy loading for routes.</snippet>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture Document</title>
+        <section>Hexagonal Architecture Pattern</section>
+        <snippet>Presentation Layer (React) communicates with backend via HTTP REST API. Clean separation enables independent evolution. State Management: React local state for UI concerns, TanStack Query for server state, Zustand for global client state.</snippet>
+      </doc>
+      <doc>
+        <path>docs/test-design-epic-3.md</path>
+        <title>Test Design Specification - Epic 3</title>
+        <section>P0 Test Scenarios</section>
+        <snippet>E2E test validates homepage loads with header, footer, main content area. Component tests verify loading/empty/error states render correctly. Performance tests measure Core Web Vitals (FCP, LCP, CLS). Accessibility tests validate keyboard navigation and ARIA labels.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic Breakdown - Story 1.7</title>
+        <section>Setup Frontend Application Shell</section>
+        <snippet>React app renders at localhost:5173. TailwindCSS styling works. React Router configured with placeholder routes (home, admin). Basic layout component created (header, main content area, footer placeholder). API client configured with axios pointing to backend.</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <artifact>
+        <path>apps/web/src/App.tsx</path>
+        <kind>component</kind>
+        <symbol>App</symbol>
+        <lines>1-55</lines>
+        <reason>Main application component with React Router configuration. Shows existing public routes (/, /calculator, /compare) all using Layout component wrapper. Story 3.1 extends this by ensuring HomePage uses the existing Layout.</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/components/layout/Layout.tsx</path>
+        <kind>component</kind>
+        <symbol>Layout</symbol>
+        <lines>1-19</lines>
+        <reason>Existing public layout component from Epic 1 Story 1.7. Contains Header, main content area, and Footer. Story 3.1 reuses this layout (AC #15 - extend, don't replace). Note: min-h-screen flex flex-col pattern for sticky footer.</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/components/layout/Header.tsx</path>
+        <kind>component</kind>
+        <symbol>Header</symbol>
+        <lines>N/A</lines>
+        <reason>Existing header component from Epic 1. Story 3.1 should verify this header includes platform name/logo and navigation bar with search input placeholder (AC #2).</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/components/layout/Footer.tsx</path>
+        <kind>component</kind>
+        <symbol>Footer</symbol>
+        <lines>N/A</lines>
+        <reason>Existing footer component from Epic 1. Story 3.1 should verify this footer includes About/Contact links as placeholders (AC #2).</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/pages/HomePage.tsx</path>
+        <kind>component</kind>
+        <symbol>HomePage</symbol>
+        <lines>N/A</lines>
+        <reason>Existing HomePage component from Epic 1 or earlier work. Story 3.1 may need to enhance this component to meet all acceptance criteria (loading/empty/error states, accessibility, performance). Check current implementation.</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/components/ui/LoadingSpinner.tsx</path>
+        <kind>component</kind>
+        <symbol>LoadingSpinner</symbol>
+        <lines>N/A</lines>
+        <reason>Existing LoadingSpinner component from Epic 2. Reuse for AC #4 (loading state). Story 3.1 should use this instead of creating new spinner component.</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/components/ui/ErrorAlert.tsx</path>
+        <kind>component</kind>
+        <symbol>ErrorAlert</symbol>
+        <lines>N/A</lines>
+        <reason>Existing ErrorAlert component from Epic 2. May be useful for AC #6 (error state with retry button). Check if it supports retry callback.</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/test/setup.ts</path>
+        <kind>test-config</kind>
+        <symbol>N/A</symbol>
+        <lines>N/A</lines>
+        <reason>Vitest test setup configuration from Epic 1 Story 1.11. Use this for component tests (Task 7). Contains MSW server setup, Testing Library configuration.</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/test/test-utils.tsx</path>
+        <kind>test-utility</kind>
+        <symbol>N/A</symbol>
+        <lines>N/A</lines>
+        <reason>Custom render utilities for Testing Library. Use this for component tests to ensure proper providers (Router, Query Client) are wrapped around components under test.</reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <frontend>
+        <dependency>
+          <name>react</name>
+          <version>^19.1.1</version>
+          <purpose>Core UI framework</purpose>
+        </dependency>
+        <dependency>
+          <name>react-router-dom</name>
+          <version>^7.9.4</version>
+          <purpose>Client-side routing (AC #1, #16)</purpose>
+        </dependency>
+        <dependency>
+          <name>@tanstack/react-query</name>
+          <version>^5.90.5</version>
+          <purpose>Server state management (AC #6 - retry button)</purpose>
+        </dependency>
+        <dependency>
+          <name>tailwindcss</name>
+          <version>^4.1.14</version>
+          <purpose>CSS styling framework (AC #3 - responsive layout)</purpose>
+        </dependency>
+        <dependency>
+          <name>vite</name>
+          <version>7.1.14 (rolldown-vite)</version>
+          <purpose>Build tool with code splitting (AC #7 - performance)</purpose>
+        </dependency>
+        <dependency>
+          <name>lucide-react</name>
+          <version>^0.546.0</version>
+          <purpose>Icon library (loading spinner, error icons)</purpose>
+        </dependency>
+      </frontend>
+      <testing>
+        <dependency>
+          <name>vitest</name>
+          <version>^3.2.4</version>
+          <purpose>Unit and component testing framework</purpose>
+        </dependency>
+        <dependency>
+          <name>@testing-library/react</name>
+          <version>^16.3.0</version>
+          <purpose>React component testing utilities</purpose>
+        </dependency>
+        <dependency>
+          <name>@testing-library/user-event</name>
+          <version>^14.6.1</version>
+          <purpose>User interaction simulation for tests</purpose>
+        </dependency>
+        <dependency>
+          <name>msw</name>
+          <version>^2.11.5</version>
+          <purpose>API mocking for component tests</purpose>
+        </dependency>
+        <dependency>
+          <name>happy-dom</name>
+          <version>^20.0.4</version>
+          <purpose>DOM implementation for Vitest</purpose>
+        </dependency>
+      </testing>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <architecture>
+      <constraint>Story 3.1 is Presentation Layer only - no backend changes allowed. Extends Epic 1 frontend shell without replacing existing components (AC #15).</constraint>
+      <constraint>Must use existing Layout, Header, Footer components from Epic 1 Story 1.7. Do not create new layout components unless extending functionality.</constraint>
+      <constraint>React Router configuration in App.tsx must be extended (add routes), not replaced (AC #16).</constraint>
+      <constraint>Hexagonal Architecture: HomePage component communicates with backend via HTTP API client (apps/web/src/api/client.ts). No direct database access.</constraint>
+    </architecture>
+    <performance>
+      <constraint>Initial bundle size MUST be &lt;200KB gzipped (AC-P4). Use React.lazy() for code splitting to achieve this.</constraint>
+      <constraint>Core Web Vitals targets: FCP &lt;1.2s, LCP &lt;2.5s, CLS &lt;0.1. Add viewport meta tags to prevent layout shift.</constraint>
+      <constraint>Page load time MUST be &lt;2 seconds (90% of loads). Optimize images (WebP format, lazy loading), minimize CSS, defer non-critical JavaScript.</constraint>
+    </performance>
+    <code-quality>
+      <constraint>TypeScript strict mode MUST be enabled (tsconfig.json: strict: true). Zero `any` types allowed (AC #11).</constraint>
+      <constraint>ESLint errors MUST be zero. Run `pnpm run lint` before committing (AC #12).</constraint>
+      <constraint>All component props MUST have TypeScript interface definitions. Export interfaces for reusability.</constraint>
+    </code-quality>
+    <accessibility>
+      <constraint>WCAG 2.1 Level AA compliance required. Use semantic HTML (&lt;header&gt;, &lt;nav&gt;, &lt;main&gt;, &lt;footer&gt;) (AC #13).</constraint>
+      <constraint>All interactive elements MUST be keyboard accessible (Tab navigation). Add ARIA labels to navigation links (AC #14).</constraint>
+      <constraint>Include skip-to-content link for screen readers at top of page.</constraint>
+      <constraint>Run axe-core automated tests - zero critical violations allowed.</constraint>
+    </accessibility>
+    <responsive-design>
+      <constraint>Mobile-first approach: design for 375px width first, then enhance for tablet/desktop (AC #3).</constraint>
+      <constraint>TailwindCSS breakpoints: sm (640px), md (768px), lg (1024px), xl (1280px), 2xl (1536px). Test at all breakpoints.</constraint>
+      <constraint>No horizontal scrollbar allowed on any breakpoint. Use responsive containers and flex layouts.</constraint>
+    </responsive-design>
+    <testing>
+      <constraint>Component tests MUST be written using Vitest + Testing Library. Use test-utils.tsx for proper providers.</constraint>
+      <constraint>E2E tests MUST be written using Playwright. Test critical user flow: load homepage → see header/footer (Task 7).</constraint>
+      <constraint>Test coverage target: 60%+ for frontend components/utilities. Run `pnpm run test:coverage` to verify.</constraint>
+      <constraint>All tests MUST pass in CI/CD pipeline before merging. Use MSW for API mocking in component tests.</constraint>
+    </testing>
+  </constraints>
+
+  <interfaces>
+    <api>
+      <endpoint>
+        <name>GET /api/health</name>
+        <kind>REST endpoint</kind>
+        <signature>GET /api/health → { status: "healthy", database: "connected", redis: "connected" }</signature>
+        <path>services/backend/LlmTokenPrice.API/Controllers/HealthController.cs</path>
+        <note>Used to verify backend connectivity. HomePage can call this on mount to show connection status.</note>
+      </endpoint>
+      <endpoint>
+        <name>GET /api/models</name>
+        <kind>REST endpoint</kind>
+        <signature>GET /api/models → { data: ModelDto[], meta: { timestamp, cached } }</signature>
+        <path>services/backend/LlmTokenPrice.API/Controllers/ModelsController.cs</path>
+        <note>Primary API for fetching models. Story 3.2 will use this. Story 3.1 prepares UI for this endpoint (loading/empty/error states).</note>
+      </endpoint>
+    </api>
+    <components>
+      <interface>
+        <name>LayoutProps</name>
+        <kind>React component interface</kind>
+        <signature>interface LayoutProps { children: ReactNode }</signature>
+        <path>apps/web/src/components/layout/Layout.tsx</path>
+        <note>Existing Layout component interface. HomePage will be wrapped with this layout in App.tsx routing.</note>
+      </interface>
+      <interface>
+        <name>LoadingSpinner</name>
+        <kind>React component</kind>
+        <signature>export default function LoadingSpinner(): JSX.Element</signature>
+        <path>apps/web/src/components/ui/LoadingSpinner.tsx</path>
+        <note>Existing component from Epic 2. Reuse for AC #4 (loading state). No need to create new spinner.</note>
+      </interface>
+    </components>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Test framework: Vitest with React Testing Library. Component tests use custom render from test-utils.tsx to wrap components with Router and QueryClientProvider. E2E tests use Playwright. API mocking via MSW (Mock Service Worker). Accessibility tests via axe-core integrated into E2E tests. Run `pnpm run test:run` for component tests, Playwright commands for E2E. Coverage target: 60%+ overall, measured via `pnpm run test:coverage`.
+    </standards>
+    <locations>
+      <location>apps/web/src/__tests__/ - Component unit tests</location>
+      <location>apps/web/src/pages/__tests__/ - Page component tests</location>
+      <location>apps/web/e2e/ - Playwright E2E tests</location>
+      <location>apps/web/src/test/setup.ts - Vitest global setup</location>
+      <location>apps/web/src/test/test-utils.tsx - Custom render utilities</location>
+    </locations>
+    <ideas>
+      <test ac="1,2">E2E test: Navigate to `/` → verify page loads with header, main content area, footer visible</test>
+      <test ac="3">E2E test: Resize viewport to 375px, 768px, 1920px → verify layout adapts correctly (no horizontal scroll)</test>
+      <test ac="4">Component test: Render HomePage with loading state → verify LoadingSpinner renders</test>
+      <test ac="5">Component test: Mock empty models response → verify EmptyState component renders with message "No models available"</test>
+      <test ac="6">Component test: Mock API error → verify ErrorState renders with retry button → click retry → verify API re-called</test>
+      <test ac="7,8,9,10">Performance test: Run Lighthouse audit on `/` → verify Performance Score ≥90, FCP &lt;1.2s, LCP &lt;2.5s, CLS &lt;0.1</test>
+      <test ac="11">Type check test: Run `pnpm run type-check` → verify zero TypeScript errors</test>
+      <test ac="12">Lint test: Run `pnpm run lint` → verify zero ESLint errors</test>
+      <test ac="13,14">E2E accessibility test: Use axe-core via Playwright → verify zero critical violations, all nav links have ARIA labels, Tab navigation works</test>
+      <test ac="15,16">Integration test: Verify HomePage route in App.tsx uses Layout component from Epic 1, React Router config preserved</test>
+    </ideas>
+  </tests>
+</story-context>
