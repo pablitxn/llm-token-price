@@ -1,65 +1,66 @@
 namespace LlmTokenPrice.Domain.Services;
 
 /// <summary>
-/// Domain service for normalizing benchmark scores to a common 0-1 scale.
-/// Pure business logic with zero infrastructure dependencies (Hexagonal Architecture).
+/// Pure domain service for normalizing benchmark scores to 0-1 range.
+/// Used for QAPS (Quality-Adjusted Price per Score) calculation.
 /// </summary>
 /// <remarks>
-/// The QAPS (Quality-Adjusted Price per Score) algorithm requires all benchmark scores
-/// on a common scale for weighted averaging. Different benchmarks have different ranges:
-/// - Some use 0-100 (e.g., MMLU: 0-100%)
-/// - Others use 0-1 (e.g., accuracy metrics)
-/// - Some have custom ranges (e.g., perplexity scores)
-///
-/// Normalization formula: (score - min) / (max - min)
-/// Result is clamped to [0, 1] to handle outliers gracefully.
+/// CRITICAL: This is a pure domain service with ZERO infrastructure dependencies.
+/// No EF Core, no HTTP, no framework-specific code. Pure business logic only.
+/// 
+/// Normalization Formula:
+/// normalized_score = (score - typical_range_min) / (typical_range_max - typical_range_min)
+/// 
+/// Result is clamped to [0, 1] range to handle outliers.
+/// Edge case: If min = max, returns 1.0 to avoid division by zero.
 /// </remarks>
 public class BenchmarkNormalizer
 {
     /// <summary>
-    /// Normalizes a benchmark score to the 0-1 range using the typical min/max values.
+    /// Normalizes a score to the 0-1 range based on typical min/max values.
     /// </summary>
-    /// <param name="score">The raw benchmark score to normalize</param>
-    /// <param name="min">Minimum value of the typical range for this benchmark</param>
-    /// <param name="max">Maximum value of the typical range for this benchmark</param>
-    /// <returns>Normalized score between 0.0 and 1.0 (clamped for outliers)</returns>
-    /// <example>
-    /// // MMLU benchmark: score=75, range 0-100
-    /// var normalized = normalizer.Normalize(75m, 0m, 100m); // Returns 0.75
-    /// </example>
-    public decimal Normalize(decimal score, decimal min, decimal max)
+    /// <param name="score">The actual score achieved.</param>
+    /// <param name="typicalMin">Minimum value in typical range.</param>
+    /// <param name="typicalMax">Maximum value in typical range.</param>
+    /// <returns>Normalized score between 0.0 and 1.0.</returns>
+    /// <remarks>
+    /// Examples:
+    /// - Normalize(75, 0, 100) = 0.75
+    /// - Normalize(50, 0, 100) = 0.50
+    /// - Normalize(50, 50, 50) = 1.00 (edge case: min = max)
+    /// - Normalize(150, 0, 100) = 1.00 (clamped, outlier above max)
+    /// - Normalize(-10, 0, 100) = 0.00 (clamped, outlier below min)
+    /// </remarks>
+    public decimal Normalize(decimal score, decimal typicalMin, decimal typicalMax)
     {
-        // Edge case: if min equals max, any score is considered "perfect"
-        // This avoids division by zero and handles single-value benchmarks
-        if (max == min)
+        // Edge case: If min equals max, avoid division by zero
+        // Return 1.0 as the score is at the only possible value
+        if (typicalMax == typicalMin)
         {
             return 1.0m;
         }
 
-        // Standard normalization formula: (score - min) / (max - min)
-        var normalized = (score - min) / (max - min);
+        // Apply normalization formula: (score - min) / (max - min)
+        var normalized = (score - typicalMin) / (typicalMax - typicalMin);
 
-        // Clamp to [0, 1] range to handle outliers gracefully
-        // - Scores below min normalize to 0.0 (worst possible)
-        // - Scores above max normalize to 1.0 (best possible)
-        // This prevents negative normalized scores or values > 1.0 from skewing QAPS
+        // Clamp result to [0, 1] range to handle outliers
+        // Scores outside typical range are capped rather than extrapolated
         return Math.Max(0m, Math.Min(1m, normalized));
     }
 
     /// <summary>
-    /// Checks if a score falls within the typical range for a benchmark.
-    /// Used to show warnings in the admin UI when scores are unusual.
+    /// Checks if a score falls within the typical range.
     /// </summary>
-    /// <param name="score">The raw benchmark score to validate</param>
-    /// <param name="min">Minimum value of the typical range</param>
-    /// <param name="max">Maximum value of the typical range</param>
-    /// <returns>True if score is within [min, max], false if it's an outlier</returns>
+    /// <param name="score">The score to check.</param>
+    /// <param name="typicalMin">Minimum value in typical range.</param>
+    /// <param name="typicalMax">Maximum value in typical range.</param>
+    /// <returns>True if score is within [min, max], false otherwise.</returns>
     /// <remarks>
-    /// Out-of-range scores are NOT rejected (admin can override), but the UI shows
-    /// a warning to help catch data entry errors.
+    /// Used for generating warning flags in the UI when scores are unusual.
+    /// Scores outside typical range are still allowed (admin override).
     /// </remarks>
-    public bool IsWithinTypicalRange(decimal score, decimal min, decimal max)
+    public bool IsWithinTypicalRange(decimal score, decimal typicalMin, decimal typicalMax)
     {
-        return score >= min && score <= max;
+        return score >= typicalMin && score <= typicalMax;
     }
 }

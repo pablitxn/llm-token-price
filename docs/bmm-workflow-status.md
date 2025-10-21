@@ -2,16 +2,16 @@
 
 **Project:** llm-token-price
 **Created:** 2025-10-16
-**Last Updated:** 2025-10-21 (Story 2.12 Context Ready - Timestamp Tracking and Display)
+**Last Updated:** 2025-10-21 (Story 2.12 Marked as DONE - Timestamp Tracking and Display)
 
 ---
 
 ## Current Status
 
 **Current Phase:** 4-Implementation → Epic 1 Complete, Epic 2 In Progress
-**Current Workflow:** story-context (Story 2.12) - Complete
-**Current Story:** Story 2.12 (Context Ready)
-**Overall Progress:** 100% (Epic 1: 37 points) + 64% (Epic 2: 32/~50 points - Stories 2.1-2.9 Complete)
+**Current Workflow:** N/A
+**Current Story:** Story 2.12 (DONE) ✅
+**Overall Progress:** 100% (Epic 1: 37 points) + 68% (Epic 2: 34/~50 points - Stories 2.1-2.9, 2.12 Complete)
 
 **🎉 EPIC 1 COMPLETE!** All 11 foundational stories delivered (37/37 points)
 
@@ -133,10 +133,8 @@
 | 2    | 5     | 2.5 | Create Backend API for Adding Models | story-2.5.md |
 | 2    | 7     | 2.7 | Create Edit Model Functionality | story-2.7.md |
 | 2    | 8     | 2.8 | Create Delete Model Functionality | story-2.8.md |
-| 2    | 9     | 2.9 | Create Benchmark Definitions Management | story-2.9.md |
 | 2    | 10    | 2.10 | Create Benchmark Score Entry Form | story-2.10.md |
 | 2    | 11    | 2.11 | Add Bulk Benchmark Import via CSV | story-2.11.md |
-| 2    | 12    | 2.12 | Add Timestamp Tracking and Display | story-2.12.md |
 | 4    | 1     | 4.1 | Create Model Detail Modal Component | story-4.1.md |
 | 4    | 2     | 4.2 | Add Overview Tab with Model Specifications | story-4.2.md |
 | 4    | 3     | 4.3 | Create Backend API for Model Detail | story-4.3.md |
@@ -240,6 +238,8 @@ All 11 Epic 1 stories delivered (37 points):
 
 | Story ID | File | Completed Date | Points |
 | -------- | ---- | -------------- | ------ |
+| 2.12 | docs/stories/story-2.12.md | 2025-10-21 | 2 |
+| 2.9 | docs/stories/story-2.9.md | 2025-10-19 | 5 |
 | 2.8 | docs/stories/story-2.8.md | 2025-10-19 | 2 |
 | 2.7 | docs/stories/story-2.7.md | 2025-10-19 | 3 |
 | 2.6 | docs/stories/story-2.6.md | 2025-10-19 | 3 |
@@ -260,8 +260,8 @@ All 11 Epic 1 stories delivered (37 points):
 | 1.2 | docs/stories/story-1.2.md | 2025-10-16 | 3 |
 | 1.7 | docs/stories/story-1.7.md | 2025-10-16 | 5 |
 
-**Total completed:** 19 stories
-**Total points completed:** 66 points
+**Total completed:** 21 stories
+**Total points completed:** 73 points
 
 ---
 
@@ -296,6 +296,7 @@ LLM Pricing Calculator - A comprehensive web application for comparing LLM model
 
 ## Decisions Log
 
+- **2025-10-21**: Story 2.12 (Add Timestamp Tracking and Display) marked as DONE. All acceptance criteria met with comprehensive implementation: Backend (PricingUpdatedAt property in Model entity, database migration with backfill, AdminModelService pricing change detection, AdminDashboardController metrics endpoint with 5min cache, DashboardMetricsDto), Frontend (formatters.ts utilities, RelativeTime component with freshness indicators, ModelList highlighting, AdminDashboard real-time metrics, ModelCard timestamps), Testing (32 tests passing - 23 formatters unit tests + 9 RelativeTime component tests, 100% coverage). Story file status: Ready for Review → DONE. Epic 2 progress: 64% → 68% (34/~50 points - Stories 2.1-2.9, 2.12 complete). Total project progress: 73 points across 21 stories. Next: Story 2.10 (Benchmark Score Entry Form) or Story 2.11 (CSV Import).
 - **2025-10-21**: Completed story-context for Story 2.12 (Add Timestamp Tracking and Display). Context file: docs/stories/story-context-2.12.xml. Comprehensive context generated covering timestamp tracking with three-tier strategy (created_at set once, updated_at for any change, pricing_updated_at for pricing-specific changes). Documentation artifacts (4): tech-spec-epic-2.md (timestamp tracking requirements, freshness indicators >7 days yellow >30 days red), solution-architecture.md (indexed timestamps, NFR013 audit logging), testing-guide.md (test pyramid 70/25/5 with xUnit/Vitest/Playwright), PRD.md NFR003 (95%+ pricing accuracy with freshness tracking). Code artifacts (7): Model.cs already has CreatedAt/UpdatedAt need PricingUpdatedAt property, AdminModelDto.cs needs PricingUpdatedAt field, AdminModelsController.cs needs pricing change detection, AdminModelService.cs update logic to conditionally set PricingUpdatedAt, ModelList.tsx already has Last Updated column needs freshness highlighting, AdminDashboardPage.tsx placeholder needs real metrics from /api/admin/dashboard/metrics, package.json date-fns 4.1.0 already installed. Dependencies: Backend (.NET 9, EF Core 9.0.10, Npgsql, Redis), Frontend (React 19, date-fns 4.1.0 for formatDistanceToNow, lucide-react for icons CheckCircle/Clock/AlertTriangle). Constraints (13 across 3 categories): architectural (hexagonal Domain pure with PricingUpdatedAt property configured in Infrastructure ModelConfiguration, timestamp strategy separation, UTC DateTime.UtcNow, freshness categories fresh<7 stale 7-30 critical>30), coding (TypeScript strict zero any, async all the way, immutable DTOs with C# records, structured logging Serilog semantic properties), testing (test pyramid 70/25/5, Bogus test data with mocked dates, TestContainers PostgreSQL integration, Vitest component tests with date inputs). Interfaces (4): GET /api/admin/dashboard/metrics REST endpoint returning DashboardMetricsDto (TotalActiveModels/ModelsNeedingUpdates>7/CriticalUpdates>30/RecentlyUpdated<7/PricingNeedingUpdates>30/CalculatedAt, [ResponseCache Duration=300] 5min, [Authorize]), RelativeTime React component (date prop, showIcon optional, formatDistanceToNow with tooltip absolute timestamp, freshness icon green/yellow/red), timestamp utility functions formatRelativeTime/formatTimestamp/getDaysSince/getFreshnessStatus in formatters.ts. Testing: 8 test ideas mapped to 5 ACs covering formatRelativeTime unit tests with fixed mock dates, getFreshnessStatus boundary conditions 7/30 days, dashboard metrics integration test with seeded stale models, PricingUpdatedAt only changes on price changes integration test, RelativeTime component with tooltip, stale model highlighting in ModelList, AdminDashboard displays metrics, public API includes timestamps. Story status: Ready → Ready (context reference added). Next: DEV agent should run dev-story to implement timestamp tracking feature with database migration adding pricing_updated_at column (backfill from updated_at), Model entity PricingUpdatedAt property, AdminModelService pricing change detection logic, AdminDashboardController metrics endpoint with 5min cache, DashboardMetricsDto, ModelList freshness indicators (yellow/red highlighting >7/>30 days), AdminDashboard metrics cards with counts, RelativeTime component, formatters.ts utilities (formatRelativeTime/getDaysSince/getFreshnessStatus), comprehensive testing (unit tests for utilities/categorization, integration tests for metrics endpoint/pricing detection, component tests for RelativeTime/ModelList highlighting/AdminDashboard display).
 - **2025-10-20**: Completed story-context for Story 2.11 (Add Bulk Benchmark Import via CSV). Context file: docs/stories/story-context-2.11.xml. Comprehensive context generated with 14 test ideas (7 P1 unit tests + 5 P1 integration tests + 2 P2 component tests) covering CSV parsing, row validation, partial success, file size limits, and duplicate handling. Next: DEV agent should run dev-story to implement CSV bulk import feature with CsvHelper library and multipart/form-data endpoint.
 - **2025-10-19**: Story 2.9 (Create Benchmark Definitions Management) approved and marked done. All 6 acceptance criteria met with 100% test coverage (79 tests total). Story status updated: READY FOR REVIEW → DONE. Implementation complete: Backend (AdminBenchmarksController with full CRUD endpoints, AdminBenchmarkService with business logic, CreateBenchmarkValidator/UpdateBenchmarkValidator with FluentValidation, IBenchmarkRepository + BenchmarkRepository implementations, DTOs and enums), Frontend (AdminBenchmarksPage with TanStack Table, BenchmarkForm with dual-mode create/edit, TanStack Query hooks with cache invalidation, Zod validation schemas), Testing (CreateBenchmarkValidatorTests.cs 21 tests, AdminBenchmarkServiceTests.cs 18 tests, AdminBenchmarksApiTests.cs 19 tests, BenchmarkForm.test.tsx 14 tests, AdminBenchmarksPage.test.tsx 7 tests). Test automation summary generated at docs/test-automation-summary-story-2.9.md. Epic 2 progress: 64% complete (32/~50 points). Next: Story 2.10 (Benchmark Score Entry Form) context ready for implementation.
