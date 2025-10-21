@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using LlmTokenPrice.Application.DTOs;
+using LlmTokenPrice.Application.Interfaces;
 using LlmTokenPrice.Application.Services;
 using LlmTokenPrice.Infrastructure.Security;
 
@@ -14,6 +15,7 @@ namespace LlmTokenPrice.API.Controllers.Admin;
 /// All endpoints require JWT authentication via [Authorize] attribute.
 /// Admin endpoints return ALL models (including inactive) and are NOT cached.
 /// Story 2.13 Task 17: All text inputs are sanitized to prevent XSS attacks.
+/// Story 2.13 Task 14: All CRUD operations logged to audit trail for compliance.
 /// </remarks>
 [ApiController]
 [Route("api/admin/models")]
@@ -23,6 +25,7 @@ public class AdminModelsController : ControllerBase
 {
     private readonly IAdminModelService _adminModelService;
     private readonly IAdminBenchmarkService _adminBenchmarkService;
+    private readonly IAuditLogService _auditLogService;
     private readonly InputSanitizationService _sanitizer;
     private readonly ILogger<AdminModelsController> _logger;
 
@@ -31,16 +34,19 @@ public class AdminModelsController : ControllerBase
     /// </summary>
     /// <param name="adminModelService">The admin model service for data operations.</param>
     /// <param name="adminBenchmarkService">The admin benchmark service for score operations.</param>
+    /// <param name="auditLogService">The audit log service for compliance tracking.</param>
     /// <param name="sanitizer">Input sanitization service for XSS protection.</param>
     /// <param name="logger">Logger for request tracking and diagnostics.</param>
     public AdminModelsController(
         IAdminModelService adminModelService,
         IAdminBenchmarkService adminBenchmarkService,
+        IAuditLogService auditLogService,
         InputSanitizationService sanitizer,
         ILogger<AdminModelsController> logger)
     {
         _adminModelService = adminModelService ?? throw new ArgumentNullException(nameof(adminModelService));
         _adminBenchmarkService = adminBenchmarkService ?? throw new ArgumentNullException(nameof(adminBenchmarkService));
+        _auditLogService = auditLogService ?? throw new ArgumentNullException(nameof(auditLogService));
         _sanitizer = sanitizer ?? throw new ArgumentNullException(nameof(sanitizer));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
@@ -359,6 +365,15 @@ public class AdminModelsController : ControllerBase
                 modelId,
                 createdModel.Name);
 
+            // Story 2.13 Task 14: Log CREATE operation to audit trail
+            var userId = User.Identity?.Name ?? "Unknown";
+            await _auditLogService.LogCreateAsync(
+                userId,
+                "Model",
+                modelId,
+                createdModel, // Serialize created model as JSON
+                cancellationToken);
+
             // Return 201 Created with Location header
             return CreatedAtAction(
                 nameof(GetById),
@@ -447,6 +462,9 @@ public class AdminModelsController : ControllerBase
                 request.Name,
                 request.Provider);
 
+            // Story 2.13 Task 14: Fetch old values BEFORE update for audit trail
+            var oldModel = await _adminModelService.GetModelByIdAsync(id, cancellationToken);
+
             // Update model (FluentValidation runs automatically via middleware)
             var updatedModel = await _adminModelService.UpdateModelAsync(id, request, cancellationToken);
 
@@ -467,6 +485,16 @@ public class AdminModelsController : ControllerBase
                 "Model updated successfully: {ModelId} - {ModelName}",
                 id,
                 updatedModel.Name);
+
+            // Story 2.13 Task 14: Log UPDATE operation to audit trail
+            var userId = User.Identity?.Name ?? "Unknown";
+            await _auditLogService.LogUpdateAsync(
+                userId,
+                "Model",
+                id,
+                oldModel!, // Old values captured before update
+                updatedModel, // New values after update
+                cancellationToken);
 
             // Return 200 OK with updated model
             return Ok(new AdminApiResponse<AdminModelDto>
@@ -544,9 +572,10 @@ public class AdminModelsController : ControllerBase
         {
             _logger.LogInformation("Admin deleting model with ID: {ModelId}", id);
 
-            var success = await _adminModelService.DeleteModelAsync(id, cancellationToken);
+            // Story 2.13 Task 14: Fetch old values BEFORE deletion for audit trail
+            var oldModel = await _adminModelService.GetModelByIdAsync(id, cancellationToken);
 
-            if (!success)
+            if (oldModel == null)
             {
                 _logger.LogWarning("Model not found for deletion: {ModelId}", id);
                 return NotFound(new
@@ -559,7 +588,32 @@ public class AdminModelsController : ControllerBase
                 });
             }
 
+            var success = await _adminModelService.DeleteModelAsync(id, cancellationToken);
+
+            if (!success)
+            {
+                // This should never happen since we just confirmed model exists above
+                _logger.LogError("Model existed but deletion failed unexpectedly: {ModelId}", id);
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    error = new
+                    {
+                        code = "INTERNAL_ERROR",
+                        message = "Model deletion failed unexpectedly"
+                    }
+                });
+            }
+
             _logger.LogInformation("Successfully deleted model: {ModelId}", id);
+
+            // Story 2.13 Task 14: Log DELETE operation to audit trail
+            var userId = User.Identity?.Name ?? "Unknown";
+            await _auditLogService.LogDeleteAsync(
+                userId,
+                "Model",
+                id,
+                oldModel, // Old values captured before deletion
+                cancellationToken);
 
             return NoContent(); // 204 No Content
         }

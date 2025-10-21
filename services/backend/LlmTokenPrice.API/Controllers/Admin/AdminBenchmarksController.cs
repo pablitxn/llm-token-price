@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using LlmTokenPrice.Application.DTOs;
+using LlmTokenPrice.Application.Interfaces;
 using LlmTokenPrice.Application.Services;
 using FluentValidation;
 
@@ -14,6 +15,7 @@ namespace LlmTokenPrice.API.Controllers.Admin;
 /// All endpoints require JWT authentication via [Authorize] attribute.
 /// Admin endpoints return ALL benchmarks (including inactive) and are NOT cached.
 /// Benchmark mutations invalidate cache patterns: cache:benchmarks:*, cache:qaps:*, cache:bestvalue:*
+/// Story 2.13 Task 14: All CRUD operations logged to audit trail for compliance.
 /// </remarks>
 [ApiController]
 [Route("api/admin/benchmarks")]
@@ -23,6 +25,7 @@ public class AdminBenchmarksController : ControllerBase
 {
     private readonly IAdminBenchmarkService _benchmarkService;
     private readonly CSVImportService _csvImportService;
+    private readonly IAuditLogService _auditLogService;
     private readonly IValidator<CreateBenchmarkRequest> _createValidator;
     private readonly IValidator<UpdateBenchmarkRequest> _updateValidator;
     private readonly ILogger<AdminBenchmarksController> _logger;
@@ -32,18 +35,21 @@ public class AdminBenchmarksController : ControllerBase
     /// </summary>
     /// <param name="benchmarkService">The admin benchmark service for data operations.</param>
     /// <param name="csvImportService">The CSV import service for bulk score import (Story 2.11).</param>
+    /// <param name="auditLogService">The audit log service for compliance tracking.</param>
     /// <param name="createValidator">FluentValidation validator for create requests.</param>
     /// <param name="updateValidator">FluentValidation validator for update requests.</param>
     /// <param name="logger">Logger for request tracking and diagnostics.</param>
     public AdminBenchmarksController(
         IAdminBenchmarkService benchmarkService,
         CSVImportService csvImportService,
+        IAuditLogService auditLogService,
         IValidator<CreateBenchmarkRequest> createValidator,
         IValidator<UpdateBenchmarkRequest> updateValidator,
         ILogger<AdminBenchmarksController> logger)
     {
         _benchmarkService = benchmarkService ?? throw new ArgumentNullException(nameof(benchmarkService));
         _csvImportService = csvImportService ?? throw new ArgumentNullException(nameof(csvImportService));
+        _auditLogService = auditLogService ?? throw new ArgumentNullException(nameof(auditLogService));
         _createValidator = createValidator ?? throw new ArgumentNullException(nameof(createValidator));
         _updateValidator = updateValidator ?? throw new ArgumentNullException(nameof(updateValidator));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -149,6 +155,15 @@ public class AdminBenchmarksController : ControllerBase
 
             _logger.LogInformation("Admin: Benchmark {BenchmarkId} created successfully", benchmarkId);
 
+            // Story 2.13 Task 14: Log CREATE operation to audit trail
+            var userId = User.Identity?.Name ?? "Unknown";
+            await _auditLogService.LogCreateAsync(
+                userId,
+                "Benchmark",
+                benchmarkId,
+                createdBenchmark!,
+                cancellationToken);
+
             // Return 201 Created with Location header
             return CreatedAtAction(
                 nameof(GetBenchmarkById),
@@ -195,6 +210,9 @@ public class AdminBenchmarksController : ControllerBase
             return BadRequest(new { errors = validationResult.Errors.Select(e => new { field = e.PropertyName, message = e.ErrorMessage }) });
         }
 
+        // Story 2.13 Task 14: Fetch old values BEFORE update for audit trail
+        var oldBenchmark = await _benchmarkService.GetBenchmarkByIdAsync(id, cancellationToken);
+
         // Update benchmark
         var updatedBenchmark = await _benchmarkService.UpdateBenchmarkAsync(id, request, cancellationToken);
 
@@ -205,6 +223,17 @@ public class AdminBenchmarksController : ControllerBase
         }
 
         _logger.LogInformation("Admin: Benchmark {BenchmarkId} updated successfully", id);
+
+        // Story 2.13 Task 14: Log UPDATE operation to audit trail
+        var userId = User.Identity?.Name ?? "Unknown";
+        await _auditLogService.LogUpdateAsync(
+            userId,
+            "Benchmark",
+            id,
+            oldBenchmark!,
+            updatedBenchmark,
+            cancellationToken);
+
         return Ok(updatedBenchmark);
     }
 
@@ -230,17 +259,37 @@ public class AdminBenchmarksController : ControllerBase
     {
         _logger.LogInformation("Admin: Deleting benchmark {BenchmarkId}", id);
 
+        // Story 2.13 Task 14: Fetch old values BEFORE deletion for audit trail
+        var oldBenchmark = await _benchmarkService.GetBenchmarkByIdAsync(id, cancellationToken);
+
+        if (oldBenchmark == null)
+        {
+            _logger.LogWarning("Admin: Benchmark {BenchmarkId} not found for deletion", id);
+            return NotFound(new { error = "Benchmark not found or already inactive" });
+        }
+
         try
         {
             var deleted = await _benchmarkService.DeleteBenchmarkAsync(id, cancellationToken);
 
             if (!deleted)
             {
-                _logger.LogWarning("Admin: Benchmark {BenchmarkId} not found for deletion", id);
-                return NotFound(new { error = "Benchmark not found or already inactive" });
+                // This should never happen since we just confirmed benchmark exists above
+                _logger.LogError("Benchmark existed but deletion failed unexpectedly: {BenchmarkId}", id);
+                return StatusCode(StatusCodes.Status500InternalServerError, new { error = "Deletion failed unexpectedly" });
             }
 
             _logger.LogInformation("Admin: Benchmark {BenchmarkId} deleted successfully", id);
+
+            // Story 2.13 Task 14: Log DELETE operation to audit trail
+            var userId = User.Identity?.Name ?? "Unknown";
+            await _auditLogService.LogDeleteAsync(
+                userId,
+                "Benchmark",
+                id,
+                oldBenchmark,
+                cancellationToken);
+
             return NoContent();
         }
         catch (InvalidOperationException ex) when (ex.Message.Contains("associated scores"))

@@ -15,6 +15,10 @@ import type {
   CreateBenchmarkFormData,
   UpdateBenchmarkFormData,
 } from '@/schemas/benchmarkSchema'
+import type {
+  AuditLogResponse,
+  AuditLogFilters,
+} from '@/types/auditLog'
 
 /**
  * Authentication API response structure
@@ -402,4 +406,108 @@ export const importBenchmarkCSV = async (
 export const getDashboardMetrics = async (): Promise<DashboardMetricsResponse> => {
   const response = await apiClient.get<DashboardMetricsResponse>('/admin/dashboard/metrics')
   return response.data
+}
+
+// ============================================================================
+// Audit Log API Functions (Story 2.13 Task 14)
+// ============================================================================
+
+/**
+ * Fetches paginated audit logs with optional filtering
+ * Returns audit trail records of all admin CRUD operations
+ * Supports filtering by user, entity type, action, and date range
+ *
+ * Story 2.13 Task 14: Comprehensive audit logging for compliance
+ *
+ * @param filters - Optional filters (userId, entityType, action, startDate, endDate, page, pageSize)
+ * @returns Promise resolving to paginated audit log response
+ * @throws Error if request fails (401 Unauthorized if not authenticated, 400 Bad Request if pagination invalid)
+ *
+ * @example
+ * // Fetch first page of audit logs
+ * const logs = await getAuditLogs({ page: 1, pageSize: 20 })
+ *
+ * // Filter by user
+ * const userLogs = await getAuditLogs({ userId: 'admin@example.com', page: 1, pageSize: 20 })
+ *
+ * // Filter by entity type and action
+ * const modelUpdates = await getAuditLogs({ entityType: 'Model', action: 'Update', page: 1, pageSize: 20 })
+ *
+ * // Filter by date range
+ * const recentLogs = await getAuditLogs({
+ *   startDate: '2024-01-01',
+ *   endDate: '2024-01-31',
+ *   page: 1,
+ *   pageSize: 20
+ * })
+ */
+export const getAuditLogs = async (filters?: AuditLogFilters): Promise<AuditLogResponse> => {
+  const params = new URLSearchParams()
+
+  if (filters?.userId) params.append('userId', filters.userId)
+  if (filters?.entityType) params.append('entityType', filters.entityType)
+  if (filters?.action) params.append('action', filters.action)
+  if (filters?.startDate) params.append('startDate', filters.startDate)
+  if (filters?.endDate) params.append('endDate', filters.endDate)
+  if (filters?.page) params.append('page', filters.page.toString())
+  if (filters?.pageSize) params.append('pageSize', filters.pageSize.toString())
+
+  const url = `/admin/audit-log${params.toString() ? `?${params.toString()}` : ''}`
+  const response = await apiClient.get<AuditLogResponse>(url)
+  return response.data
+}
+
+/**
+ * Exports audit logs to CSV format with optional filtering
+ * Returns a downloadable CSV file containing all audit logs matching the filters
+ * No pagination - exports ALL matching records
+ *
+ * CSV Format:
+ * - Id: UUID
+ * - Timestamp: ISO 8601 datetime
+ * - UserId: User identifier (email or username)
+ * - Action: Create, Update, Delete, Import
+ * - EntityType: Model, Benchmark, BenchmarkScore
+ * - EntityId: UUID of affected entity
+ * - OldValues: JSON string (before state)
+ * - NewValues: JSON string (after state)
+ *
+ * Story 2.13 Task 14.9: CSV export for audit compliance and analysis
+ *
+ * @param filters - Optional filters (userId, entityType, action, startDate, endDate)
+ * @returns Promise resolving to Blob containing CSV file
+ * @throws Error if request fails (401 Unauthorized if not authenticated)
+ *
+ * @example
+ * // Export all audit logs
+ * const blob = await exportAuditLogsToCSV()
+ * const url = URL.createObjectURL(blob)
+ * const a = document.createElement('a')
+ * a.href = url
+ * a.download = 'audit-log-2024-01-15.csv'
+ * a.click()
+ *
+ * // Export filtered audit logs
+ * const blob = await exportAuditLogsToCSV({
+ *   entityType: 'Model',
+ *   startDate: '2024-01-01',
+ *   endDate: '2024-01-31'
+ * })
+ */
+export const exportAuditLogsToCSV = async (
+  filters?: Omit<AuditLogFilters, 'page' | 'pageSize'>
+): Promise<Blob> => {
+  const params = new URLSearchParams()
+
+  if (filters?.userId) params.append('userId', filters.userId)
+  if (filters?.entityType) params.append('entityType', filters.entityType)
+  if (filters?.action) params.append('action', filters.action)
+  if (filters?.startDate) params.append('startDate', filters.startDate)
+  if (filters?.endDate) params.append('endDate', filters.endDate)
+
+  const url = `/admin/audit-log/export${params.toString() ? `?${params.toString()}` : ''}`
+  const response = await apiClient.get(url, {
+    responseType: 'blob', // Important: Tell axios to handle binary data
+  })
+  return response.data as Blob
 }
