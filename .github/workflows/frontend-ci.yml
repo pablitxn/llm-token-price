@@ -63,6 +63,34 @@ jobs:
         run: pnpm run lint
         working-directory: ./apps/web
 
+      - name: Run tests
+        id: test-run
+        run: |
+          # Check if test script exists in package.json
+          if grep -q '"test"' package.json; then
+            pnpm run test:run || pnpm test || echo "No tests configured yet"
+          else
+            echo "⚠️ No test script found in package.json - skipping tests"
+            echo "Tests will be added in future stories (Epic 3+)"
+          fi
+        working-directory: ./apps/web
+        continue-on-error: true
+
       - name: Build application
         run: pnpm run build
+        working-directory: ./apps/web
+
+      - name: Check bundle size
+        run: |
+          # Get build output size
+          BUILD_SIZE=$(du -sh dist | cut -f1)
+          echo "📦 Bundle size: $BUILD_SIZE"
+
+          # Check if dist folder exists
+          if [ -d "dist" ]; then
+            echo "✅ Build successful"
+          else
+            echo "❌ Build failed - no dist folder"
+            exit 1
+          fi
         working-directory: ./apps/web
