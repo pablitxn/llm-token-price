@@ -11,6 +11,8 @@ import { ModelList } from '@/components/admin/ModelList'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { useAdminModels, useDeleteModel } from '@/hooks/useAdminModels'
 import type { AdminModelDto } from '@/types/admin'
+import { getDaysSince, getFreshnessStatus } from '@/utils/formatters'
+import type { FreshnessStatus } from '@/types/timestamp'
 import * as React from 'react'
 
 /**
@@ -49,24 +51,40 @@ export default function AdminModelsPage() {
   // Initialize search term from URL params or empty string
   const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '')
 
+  // Initialize freshness filter from URL params or 'all'
+  const [freshnessFilter, setFreshnessFilter] = useState<'all' | FreshnessStatus>(
+    (searchParams.get('freshness') as 'all' | FreshnessStatus) || 'all'
+  )
+
   // Debounce search term to avoid excessive re-renders and API calls
   const debouncedSearchTerm = useDebounce(searchTerm, 300)
 
-  // Sync search term with URL params when it changes
+  // Sync search term and freshness filter with URL params when they change
   useEffect(() => {
+    const params: Record<string, string> = {}
     if (searchTerm) {
-      setSearchParams({ search: searchTerm })
-    } else {
-      // Remove search param if empty
-      setSearchParams({})
+      params.search = searchTerm
     }
-  }, [searchTerm, setSearchParams])
+    if (freshnessFilter !== 'all') {
+      params.freshness = freshnessFilter
+    }
+    setSearchParams(params)
+  }, [searchTerm, freshnessFilter, setSearchParams])
 
   // Fetch models using TanStack Query hook
   const { data: models, isLoading, error, refetch } = useAdminModels(debouncedSearchTerm)
 
   // Delete mutation hook
   const deleteMutation = useDeleteModel()
+
+  /**
+   * Filter models by freshness status
+   */
+  const filteredModels = models?.filter((model) => {
+    if (freshnessFilter === 'all') return true
+    const status = getFreshnessStatus(model.updatedAt)
+    return status === freshnessFilter
+  }) ?? []
 
   /**
    * Handles clear search button click
@@ -122,8 +140,8 @@ export default function AdminModelsPage() {
     setModelToDelete(null)
   }
 
-  // Compute models count for display
-  const modelsCount = models?.length ?? 0
+  // Compute models count for display (filtered)
+  const modelsCount = filteredModels.length
 
   return (
     <div className="px-4 sm:px-6 lg:px-8">
@@ -217,10 +235,68 @@ export default function AdminModelsPage() {
         )}
       </div>
 
+      {/* Freshness Filter */}
+      <div className="mt-4">
+        <label htmlFor="freshness-filter" className="block text-sm font-medium text-gray-700 mb-2">
+          Filter by Data Freshness
+        </label>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setFreshnessFilter('all')}
+            className={`px-4 py-2 text-sm font-medium rounded-md ${
+              freshnessFilter === 'all'
+                ? 'bg-blue-600 text-white'
+                : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+            }`}
+          >
+            All Models
+          </button>
+          <button
+            type="button"
+            onClick={() => setFreshnessFilter('fresh')}
+            className={`px-4 py-2 text-sm font-medium rounded-md ${
+              freshnessFilter === 'fresh'
+                ? 'bg-green-600 text-white'
+                : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+            }`}
+          >
+            🟢 Fresh (&lt; 7 days)
+          </button>
+          <button
+            type="button"
+            onClick={() => setFreshnessFilter('stale')}
+            className={`px-4 py-2 text-sm font-medium rounded-md ${
+              freshnessFilter === 'stale'
+                ? 'bg-yellow-600 text-white'
+                : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+            }`}
+          >
+            🟡 Stale (7-30 days)
+          </button>
+          <button
+            type="button"
+            onClick={() => setFreshnessFilter('critical')}
+            className={`px-4 py-2 text-sm font-medium rounded-md ${
+              freshnessFilter === 'critical'
+                ? 'bg-red-600 text-white'
+                : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+            }`}
+          >
+            🔴 Critical (&gt; 30 days)
+          </button>
+        </div>
+      </div>
+
       {/* Models Count */}
       <div className="mt-4">
         <p className="text-sm text-gray-700">
           Showing <span className="font-medium">{modelsCount}</span> model{modelsCount !== 1 ? 's' : ''}
+          {freshnessFilter !== 'all' && (
+            <span className="ml-1">
+              ({freshnessFilter})
+            </span>
+          )}
         </p>
       </div>
 
@@ -276,7 +352,7 @@ export default function AdminModelsPage() {
       {/* Models Table */}
       {!isLoading && !error && models && (
         <div className="mt-8">
-          <ModelList models={models} searchTerm={debouncedSearchTerm} onDeleteClick={handleDeleteClick} />
+          <ModelList models={filteredModels} searchTerm={debouncedSearchTerm} onDeleteClick={handleDeleteClick} />
         </div>
       )}
 

@@ -1,4 +1,5 @@
 import type { ModelDto } from '@/types/models'
+import { RelativeTime } from '@/components/ui/RelativeTime'
 
 interface ModelCardProps {
   model: ModelDto
@@ -25,6 +26,10 @@ export default function ModelCard({ model }: ModelCardProps) {
         <div className="flex justify-between text-sm">
           <span className="text-gray-600">Output:</span>
           <span className="font-medium">${model.outputPricePer1M}/1M tokens</span>
+        </div>
+        <div className="flex justify-between text-sm pt-2 border-t border-gray-100">
+          <span className="text-gray-600">Updated:</span>
+          <RelativeTime date={model.updatedAt} showIcon />
         </div>
       </div>
 

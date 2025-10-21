@@ -147,3 +147,24 @@ export interface CSVImportResultDto {
   skippedDuplicates: number
   errors: FailedRow[]
 }
+
+// ========== Dashboard Metrics Types (Story 2.12) ==========
+
+/**
+ * Dashboard metrics response DTO
+ * Matches backend DashboardMetricsDto structure
+ * Provides freshness statistics for admin dashboard
+ */
+export interface DashboardMetricsDto {
+  totalActiveModels: number
+  modelsNeedingUpdates: number // Models >7 days old
+  criticalUpdates: number // Models >30 days old
+  recentlyUpdated: number // Models <7 days old
+  pricingNeedingUpdates: number // Models with pricing >30 days old
+  calculatedAt: string // ISO 8601
+}
+
+/**
+ * Dashboard metrics API response type
+ */
+export type DashboardMetricsResponse = AdminApiResponse<DashboardMetricsDto>

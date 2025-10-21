@@ -7,6 +7,7 @@ import type {
   BenchmarkScoreResponse,
   CreateBenchmarkScoreDto,
   CSVImportResultDto,
+  DashboardMetricsResponse,
 } from '@/types/admin'
 import type {
   BenchmarkResponseDto,
@@ -368,5 +369,22 @@ export const importBenchmarkCSV = async (
       },
     }
   )
+  return response.data
+}
+
+// ============================================================================
+// Dashboard Metrics API Functions (Story 2.12)
+// ============================================================================
+
+/**
+ * Fetches dashboard metrics showing data freshness statistics
+ * Returns counts of models by freshness category (fresh/stale/critical)
+ * Cached server-side for 5 minutes for performance
+ *
+ * @returns Promise resolving to dashboard metrics response
+ * @throws Error if request fails (401 Unauthorized if not authenticated, 500 Internal Server Error)
+ */
+export const getDashboardMetrics = async (): Promise<DashboardMetricsResponse> => {
+  const response = await apiClient.get<DashboardMetricsResponse>('/admin/dashboard/metrics')
   return response.data
 }
