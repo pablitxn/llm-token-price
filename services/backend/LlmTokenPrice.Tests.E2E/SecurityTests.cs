@@ -77,14 +77,13 @@ public class SecurityTests : IClassFixture<TestWebApplicationFactory>
             InputPricePer1M = 10.0m,
             OutputPricePer1M = 30.0m,
             Currency = "USD",
-            Capability = new CreateCapabilityRequest
+            Capabilities = new CreateCapabilityRequest
             {
-                SupportsTextInput = true,
-                SupportsImageInput = false,
+                ContextWindow = 8192,
+                MaxOutputTokens = 4096,
+                SupportsVision = false,
                 SupportsAudioInput = false,
-                SupportsVideoInput = false,
-                MaxContextWindow = 8192,
-                MaxOutputTokens = 4096
+                SupportsAudioOutput = false
             }
         };
 
@@ -118,14 +117,13 @@ public class SecurityTests : IClassFixture<TestWebApplicationFactory>
             InputPricePer1M = 10.0m,
             OutputPricePer1M = 30.0m,
             Currency = "USD",
-            Capability = new CreateCapabilityRequest
+            Capabilities = new CreateCapabilityRequest
             {
-                SupportsTextInput = true,
-                SupportsImageInput = false,
+                ContextWindow = 8192,
+                MaxOutputTokens = 4096,
+                SupportsVision = false,
                 SupportsAudioInput = false,
-                SupportsVideoInput = false,
-                MaxContextWindow = 8192,
-                MaxOutputTokens = 4096
+                SupportsAudioOutput = false
             }
         };
 
@@ -199,14 +197,21 @@ public class SecurityTests : IClassFixture<TestWebApplicationFactory>
         // Act
         var response = await _client.GetAsync("/api/models");
 
-        // Assert - CSP should contain script-src 'self' (no 'unsafe-inline')
+        // Assert - CSP should contain script-src 'self' (no 'unsafe-inline' in script-src)
         response.Headers.Should().ContainKey("Content-Security-Policy");
         var cspHeader = response.Headers.GetValues("Content-Security-Policy").First();
 
         cspHeader.Should().Contain("script-src 'self'",
             "CSP should only allow scripts from same origin");
-        cspHeader.Should().NotContain("'unsafe-inline'",
-            "CSP should NOT allow unsafe-inline scripts (except for styles in Swagger)");
+
+        // Extract script-src directive specifically (not style-src which may have unsafe-inline)
+        var scriptSrcDirective = cspHeader.Split(';')
+            .Select(d => d.Trim())
+            .FirstOrDefault(d => d.StartsWith("script-src"));
+
+        scriptSrcDirective.Should().NotBeNull("script-src directive should exist");
+        scriptSrcDirective.Should().NotContain("'unsafe-inline'",
+            "script-src should NOT allow unsafe-inline (blocks XSS attacks)");
     }
 
     /// <summary>
@@ -225,14 +230,13 @@ public class SecurityTests : IClassFixture<TestWebApplicationFactory>
             InputPricePer1M = 10.0m,
             OutputPricePer1M = 30.0m,
             Currency = "€UR",
-            Capability = new CreateCapabilityRequest
+            Capabilities = new CreateCapabilityRequest
             {
-                SupportsTextInput = true,
-                SupportsImageInput = false,
+                ContextWindow = 8192,
+                MaxOutputTokens = 4096,
+                SupportsVision = false,
                 SupportsAudioInput = false,
-                SupportsVideoInput = false,
-                MaxContextWindow = 8192,
-                MaxOutputTokens = 4096
+                SupportsAudioOutput = false
             }
         };
 
