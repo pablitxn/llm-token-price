@@ -53,23 +53,53 @@ public class AdminDashboardController : ControllerBase
             status: "active", // Only count active models in metrics
             cancellationToken);
 
-        // Calculate metrics
+        // Calculate Story 2.12 metrics (data freshness)
+        var totalModels = models.Count;
+        var modelsNeedingUpdates = models.Count(m => m.UpdatedAt < sevenDaysAgo);
+        var criticalUpdates = models.Count(m => m.UpdatedAt < thirtyDaysAgo);
+        var recentlyUpdated = models.Count(m => m.UpdatedAt >= sevenDaysAgo);
+        var pricingNeedingUpdates = models.Count(m =>
+            m.PricingUpdatedAt.HasValue && m.PricingUpdatedAt < thirtyDaysAgo);
+
+        // Calculate Story 2.13 Task 15 metrics (data quality)
+        var incompleteModels = models.Count(m => m.BenchmarkScores.Count < 3);
+        var recentAdditions = models.Count(m => m.CreatedAt >= sevenDaysAgo);
+
+        // Average benchmarks per model (avoid division by zero)
+        var averageBenchmarks = totalModels > 0
+            ? Math.Round(models.Average(m => m.BenchmarkScores.Count), 1)
+            : 0.0;
+
+        // Models by provider (group and order by count descending)
+        var modelsByProvider = models
+            .GroupBy(m => m.Provider)
+            .Select(g => new { Provider = g.Key, Count = g.Count() })
+            .OrderByDescending(x => x.Count)
+            .ToDictionary(x => x.Provider, x => x.Count);
+
         var metrics = new DashboardMetricsDto
         {
-            TotalActiveModels = models.Count,
-            ModelsNeedingUpdates = models.Count(m => m.UpdatedAt < sevenDaysAgo),
-            CriticalUpdates = models.Count(m => m.UpdatedAt < thirtyDaysAgo),
-            RecentlyUpdated = models.Count(m => m.UpdatedAt >= sevenDaysAgo),
-            PricingNeedingUpdates = models.Count(m =>
-                m.PricingUpdatedAt.HasValue && m.PricingUpdatedAt < thirtyDaysAgo),
+            // Story 2.12 metrics
+            TotalActiveModels = totalModels,
+            ModelsNeedingUpdates = modelsNeedingUpdates,
+            CriticalUpdates = criticalUpdates,
+            RecentlyUpdated = recentlyUpdated,
+            PricingNeedingUpdates = pricingNeedingUpdates,
+            // Story 2.13 Task 15 metrics
+            IncompleteModels = incompleteModels,
+            RecentAdditions = recentAdditions,
+            AverageBenchmarksPerModel = averageBenchmarks,
+            ModelsByProvider = modelsByProvider,
             CalculatedAt = now
         };
 
         _logger.LogInformation(
-            "Dashboard metrics calculated: {TotalModels} total, {Stale} stale, {Critical} critical",
+            "Dashboard metrics calculated: {TotalModels} total, {Stale} stale, {Critical} critical, {Incomplete} incomplete, {AvgBenchmarks} avg benchmarks",
             metrics.TotalActiveModels,
             metrics.ModelsNeedingUpdates,
-            metrics.CriticalUpdates);
+            metrics.CriticalUpdates,
+            metrics.IncompleteModels,
+            metrics.AverageBenchmarksPerModel);
 
         return Ok(new { data = metrics });
     }

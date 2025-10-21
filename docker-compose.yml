@@ -3,15 +3,17 @@ services:
     image: timescale/timescaledb:2.13.0-pg16
     container_name: llmpricing_postgres
     environment:
-      POSTGRES_USER: llmpricing
-      POSTGRES_PASSWORD: dev_password
-      POSTGRES_DB: llmpricing_dev
+      # Task 19.8: Environment variable placeholders for database configuration
+      # Override these via .env file or shell environment variables
+      POSTGRES_USER: ${POSTGRES_USER:-llmpricing}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dev_password}
+      POSTGRES_DB: ${POSTGRES_DB:-llmpricing_dev}
     ports:
-      - "5434:5432"
+      - "${POSTGRES_PORT:-5434}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U llmpricing"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-llmpricing}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -21,10 +23,28 @@ services:
   redis:
     image: redis:7-alpine
     container_name: llmpricing_redis
+    # Task 19.8: Support Redis password via environment variable (optional for dev)
+    command: >
+      sh -c "
+      if [ -n \"$REDIS_PASSWORD\" ]; then
+        redis-server --requirepass $REDIS_PASSWORD
+      else
+        redis-server
+      fi
+      "
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT:-6379}:6379"
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: >
+        sh -c "
+        if [ -n \"$REDIS_PASSWORD\" ]; then
+          redis-cli -a $REDIS_PASSWORD ping
+        else
+          redis-cli ping
+        fi
+        "
       interval: 10s
       timeout: 3s
       retries: 5

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using LlmTokenPrice.Application.DTOs;
 using LlmTokenPrice.Application.Services;
+using LlmTokenPrice.Infrastructure.Security;
 
 namespace LlmTokenPrice.API.Controllers.Admin;
 
@@ -12,6 +13,7 @@ namespace LlmTokenPrice.API.Controllers.Admin;
 /// <remarks>
 /// All endpoints require JWT authentication via [Authorize] attribute.
 /// Admin endpoints return ALL models (including inactive) and are NOT cached.
+/// Story 2.13 Task 17: All text inputs are sanitized to prevent XSS attacks.
 /// </remarks>
 [ApiController]
 [Route("api/admin/models")]
@@ -21,6 +23,7 @@ public class AdminModelsController : ControllerBase
 {
     private readonly IAdminModelService _adminModelService;
     private readonly IAdminBenchmarkService _adminBenchmarkService;
+    private readonly InputSanitizationService _sanitizer;
     private readonly ILogger<AdminModelsController> _logger;
 
     /// <summary>
@@ -28,14 +31,17 @@ public class AdminModelsController : ControllerBase
     /// </summary>
     /// <param name="adminModelService">The admin model service for data operations.</param>
     /// <param name="adminBenchmarkService">The admin benchmark service for score operations.</param>
+    /// <param name="sanitizer">Input sanitization service for XSS protection.</param>
     /// <param name="logger">Logger for request tracking and diagnostics.</param>
     public AdminModelsController(
         IAdminModelService adminModelService,
         IAdminBenchmarkService adminBenchmarkService,
+        InputSanitizationService sanitizer,
         ILogger<AdminModelsController> logger)
     {
         _adminModelService = adminModelService ?? throw new ArgumentNullException(nameof(adminModelService));
         _adminBenchmarkService = adminBenchmarkService ?? throw new ArgumentNullException(nameof(adminBenchmarkService));
+        _sanitizer = sanitizer ?? throw new ArgumentNullException(nameof(sanitizer));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 

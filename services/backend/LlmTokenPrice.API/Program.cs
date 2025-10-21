@@ -1,4 +1,5 @@
 using System.Text;
+using AspNetCoreRateLimit;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using LlmTokenPrice.Application.Services;
@@ -40,10 +41,19 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 // CORS configuration (must allow credentials for JWT cookies)
+// Task 18: Environment-based CORS configuration for production security
+var corsOrigins = builder.Configuration["CORS_ALLOWED_ORIGINS"]
+    ?? builder.Configuration["Cors:AllowedOrigins"]
+    ?? "http://localhost:5173"; // Fallback for development
+
+var allowedOrigins = corsOrigins
+    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+    .ToArray();
+
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
-        policy.WithOrigins("http://localhost:5173")
+        policy.WithOrigins(allowedOrigins)
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials()); // Required for HttpOnly cookies
@@ -116,6 +126,9 @@ builder.Services.AddScoped<IBenchmarkRepository, BenchmarkRepository>();
 // Domain services (transient - pure business logic, no state)
 builder.Services.AddTransient<BenchmarkNormalizer>();
 
+// Security services (Story 2.13 Task 17: XSS protection)
+builder.Services.AddSingleton<LlmTokenPrice.Infrastructure.Security.InputSanitizationService>();
+
 // Application services (scoped)
 builder.Services.AddScoped<IModelQueryService, ModelQueryService>();
 builder.Services.AddScoped<IAdminModelService, AdminModelService>();
@@ -124,8 +137,19 @@ builder.Services.AddScoped<CSVImportService>(); // Story 2.11: CSV bulk import s
 builder.Services.AddScoped<IAuthService, AuthService>();
 
 // JWT Authentication configuration
-var jwtSecret = builder.Configuration["Jwt:SecretKey"]
-    ?? throw new InvalidOperationException("JWT SecretKey is not configured in appsettings");
+// Task 19: Read JWT secret from environment variable (preferred) or configuration (fallback)
+var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET_KEY")
+    ?? builder.Configuration["Jwt:SecretKey"]
+    ?? throw new InvalidOperationException(
+        "JWT SecretKey is not configured. Set JWT_SECRET_KEY environment variable or Jwt:SecretKey in appsettings.json");
+
+// Validate JWT secret strength in production
+if (!builder.Environment.IsDevelopment() && jwtSecret.Length < 32)
+{
+    throw new InvalidOperationException(
+        "JWT SecretKey must be at least 32 characters for HS256 algorithm in production. " +
+        "Generate a secure key with: openssl rand -base64 48");
+}
 
 builder.Services.AddAuthentication(options =>
 {
@@ -157,7 +181,48 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+// Rate Limiting configuration (Story 2.13 Task 7: Protect admin endpoints from abuse)
+// Limits: 100 requests per minute per IP address for /api/admin/* endpoints
+builder.Services.AddMemoryCache();
+builder.Services.Configure<IpRateLimitOptions>(options =>
+{
+    options.EnableEndpointRateLimiting = true;
+    options.StackBlockedRequests = false;
+    options.HttpStatusCode = 429; // Too Many Requests
+    options.RealIpHeader = "X-Real-IP";
+    options.ClientIdHeader = "X-ClientId";
+
+    // General rate limit rules
+    options.GeneralRules = new List<RateLimitRule>
+    {
+        new RateLimitRule
+        {
+            Endpoint = "*/api/admin/*", // Apply to all admin endpoints
+            Period = "1m", // Per minute
+            Limit = 100 // 100 requests per minute
+        }
+    };
+
+    // Customize response when rate limit is exceeded
+    options.QuotaExceededResponse = new QuotaExceededResponse
+    {
+        Content = "{{\"error\": {{\"code\": \"RATE_LIMIT_EXCEEDED\", \"message\": \"API rate limit exceeded. Please try again later.\", \"retryAfter\": \"{0}\"}}}}",
+        ContentType = "application/json",
+        StatusCode = 429
+    };
+});
+
+// Inject counter and IP policy stores
+builder.Services.AddSingleton<IIpPolicyStore, MemoryCacheIpPolicyStore>();
+builder.Services.AddSingleton<IRateLimitCounterStore, MemoryCacheRateLimitCounterStore>();
+builder.Services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
+builder.Services.AddSingleton<IProcessingStrategy, AsyncKeyLockProcessingStrategy>();
+
 var app = builder.Build();
+
+// Log CORS configuration for debugging (after app is built)
+var logger = app.Services.GetRequiredService<ILogger<Program>>();
+logger.LogInformation("CORS configured with allowed origins: {Origins}", string.Join(", ", allowedOrigins));
 
 // Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
@@ -167,7 +232,43 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Security headers middleware (Story 2.13 Task 17: XSS protection via CSP)
+app.Use(async (context, next) =>
+{
+    // Content-Security-Policy: Prevents inline scripts and unsafe code execution
+    // This is a strict policy for a data API - no inline scripts allowed
+    context.Response.Headers.Append("Content-Security-Policy",
+        "default-src 'self'; " +
+        "script-src 'self'; " +
+        "style-src 'self' 'unsafe-inline'; " + // Allow inline styles for Swagger UI
+        "img-src 'self' data:; " +
+        "font-src 'self'; " +
+        "connect-src 'self'; " +
+        "frame-ancestors 'none'; " +
+        "base-uri 'self'; " +
+        "form-action 'self'");
+
+    // X-Content-Type-Options: Prevents MIME type sniffing
+    context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+
+    // X-Frame-Options: Prevents clickjacking attacks
+    context.Response.Headers.Append("X-Frame-Options", "DENY");
+
+    // X-XSS-Protection: Legacy XSS filter (for older browsers)
+    context.Response.Headers.Append("X-XSS-Protection", "1; mode=block");
+
+    // Referrer-Policy: Controls referer information sent with requests
+    context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
+
+    await next();
+});
+
 app.UseCors(); // Must be before UseAuthentication
+
+// Rate limiting middleware (Story 2.13 Task 7: Must be before UseAuthentication)
+app.UseIpRateLimiting();
+
 app.UseAuthentication(); // Must be before UseAuthorization
 app.UseAuthorization();
 app.MapControllers();
@@ -179,13 +280,13 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var context = services.GetRequiredService<AppDbContext>();
-        var logger = services.GetRequiredService<ILogger<Program>>();
-        await DbInitializer.InitializeAsync(context, logger);
+        var dbLogger = services.GetRequiredService<ILogger<Program>>();
+        await DbInitializer.InitializeAsync(context, dbLogger);
     }
     catch (Exception ex)
     {
-        var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "An error occurred while initializing the database");
+        var dbLogger = services.GetRequiredService<ILogger<Program>>();
+        dbLogger.LogError(ex, "An error occurred while initializing the database");
     }
 }
 

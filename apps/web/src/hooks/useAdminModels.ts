@@ -5,14 +5,16 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getAdminModels, deleteAdminModel } from '@/api/admin'
-import type { AdminModelDto } from '@/types/admin'
+import type { AdminModelDto, PaginationMetadata } from '@/types/admin'
 
 /**
- * Hook return type
+ * Hook return type (Story 2.13 Task 5.6: Added pagination support)
  */
 export interface UseAdminModelsResult {
   /** Array of admin models (including inactive), undefined while loading */
   data: AdminModelDto[] | undefined
+  /** Pagination metadata (only present when using pagination) */
+  pagination: PaginationMetadata | undefined
   /** Loading state (initial fetch) */
   isLoading: boolean
   /** Error object if request failed, null otherwise */
@@ -25,50 +27,50 @@ export interface UseAdminModelsResult {
 
 /**
  * Fetches all models for admin panel using TanStack Query
- * Supports optional search and filter parameters.
+ * Supports optional search, filter, and pagination parameters.
+ *
+ * Story 2.13 Task 5.6: Added pagination support (page, pageSize)
  *
  * Key features:
  * - Automatic caching with 5min stale time (matches public API pattern)
  * - Background refetch on window focus
  * - Automatic retry on failure (3 attempts)
  * - Returns all models (active, inactive, deprecated, beta)
+ * - Pagination support with metadata (totalItems, totalPages, hasNext/hasPrev)
  *
  * @param searchTerm - Optional search term to filter by model name or provider (case-insensitive)
  * @param provider - Optional provider filter (exact match, case-insensitive)
  * @param status - Optional status filter (exact match, case-insensitive)
- * @returns Query result with data, loading state, error, and refetch function
+ * @param page - Optional page number (1-indexed)
+ * @param pageSize - Optional page size (default: 20, max: 100)
+ * @returns Query result with data, pagination metadata, loading state, error, and refetch function
  *
- * @example
+ * @example Without pagination
  * ```tsx
- * function AdminModelsPage() {
- *   const { data: models, isLoading, error } = useAdminModels()
- *
- *   if (isLoading) return <div>Loading...</div>
- *   if (error) return <div>Error: {error.message}</div>
- *
- *   return <ModelList models={models} />
- * }
+ * const { data: models, isLoading } = useAdminModels()
  * ```
  *
- * @example With search
+ * @example With pagination
  * ```tsx
- * const [searchTerm, setSearchTerm] = useState('')
- * const { data: models } = useAdminModels(searchTerm)
+ * const { data: models, pagination, isLoading } = useAdminModels(undefined, undefined, undefined, 1, 20)
+ * // pagination = { currentPage: 1, pageSize: 20, totalItems: 150, totalPages: 8, hasNextPage: true, hasPreviousPage: false }
  * ```
  */
 export function useAdminModels(
   searchTerm?: string,
   provider?: string,
-  status?: string
+  status?: string,
+  page?: number,
+  pageSize?: number
 ): UseAdminModelsResult {
   const queryResult = useQuery({
-    // Query key includes search params to trigger refetch when they change
-    queryKey: ['admin', 'models', searchTerm, provider, status],
+    // Query key includes all params to trigger refetch when they change
+    queryKey: ['admin', 'models', searchTerm, provider, status, page, pageSize],
 
     // Query function calls the admin API client
     queryFn: async () => {
-      const response = await getAdminModels(searchTerm, provider, status)
-      return response.data // Extract data array from response
+      const response = await getAdminModels(searchTerm, provider, status, page, pageSize)
+      return response
     },
 
     // Caching strategy (matches public API pattern)
@@ -84,8 +86,21 @@ export function useAdminModels(
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
   })
 
+  // Extract data and pagination from response based on response type
+  // If pagination params were provided, response.data is PagedResult<AdminModelDto>
+  // Otherwise, response.data is AdminModelDto[]
+  const isPaginated = page !== undefined || pageSize !== undefined
+  const data = isPaginated
+    ? (queryResult.data?.data as { items: AdminModelDto[] })?.items
+    : (queryResult.data?.data as AdminModelDto[])
+
+  const pagination = isPaginated
+    ? (queryResult.data?.data as { pagination: PaginationMetadata })?.pagination
+    : undefined
+
   return {
-    data: queryResult.data,
+    data,
+    pagination,
     isLoading: queryResult.isLoading,
     error: queryResult.error,
     refetch: queryResult.refetch,

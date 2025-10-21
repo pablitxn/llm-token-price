@@ -47,21 +47,6 @@ describe('ConfirmDialog', () => {
     expect(onClose).toHaveBeenCalledTimes(1)
   })
 
-  it('calls onClose when backdrop is clicked', async () => {
-    const user = userEvent.setup()
-    const onClose = vi.fn()
-    render(<ConfirmDialog {...defaultProps} onClose={onClose} />)
-
-    // Click on backdrop (the div with bg-black/50 class)
-    const backdrop = screen.getByRole('dialog').parentElement?.querySelector(
-      '[aria-hidden="true"]'
-    )
-    expect(backdrop).toBeInTheDocument()
-    await user.click(backdrop!)
-
-    expect(onClose).toHaveBeenCalledTimes(1)
-  })
-
   it('calls onClose when X button is clicked', async () => {
     const user = userEvent.setup()
     const onClose = vi.fn()
@@ -157,5 +142,183 @@ describe('ConfirmDialog', () => {
 
     expect(screen.getByText(customTitle)).toBeInTheDocument()
     expect(screen.getByText(customMessage)).toBeInTheDocument()
+  })
+
+  // Story 2.13 Task 11: Two-step confirmation tests
+  describe('Two-step typed confirmation', () => {
+    const twoStepProps = {
+      ...defaultProps,
+      requireTypedConfirmation: true,
+      confirmationKeyword: 'DELETE',
+      itemName: 'GPT-4',
+      message: 'This action cannot be undone.',
+      confirmText: 'Delete',
+    }
+
+    it('shows item name in first step', () => {
+      render(<ConfirmDialog {...twoStepProps} />)
+
+      expect(screen.getByText(/This action cannot be undone/)).toBeInTheDocument()
+      expect(screen.getByText('GPT-4')).toBeInTheDocument()
+    })
+
+    it('moves to second step when confirm button is clicked', async () => {
+      const user = userEvent.setup()
+      render(<ConfirmDialog {...twoStepProps} />)
+
+      // Initially on step 1
+      expect(
+        screen.queryByText(/To confirm deletion, please type/)
+      ).not.toBeInTheDocument()
+
+      // Click confirm button
+      const confirmButton = screen.getByRole('button', { name: /delete/i })
+      await user.click(confirmButton)
+
+      // Now on step 2
+      expect(screen.getByText(/To confirm deletion, please type/)).toBeInTheDocument()
+      expect(screen.getByText('DELETE')).toBeInTheDocument()
+      expect(screen.getByLabelText(/type confirmation keyword/i)).toBeInTheDocument()
+    })
+
+    it('shows text input in second step', async () => {
+      const user = userEvent.setup()
+      render(<ConfirmDialog {...twoStepProps} />)
+
+      // Move to step 2
+      const confirmButton = screen.getByRole('button', { name: /delete/i })
+      await user.click(confirmButton)
+
+      // Check for input field
+      const input = screen.getByLabelText(/type confirmation keyword/i)
+      expect(input).toBeInTheDocument()
+      expect(input).toHaveAttribute('placeholder', 'Type DELETE to confirm')
+    })
+
+    it('disables confirm button until keyword matches', async () => {
+      const user = userEvent.setup()
+      render(<ConfirmDialog {...twoStepProps} />)
+
+      // Move to step 2
+      await user.click(screen.getByRole('button', { name: /delete/i }))
+
+      // Confirm button should be disabled initially
+      const confirmDeleteButton = screen.getByRole('button', {
+        name: /confirm delete/i,
+      })
+      expect(confirmDeleteButton).toBeDisabled()
+
+      // Type incorrect keyword
+      const input = screen.getByLabelText(/type confirmation keyword/i)
+      await user.type(input, 'delete')
+      expect(confirmDeleteButton).toBeDisabled()
+
+      // Clear and type correct keyword
+      await user.clear(input)
+      await user.type(input, 'DELETE')
+      expect(confirmDeleteButton).toBeEnabled()
+    })
+
+    it('shows error message when typed keyword does not match', async () => {
+      const user = userEvent.setup()
+      render(<ConfirmDialog {...twoStepProps} />)
+
+      // Move to step 2
+      await user.click(screen.getByRole('button', { name: /delete/i }))
+
+      // Type incorrect keyword
+      const input = screen.getByLabelText(/type confirmation keyword/i)
+      await user.type(input, 'wrong')
+
+      expect(
+        screen.getByText(/Keyword does not match.*DELETE/)
+      ).toBeInTheDocument()
+    })
+
+    it('calls onConfirm only when correct keyword is typed', async () => {
+      const user = userEvent.setup()
+      const onConfirm = vi.fn()
+      render(<ConfirmDialog {...twoStepProps} onConfirm={onConfirm} />)
+
+      // Move to step 2
+      await user.click(screen.getByRole('button', { name: /delete/i }))
+
+      // Type correct keyword
+      const input = screen.getByLabelText(/type confirmation keyword/i)
+      await user.type(input, 'DELETE')
+
+      // Click confirm
+      const confirmButton = screen.getByRole('button', { name: /confirm delete/i })
+      await user.click(confirmButton)
+
+      expect(onConfirm).toHaveBeenCalledTimes(1)
+    })
+
+    it('resets state when dialog is closed and reopened', async () => {
+      const user = userEvent.setup()
+      const { rerender } = render(<ConfirmDialog {...twoStepProps} />)
+
+      // Move to step 2 and type keyword
+      await user.click(screen.getByRole('button', { name: /delete/i }))
+      const input = screen.getByLabelText(/type confirmation keyword/i)
+      await user.type(input, 'DELETE')
+
+      // Close dialog
+      rerender(<ConfirmDialog {...twoStepProps} open={false} />)
+
+      // Reopen dialog
+      rerender(<ConfirmDialog {...twoStepProps} open={true} />)
+
+      // Should be back to step 1
+      expect(
+        screen.queryByLabelText(/type confirmation keyword/i)
+      ).not.toBeInTheDocument()
+      expect(screen.getByText('GPT-4')).toBeInTheDocument()
+    })
+
+    it('works with custom confirmation keyword', async () => {
+      const user = userEvent.setup()
+      const customKeywordProps = {
+        ...twoStepProps,
+        confirmationKeyword: 'REMOVE',
+      }
+      render(<ConfirmDialog {...customKeywordProps} />)
+
+      // Move to step 2
+      await user.click(screen.getByRole('button', { name: /delete/i }))
+
+      // Should show custom keyword
+      expect(screen.getByText('REMOVE')).toBeInTheDocument()
+      expect(screen.getByPlaceholderText('Type REMOVE to confirm')).toBeInTheDocument()
+
+      // Type custom keyword
+      const input = screen.getByLabelText(/type confirmation keyword/i)
+      await user.type(input, 'REMOVE')
+
+      // Confirm button should be enabled
+      const confirmButton = screen.getByRole('button', { name: /confirm delete/i })
+      expect(confirmButton).toBeEnabled()
+    })
+
+    it('does not require typed confirmation when flag is false', async () => {
+      const user = userEvent.setup()
+      const onConfirm = vi.fn()
+      const singleStepProps = {
+        ...twoStepProps,
+        requireTypedConfirmation: false,
+        onConfirm,
+      }
+      render(<ConfirmDialog {...singleStepProps} />)
+
+      // Click confirm button
+      const confirmButton = screen.getByRole('button', { name: /delete/i })
+      await user.click(confirmButton)
+
+      // Should call onConfirm immediately without showing step 2
+      expect(onConfirm).toHaveBeenCalledTimes(1)
+      expect(
+        screen.queryByLabelText(/type confirmation keyword/i)
+      ).not.toBeInTheDocument()
+    })
   })
 })

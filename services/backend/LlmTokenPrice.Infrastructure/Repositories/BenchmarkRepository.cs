@@ -242,4 +242,14 @@ public class BenchmarkRepository : IBenchmarkRepository
     {
         await _context.SaveChangesAsync(cancellationToken);
     }
+
+    /// <inheritdoc />
+    public async Task<ITransactionScope> BeginTransactionAsync(CancellationToken cancellationToken = default)
+    {
+        // Begin EF Core database transaction
+        var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+
+        // Wrap in ITransactionScope adapter (Hexagonal Architecture pattern)
+        return new TransactionScope(transaction);
+    }
 }

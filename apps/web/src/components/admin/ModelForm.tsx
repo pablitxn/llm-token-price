@@ -14,6 +14,8 @@ import { useUpdateModel } from '@/hooks/useUpdateModel'
 import { CapabilitiesSection } from './CapabilitiesSection'
 import type { AdminModelDto } from '@/types/admin'
 import { format } from 'date-fns'
+import { ErrorAlert } from '@/components/ui/ErrorAlert'
+import { mapErrorToUserMessage } from '@/utils/errorMessages'
 
 interface ModelFormProps {
   /** Form mode: 'create' for new models, 'edit' for existing models */
@@ -363,14 +365,8 @@ export function ModelForm({ mode, modelId, model = null }: ModelFormProps) {
       {/* Capabilities Section */}
       <CapabilitiesSection />
 
-      {/* Server Error Display */}
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-sm text-red-800">
-            {error.message || 'An error occurred while creating the model. Please try again.'}
-          </p>
-        </div>
-      )}
+      {/* Server Error Display - Story 2.13 Task 10: User-friendly error messages */}
+      {error && <ErrorAlert error={mapErrorToUserMessage(error)} />}
 
       {/* Form Actions */}
       <div className="flex items-center justify-end gap-4">

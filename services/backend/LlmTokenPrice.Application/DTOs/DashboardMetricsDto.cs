@@ -2,7 +2,7 @@ namespace LlmTokenPrice.Application.DTOs;
 
 /// <summary>
 /// Data Transfer Object for admin dashboard metrics.
-/// Story 2.12: Provides data freshness metrics for admin monitoring.
+/// Story 2.12 + 2.13 Task 15: Comprehensive data quality and freshness metrics.
 /// </summary>
 /// <remarks>
 /// Returned by GET /api/admin/dashboard/metrics endpoint.
@@ -10,6 +10,8 @@ namespace LlmTokenPrice.Application.DTOs;
 /// </remarks>
 public record DashboardMetricsDto
 {
+    // Story 2.12 - Data Freshness Metrics
+
     /// <summary>
     /// Total number of active models in the system (IsActive = true).
     /// </summary>
@@ -38,6 +40,33 @@ public record DashboardMetricsDto
     /// Based on PricingUpdatedAt timestamp, critical for pricing platform accuracy.
     /// </summary>
     public required int PricingNeedingUpdates { get; init; }
+
+    // Story 2.13 Task 15 - Additional Data Quality Metrics
+
+    /// <summary>
+    /// Count of models with fewer than 3 benchmark scores (incomplete models).
+    /// Minimum 3 benchmarks recommended for meaningful quality comparisons.
+    /// </summary>
+    public required int IncompleteModels { get; init; }
+
+    /// <summary>
+    /// Count of models added in the last 7 days (recent additions).
+    /// Based on CreatedAt timestamp, indicates catalog growth.
+    /// </summary>
+    public required int RecentAdditions { get; init; }
+
+    /// <summary>
+    /// Average number of benchmark scores per model across all active models.
+    /// Indicates overall benchmark coverage quality. Rounded to 1 decimal place.
+    /// </summary>
+    public required double AverageBenchmarksPerModel { get; init; }
+
+    /// <summary>
+    /// Breakdown of model counts by provider (e.g., OpenAI: 15, Anthropic: 8).
+    /// Dictionary ordered by count descending (most models first).
+    /// Helps identify which providers dominate the catalog.
+    /// </summary>
+    public required Dictionary<string, int> ModelsByProvider { get; init; }
 
     /// <summary>
     /// Timestamp when these metrics were calculated (UTC).
