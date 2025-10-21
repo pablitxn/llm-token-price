@@ -466,6 +466,15 @@ public class AdminBenchmarkServiceTests
         // GIVEN: Valid score request with no duplicate
         var modelId = Guid.NewGuid();
         var benchmarkId = Guid.NewGuid();
+        var model = new Model
+        {
+            Id = modelId,
+            Name = "GPT-4",
+            Provider = "OpenAI",
+            InputPricePer1M = 30m,
+            OutputPricePer1M = 60m,
+            IsActive = true
+        };
         var benchmark = new Benchmark
         {
             Id = benchmarkId,
@@ -488,6 +497,10 @@ public class AdminBenchmarkServiceTests
             Verified = true,
             Notes = "Official test results"
         };
+
+        _adminModelRepositoryMock
+            .Setup(r => r.GetByIdAsync(modelId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model);
 
         _benchmarkRepositoryMock
             .Setup(r => r.GetScoreAsync(modelId, benchmarkId, It.IsAny<CancellationToken>()))
@@ -532,6 +545,27 @@ public class AdminBenchmarkServiceTests
         var modelId = Guid.NewGuid();
         var benchmarkId = Guid.NewGuid();
 
+        var model = new Model
+        {
+            Id = modelId,
+            Name = "TestModel",
+            Provider = "TestProvider",
+            InputPricePer1M = 10m,
+            OutputPricePer1M = 20m,
+            IsActive = true
+        };
+
+        var benchmark = new Benchmark
+        {
+            Id = benchmarkId,
+            BenchmarkName = "MMLU",
+            Category = BenchmarkCategory.Reasoning,
+            TypicalRangeMin = 0,
+            TypicalRangeMax = 100,
+            WeightInQaps = 0.30m,
+            IsActive = true
+        };
+
         var existingScore = new BenchmarkScore
         {
             Id = Guid.NewGuid(),
@@ -546,6 +580,14 @@ public class AdminBenchmarkServiceTests
             BenchmarkId = benchmarkId,
             Score = 90.0m
         };
+
+        _adminModelRepositoryMock
+            .Setup(r => r.GetByIdAsync(modelId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model);
+
+        _benchmarkRepositoryMock
+            .Setup(r => r.GetByIdAsync(benchmarkId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(benchmark);
 
         _benchmarkRepositoryMock
             .Setup(r => r.GetScoreAsync(modelId, benchmarkId, It.IsAny<CancellationToken>()))
@@ -579,6 +621,15 @@ public class AdminBenchmarkServiceTests
         // GIVEN: Benchmark with specific range and score to normalize
         var modelId = Guid.NewGuid();
         var benchmarkId = Guid.NewGuid();
+        var model = new Model
+        {
+            Id = modelId,
+            Name = "TestModel",
+            Provider = "TestProvider",
+            InputPricePer1M = 10m,
+            OutputPricePer1M = 20m,
+            IsActive = true
+        };
         var benchmark = new Benchmark
         {
             Id = benchmarkId,
@@ -595,6 +646,10 @@ public class AdminBenchmarkServiceTests
             BenchmarkId = benchmarkId,
             Score = score
         };
+
+        _adminModelRepositoryMock
+            .Setup(r => r.GetByIdAsync(modelId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model);
 
         _benchmarkRepositoryMock
             .Setup(r => r.GetScoreAsync(modelId, benchmarkId, It.IsAny<CancellationToken>()))
@@ -631,11 +686,25 @@ public class AdminBenchmarkServiceTests
         var modelId = Guid.NewGuid();
         var benchmarkId = Guid.NewGuid();
 
+        var model = new Model
+        {
+            Id = modelId,
+            Name = "TestModel",
+            Provider = "TestProvider",
+            InputPricePer1M = 10m,
+            OutputPricePer1M = 20m,
+            IsActive = true
+        };
+
         var request = new CreateBenchmarkScoreDto
         {
             BenchmarkId = benchmarkId,
             Score = 87.5m
         };
+
+        _adminModelRepositoryMock
+            .Setup(r => r.GetByIdAsync(modelId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model);
 
         _benchmarkRepositoryMock
             .Setup(r => r.GetScoreAsync(modelId, benchmarkId, It.IsAny<CancellationToken>()))
@@ -646,10 +715,12 @@ public class AdminBenchmarkServiceTests
             .ReturnsAsync((Benchmark?)null); // Benchmark doesn't exist
 
         // WHEN: Attempting to add score with non-existent benchmark
-        // THEN: Should throw KeyNotFoundException
-        await Assert.ThrowsAsync<KeyNotFoundException>(
+        // THEN: Should throw InvalidOperationException
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
             async () => await _service.AddScoreAsync(modelId, request)
         );
+
+        exception.Message.Should().Contain("Benchmark");
     }
 
     #endregion
@@ -837,6 +908,10 @@ public class AdminBenchmarkServiceTests
             .ReturnsAsync(existingScore);
 
         _benchmarkRepositoryMock
+            .Setup(r => r.GetByIdAsync(benchmarkId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(benchmark);
+
+        _benchmarkRepositoryMock
             .Setup(r => r.UpdateScoreAsync(It.IsAny<BenchmarkScore>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
@@ -900,6 +975,19 @@ public class AdminBenchmarkServiceTests
         // GIVEN: Existing score
         var modelId = Guid.NewGuid();
         var scoreId = Guid.NewGuid();
+
+        var existingScore = new BenchmarkScore
+        {
+            Id = scoreId,
+            ModelId = modelId,
+            BenchmarkId = Guid.NewGuid(),
+            Score = 85.0m,
+            NormalizedScore = 0.85m
+        };
+
+        _benchmarkRepositoryMock
+            .Setup(r => r.GetScoreByIdAsync(scoreId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingScore);
 
         _benchmarkRepositoryMock
             .Setup(r => r.DeleteScoreAsync(scoreId, It.IsAny<CancellationToken>()))
