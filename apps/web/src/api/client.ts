@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { getCurrentLanguage } from '@/components/admin/LanguageSelector'
 
 export const apiClient = axios.create({
   baseURL: '/api', // Vite proxy forwards to http://localhost:5000/api
@@ -9,9 +10,14 @@ export const apiClient = axios.create({
   withCredentials: true, // Required to send/receive cookies with cross-origin requests
 })
 
-// Request interceptor (placeholder for future auth)
+// Request interceptor - Adds Accept-Language header and auth token
 apiClient.interceptors.request.use(
   (config) => {
+    // Add Accept-Language header for localized validation messages (Story 2.13 Task 13.6)
+    // Backend RequestLocalizationMiddleware reads this header to set CultureInfo
+    const language = getCurrentLanguage()
+    config.headers['Accept-Language'] = language
+
     // Add auth token here when implemented
     // const token = localStorage.getItem('token')
     // if (token) {
