@@ -6,8 +6,8 @@
 
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { formatDistanceToNow } from 'date-fns'
 import type { AdminModelDto } from '@/types/admin'
+import { RelativeTime } from '@/components/ui/RelativeTime'
 
 /**
  * Props for ModelList component
@@ -43,14 +43,6 @@ function formatPrice(price: number, currency: string = 'USD'): string {
   return `${symbol}${price.toFixed(6)}`
 }
 
-/**
- * Formats a timestamp as relative time (e.g., "2 days ago")
- * @param timestamp - ISO 8601 timestamp
- * @returns Relative time string
- */
-function formatRelativeTime(timestamp: string): string {
-  return formatDistanceToNow(new Date(timestamp), { addSuffix: true })
-}
 
 /**
  * Returns Tailwind CSS classes for status badge
@@ -229,7 +221,7 @@ export function ModelList({ models, searchTerm, onDeleteClick }: ModelListProps)
                 )}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {formatRelativeTime(model.updatedAt)}
+                <RelativeTime date={model.updatedAt} showIcon />
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                 <button

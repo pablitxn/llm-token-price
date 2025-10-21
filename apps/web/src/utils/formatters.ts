@@ -70,7 +70,7 @@ export function getDaysSince(date: string | Date): number {
  */
 export function getFreshnessStatus(date: string | Date): 'fresh' | 'stale' | 'critical' {
   const days = getDaysSince(date)
-  if (days <= 7) return 'fresh'
-  if (days <= 30) return 'stale'
+  if (days < 7) return 'fresh'
+  if (days < 30) return 'stale'
   return 'critical'
 }

@@ -2,7 +2,7 @@ import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import CSVImport from '../CSVImport';
+import { CSVImport } from '../CSVImport';
 import { importBenchmarkCSV } from '@/api/admin';
 
 // Mock the API client
