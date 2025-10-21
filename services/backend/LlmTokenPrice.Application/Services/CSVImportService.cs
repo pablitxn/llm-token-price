@@ -80,6 +80,13 @@ public class CSVImportService
                     skipDuplicates,
                     cancellationToken);
 
+                // Check WasSkipped BEFORE IsValid (duplicates have IsValid=false by default)
+                if (validationResult.WasSkipped)
+                {
+                    result.SkippedDuplicates++;
+                    continue;
+                }
+
                 if (!validationResult.IsValid)
                 {
                     errors.Add(new FailedRowDto
@@ -88,12 +95,6 @@ public class CSVImportService
                         Error = validationResult.Error!,
                         Data = RowToDictionary(row)
                     });
-                    continue;
-                }
-
-                if (validationResult.WasSkipped)
-                {
-                    result.SkippedDuplicates++;
                     continue;
                 }
 

@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using CsvHelper.Configuration.Attributes;
 
 namespace LlmTokenPrice.Application.DTOs;
 
@@ -11,7 +12,9 @@ public class BenchmarkScoreImportRow
 {
     /// <summary>
     /// Row number in CSV file (for error reporting)
+    /// Not mapped from CSV - set programmatically
     /// </summary>
+    [Ignore]
     public int RowNumber { get; set; }
 
     /// <summary>
@@ -19,6 +22,7 @@ public class BenchmarkScoreImportRow
     /// Column: model_id
     /// </summary>
     [Required]
+    [Name("model_id")]
     public string ModelId { get; set; } = string.Empty;
 
     /// <summary>
@@ -27,6 +31,7 @@ public class BenchmarkScoreImportRow
     /// Case-insensitive lookup against database
     /// </summary>
     [Required]
+    [Name("benchmark_name")]
     public string BenchmarkName { get; set; } = string.Empty;
 
     /// <summary>
@@ -34,6 +39,7 @@ public class BenchmarkScoreImportRow
     /// Column: score
     /// </summary>
     [Required]
+    [Name("score")]
     public string Score { get; set; } = string.Empty;
 
     /// <summary>
@@ -41,6 +47,7 @@ public class BenchmarkScoreImportRow
     /// Column: max_score
     /// If provided, must be >= score
     /// </summary>
+    [Name("max_score")]
     public string? MaxScore { get; set; }
 
     /// <summary>
@@ -48,6 +55,7 @@ public class BenchmarkScoreImportRow
     /// Column: test_date
     /// Optional, defaults to current date if not provided
     /// </summary>
+    [Name("test_date")]
     public string? TestDate { get; set; }
 
     /// <summary>
@@ -55,6 +63,7 @@ public class BenchmarkScoreImportRow
     /// Column: source_url
     /// Must be valid URL format if provided
     /// </summary>
+    [Name("source_url")]
     public string? SourceUrl { get; set; }
 
     /// <summary>
@@ -62,6 +71,7 @@ public class BenchmarkScoreImportRow
     /// Column: verified
     /// Defaults to false if not provided
     /// </summary>
+    [Name("verified")]
     public string? Verified { get; set; }
 
     /// <summary>
@@ -69,5 +79,6 @@ public class BenchmarkScoreImportRow
     /// Column: notes
     /// Max length validated by FluentValidation
     /// </summary>
+    [Name("notes")]
     public string? Notes { get; set; }
 }

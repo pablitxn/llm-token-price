@@ -94,6 +94,14 @@ public class Model
     /// </summary>
     public DateTime UpdatedAt { get; set; }
 
+    /// <summary>
+    /// Timestamp when pricing fields (InputPricePer1M, OutputPricePer1M) were last updated.
+    /// Optional field - null if pricing has never been updated since creation.
+    /// Enables pricing-specific freshness tracking separate from general model updates.
+    /// Indexed for pricing staleness queries (e.g., "models with pricing >30 days old").
+    /// </summary>
+    public DateTime? PricingUpdatedAt { get; set; }
+
     // Navigation Properties (one-way relationships from Model)
 
     /// <summary>

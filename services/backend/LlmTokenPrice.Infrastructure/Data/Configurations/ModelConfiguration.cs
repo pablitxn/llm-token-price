@@ -33,6 +33,10 @@ public class ModelConfiguration : IEntityTypeConfiguration<Model>
             .HasDatabaseName("idx_models_updated")
             .IsDescending(); // DESC for "recently updated" queries
 
+        builder.HasIndex(m => m.PricingUpdatedAt)
+            .HasDatabaseName("idx_models_pricing_updated")
+            .IsDescending(); // DESC for "recently price-updated" queries
+
         // Unique Constraints
         builder.HasIndex(m => new { m.Name, m.Provider })
             .IsUnique()
@@ -66,6 +70,9 @@ public class ModelConfiguration : IEntityTypeConfiguration<Model>
 
         builder.Property(m => m.UpdatedAt)
             .IsRequired();
+
+        builder.Property(m => m.PricingUpdatedAt)
+            .IsRequired(false); // Optional - null until first pricing update
 
         // Column Configurations - Decimal Precision
         builder.Property(m => m.InputPricePer1M)

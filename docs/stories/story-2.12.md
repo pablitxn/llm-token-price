@@ -430,7 +430,7 @@ const columns = [
 
 ### Context Reference
 
-<!-- Path(s) to story context XML will be added here by context workflow -->
+- [Story Context 2.12](story-context-2.12.xml) - Generated 2025-10-21
 
 ### Agent Model Used
 
