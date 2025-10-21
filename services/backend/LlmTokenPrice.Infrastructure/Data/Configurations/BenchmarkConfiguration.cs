@@ -43,15 +43,19 @@ public class BenchmarkConfiguration : IEntityTypeConfiguration<Benchmark>
         builder.Property(b => b.Description)
             .HasMaxLength(1000);
 
-        // Enum stored as string in database
+        // Enum stored as string in database (lowercase conversion for PostgreSQL conventions)
         builder.Property(b => b.Category)
             .IsRequired()
-            .HasConversion<string>()
+            .HasConversion(
+                v => v.ToString().ToLowerInvariant(),  // To database: Reasoning → reasoning
+                v => (BenchmarkCategory)Enum.Parse(typeof(BenchmarkCategory), v, true))  // From database: reasoning → Reasoning
             .HasMaxLength(20);
 
         builder.Property(b => b.Interpretation)
             .IsRequired()
-            .HasConversion<string>()
+            .HasConversion(
+                v => v.ToString().ToSnakeCase(),  // To database: HigherBetter → higher_better
+                v => (BenchmarkInterpretation)Enum.Parse(typeof(BenchmarkInterpretation), v.ToPascalCase(), true))  // From database: higher_better → HigherBetter
             .HasMaxLength(20);
 
         // Column Configurations - Decimal Precision for typical ranges

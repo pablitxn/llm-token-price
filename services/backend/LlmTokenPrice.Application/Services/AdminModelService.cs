@@ -216,11 +216,11 @@ public class AdminModelService : IAdminModelService
             UpdatedAt = model.UpdatedAt,
             PricingUpdatedAt = model.PricingUpdatedAt, // Story 2.12
             Capabilities = model.Capability == null ? null : MapCapabilityToDto(model.Capability),
-            TopBenchmarks = model.BenchmarkScores
+            TopBenchmarks = model.BenchmarkScores?
                 .OrderByDescending(bs => bs.Score)
                 .Take(3)
                 .Select(MapBenchmarkScoreToDto)
-                .ToList()
+                .ToList() ?? new List<BenchmarkScoreDto>()
         };
     }
 
@@ -254,7 +254,7 @@ public class AdminModelService : IAdminModelService
     {
         return new BenchmarkScoreDto
         {
-            BenchmarkName = benchmarkScore.Benchmark.BenchmarkName,
+            BenchmarkName = benchmarkScore.Benchmark?.BenchmarkName ?? "Unknown",
             Score = benchmarkScore.Score,
             MaxScore = benchmarkScore.MaxScore,
             NormalizedScore = benchmarkScore.NormalizedScore
