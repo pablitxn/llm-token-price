@@ -2,6 +2,7 @@ using System.Text;
 using AspNetCoreRateLimit;
 using FluentValidation;
 using FluentValidation.AspNetCore;
+using LlmTokenPrice.Application.Interfaces;
 using LlmTokenPrice.Application.Services;
 using LlmTokenPrice.Application.Validators;
 using LlmTokenPrice.Domain.Repositories;
