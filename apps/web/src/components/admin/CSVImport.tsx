@@ -9,6 +9,7 @@ import { useState, useRef, DragEvent, ChangeEvent } from 'react'
 import { Upload, FileText, AlertCircle, Download } from 'lucide-react'
 import { useImportBenchmarkCSV } from '@/hooks/useBenchmarkScores'
 import { ImportResults } from './ImportResults'
+import { ImportProgress } from './ImportProgress'
 
 /**
  * CSV bulk import component for benchmark scores
@@ -196,8 +197,32 @@ export function CSVImport() {
         </ul>
       </div>
 
-      {/* Upload Section - Only show if no results yet */}
-      {!importMutation.isSuccess && (
+      {/* All-or-Nothing Import Notice (Story 2.13 Task 6.6) */}
+      <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+        <div className="flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <h3 className="text-sm font-medium text-amber-900 mb-1">All-or-Nothing Import Policy</h3>
+            <p className="text-sm text-amber-800">
+              <strong>All rows must be valid for the import to succeed.</strong> If any single row
+              contains errors (invalid model ID, unknown benchmark, etc.), the entire import will be
+              rejected and NO rows will be added to the database. Please review your CSV file
+              carefully before uploading.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Progress Indicator - Story 2.13 Task 12: Enhanced progress indication */}
+      {importMutation.isPending && selectedFile && (
+        <ImportProgress
+          fileName={selectedFile.name}
+          fileSize={selectedFile.size}
+        />
+      )}
+
+      {/* Upload Section - Only show if not processing and no results yet */}
+      {!importMutation.isPending && !importMutation.isSuccess && (
         <div className="bg-white shadow rounded-lg p-6">
           {/* Drag and Drop Zone */}
           <div
@@ -268,36 +293,10 @@ export function CSVImport() {
             <button
               type="button"
               onClick={handleUpload}
-              disabled={!selectedFile || importMutation.isPending}
+              disabled={!selectedFile}
               className="px-6 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {importMutation.isPending ? (
-                <span className="flex items-center gap-2">
-                  <svg
-                    className="animate-spin h-4 w-4 text-white"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    />
-                  </svg>
-                  Processing...
-                </span>
-              ) : (
-                'Upload and Import'
-              )}
+              Upload and Import
             </button>
           </div>
 

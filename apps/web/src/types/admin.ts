@@ -148,19 +148,27 @@ export interface CSVImportResultDto {
   errors: FailedRow[]
 }
 
-// ========== Dashboard Metrics Types (Story 2.12) ==========
+// ========== Dashboard Metrics Types (Story 2.12 + 2.13 Task 15) ==========
 
 /**
  * Dashboard metrics response DTO
  * Matches backend DashboardMetricsDto structure
- * Provides freshness statistics for admin dashboard
+ * Provides freshness and data quality statistics for admin dashboard
  */
 export interface DashboardMetricsDto {
+  // Story 2.12 - Data Freshness Metrics
   totalActiveModels: number
   modelsNeedingUpdates: number // Models >7 days old
   criticalUpdates: number // Models >30 days old
   recentlyUpdated: number // Models <7 days old
   pricingNeedingUpdates: number // Models with pricing >30 days old
+
+  // Story 2.13 Task 15 - Additional Data Quality Metrics
+  incompleteModels: number // Models with <3 benchmark scores
+  recentAdditions: number // Models added in last 7 days
+  averageBenchmarksPerModel: number // Average benchmark coverage
+  modelsByProvider: Record<string, number> // Provider breakdown: { "OpenAI": 15, "Anthropic": 8, ... }
+
   calculatedAt: string // ISO 8601
 }
 
@@ -168,3 +176,34 @@ export interface DashboardMetricsDto {
  * Dashboard metrics API response type
  */
 export type DashboardMetricsResponse = AdminApiResponse<DashboardMetricsDto>
+
+// ========== Pagination Types (Story 2.13 Task 5) ==========
+
+/**
+ * Pagination metadata for a paged result
+ * Matches backend PaginationMetadata structure
+ * Provides information for rendering pagination controls in the UI
+ */
+export interface PaginationMetadata {
+  currentPage: number // 1-indexed
+  pageSize: number
+  totalItems: number
+  totalPages: number
+  hasNextPage: boolean
+  hasPreviousPage: boolean
+}
+
+/**
+ * Generic paginated result wrapper for list endpoints
+ * Matches backend PagedResult<T> structure
+ */
+export interface PagedResult<T> {
+  items: T[]
+  pagination: PaginationMetadata
+}
+
+/**
+ * Admin models paginated response type
+ * Used when pagination parameters (page, pageSize) are provided to GET /api/admin/models
+ */
+export type AdminModelsPagedResponse = AdminApiResponse<PagedResult<AdminModelDto>>

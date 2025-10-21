@@ -1,6 +1,7 @@
 import { apiClient } from './client'
 import type {
   AdminModelsResponse,
+  AdminModelsPagedResponse,
   AdminModelResponse,
   CreateModelRequest,
   BenchmarkScoresResponse,
@@ -78,30 +79,44 @@ export const checkAuthStatus = async (): Promise<boolean> => {
 
 /**
  * Fetches all models for admin panel (including inactive)
- * Supports search by name/provider and filtering by status.
+ * Supports search by name/provider, filtering by status, and pagination.
  * Admin endpoint returns ALL models and is NEVER cached.
+ *
+ * Story 2.13 Task 5.6: Added pagination support (page, pageSize)
  *
  * @param searchTerm - Optional search term to filter by model name or provider (case-insensitive)
  * @param provider - Optional provider filter (exact match, case-insensitive)
  * @param status - Optional status filter (exact match, case-insensitive)
- * @returns Promise resolving to admin models response (all models including inactive, ordered by updatedAt DESC)
+ * @param page - Optional page number (1-indexed, requires pageSize)
+ * @param pageSize - Optional page size (default: 20, max: 100)
+ * @returns Promise resolving to paginated response if page/pageSize provided, otherwise full list
  * @throws Error if request fails (401 Unauthorized if not authenticated, 500 Internal Server Error)
  */
 export const getAdminModels = async (
   searchTerm?: string,
   provider?: string,
-  status?: string
-): Promise<AdminModelsResponse> => {
+  status?: string,
+  page?: number,
+  pageSize?: number
+): Promise<AdminModelsResponse | AdminModelsPagedResponse> => {
   const params = new URLSearchParams()
   if (searchTerm) params.append('searchTerm', searchTerm)
   if (provider) params.append('provider', provider)
   if (status) params.append('status', status)
+  if (page !== undefined) params.append('page', page.toString())
+  if (pageSize !== undefined) params.append('pageSize', pageSize.toString())
 
   const queryString = params.toString()
   const url = queryString ? `/admin/models?${queryString}` : '/admin/models'
 
-  const response = await apiClient.get<AdminModelsResponse>(url)
-  return response.data
+  // Response type differs based on whether pagination is used
+  if (page !== undefined || pageSize !== undefined) {
+    const response = await apiClient.get<AdminModelsPagedResponse>(url)
+    return response.data
+  } else {
+    const response = await apiClient.get<AdminModelsResponse>(url)
+    return response.data
+  }
 }
 
 /**

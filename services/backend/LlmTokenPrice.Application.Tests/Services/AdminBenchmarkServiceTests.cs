@@ -1,10 +1,12 @@
 using FluentAssertions;
 using LlmTokenPrice.Application.DTOs;
 using LlmTokenPrice.Application.Services;
+using LlmTokenPrice.Domain.Caching;
 using LlmTokenPrice.Domain.Entities;
 using LlmTokenPrice.Domain.Enums;
 using LlmTokenPrice.Domain.Repositories;
 using LlmTokenPrice.Domain.Services;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
@@ -20,6 +22,8 @@ public class AdminBenchmarkServiceTests
     private readonly Mock<IBenchmarkRepository> _benchmarkRepositoryMock;
     private readonly Mock<IAdminModelRepository> _adminModelRepositoryMock;
     private readonly BenchmarkNormalizer _benchmarkNormalizer;
+    private readonly Mock<ICacheRepository> _cacheRepositoryMock;
+    private readonly Mock<ILogger<AdminBenchmarkService>> _loggerMock;
     private readonly AdminBenchmarkService _service;
 
     public AdminBenchmarkServiceTests()
@@ -27,10 +31,19 @@ public class AdminBenchmarkServiceTests
         _benchmarkRepositoryMock = new Mock<IBenchmarkRepository>();
         _adminModelRepositoryMock = new Mock<IAdminModelRepository>();
         _benchmarkNormalizer = new BenchmarkNormalizer();
+        _cacheRepositoryMock = new Mock<ICacheRepository>();
+        _loggerMock = new Mock<ILogger<AdminBenchmarkService>>();
+
+        // Setup cache mock to return 0 invalidated keys by default
+        _cacheRepositoryMock.Setup(x => x.RemoveByPatternAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(0);
+
         _service = new AdminBenchmarkService(
             _benchmarkRepositoryMock.Object,
             _adminModelRepositoryMock.Object,
-            _benchmarkNormalizer);
+            _benchmarkNormalizer,
+            _cacheRepositoryMock.Object,
+            _loggerMock.Object);
     }
 
     #region CreateBenchmarkAsync Tests

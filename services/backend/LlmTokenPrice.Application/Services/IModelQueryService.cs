@@ -55,4 +55,25 @@ public interface IModelQueryService
     Task<PagedResult<ModelDto>> GetAllModelsPagedAsync(
         PaginationParams pagination,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Retrieves all active models with cache hit/miss information.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token for async operation.</param>
+    /// <returns>CachedResult containing model list and FromCache flag.</returns>
+    /// <remarks>
+    /// Story 2.13 Task 4.3: Enables controller to report accurate Meta.Cached value.
+    /// Returns FromCache=true if data retrieved from Redis, false if from database.
+    /// </remarks>
+    Task<CachedResult<List<ModelDto>>> GetAllModelsWithCacheInfoAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Retrieves a paginated list of models with cache hit/miss information.
+    /// </summary>
+    /// <param name="pagination">Pagination parameters.</param>
+    /// <param name="cancellationToken">Cancellation token for async operation.</param>
+    /// <returns>CachedResult containing paged models and FromCache flag.</returns>
+    Task<CachedResult<PagedResult<ModelDto>>> GetAllModelsPagedWithCacheInfoAsync(
+        PaginationParams pagination,
+        CancellationToken cancellationToken = default);
 }

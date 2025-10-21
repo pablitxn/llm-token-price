@@ -130,17 +130,19 @@ public class ModelsController : ControllerBase
                     });
                 }
 
-                var pagedResult = await _queryService.GetAllModelsPagedAsync(pagination, cancellationToken);
+                // Story 2.13 Task 4.3: Use new method that returns cache hit/miss info
+                var cachedResult = await _queryService.GetAllModelsPagedWithCacheInfoAsync(pagination, cancellationToken);
 
-                _logger.LogInformation("Successfully retrieved page {Page} ({Count}/{Total} models)",
-                    pagination.Page, pagedResult.Items.Count, pagedResult.Pagination.TotalItems);
+                _logger.LogInformation("Successfully retrieved page {Page} ({Count}/{Total} models) from {Source}",
+                    pagination.Page, cachedResult.Data.Items.Count, cachedResult.Data.Pagination.TotalItems,
+                    cachedResult.FromCache ? "cache" : "database");
 
                 var response = new ApiResponse<PagedResult<ModelDto>>
                 {
-                    Data = pagedResult,
+                    Data = cachedResult.Data,
                     Meta = new ApiResponseMeta
                     {
-                        Cached = false,
+                        Cached = cachedResult.FromCache, // Accurate cache reporting
                         Timestamp = DateTime.UtcNow
                     }
                 };
@@ -149,20 +151,21 @@ public class ModelsController : ControllerBase
             }
             else
             {
-                // Original behavior - return all models
+                // Story 2.13 Task 4.3: Use new method that returns cache hit/miss info
                 _logger.LogInformation("Fetching all active models (no pagination)");
 
-                var models = await _queryService.GetAllModelsAsync(cancellationToken);
+                var cachedResult = await _queryService.GetAllModelsWithCacheInfoAsync(cancellationToken);
 
-                _logger.LogInformation("Successfully retrieved {Count} models", models.Count);
+                _logger.LogInformation("Successfully retrieved {Count} models from {Source}",
+                    cachedResult.Data.Count, cachedResult.FromCache ? "cache" : "database");
 
                 var response = new ApiResponse<List<ModelDto>>
                 {
-                    Data = models,
+                    Data = cachedResult.Data,
                     Meta = new ApiResponseMeta
                     {
-                        Count = models.Count,
-                        Cached = false,
+                        Count = cachedResult.Data.Count,
+                        Cached = cachedResult.FromCache, // Accurate cache reporting
                         Timestamp = DateTime.UtcNow
                     }
                 };

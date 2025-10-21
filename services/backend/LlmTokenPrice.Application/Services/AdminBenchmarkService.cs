@@ -1,8 +1,10 @@
 using LlmTokenPrice.Application.DTOs;
+using LlmTokenPrice.Domain.Caching;
 using LlmTokenPrice.Domain.Entities;
 using LlmTokenPrice.Domain.Enums;
 using LlmTokenPrice.Domain.Repositories;
 using LlmTokenPrice.Domain.Services;
+using Microsoft.Extensions.Logging;
 
 namespace LlmTokenPrice.Application.Services;
 
@@ -23,6 +25,8 @@ public class AdminBenchmarkService : IAdminBenchmarkService
     private readonly IBenchmarkRepository _benchmarkRepository;
     private readonly IAdminModelRepository _adminModelRepository;
     private readonly BenchmarkNormalizer _benchmarkNormalizer;
+    private readonly ICacheRepository _cacheRepository;
+    private readonly ILogger<AdminBenchmarkService> _logger;
 
     /// <summary>
     /// Initializes a new instance of the AdminBenchmarkService.
@@ -30,14 +34,20 @@ public class AdminBenchmarkService : IAdminBenchmarkService
     /// <param name="benchmarkRepository">The benchmark repository for data access.</param>
     /// <param name="adminModelRepository">The admin model repository for model validation.</param>
     /// <param name="benchmarkNormalizer">The domain service for score normalization.</param>
+    /// <param name="cacheRepository">The cache repository for invalidation.</param>
+    /// <param name="logger">The logger for tracking cache operations.</param>
     public AdminBenchmarkService(
         IBenchmarkRepository benchmarkRepository,
         IAdminModelRepository adminModelRepository,
-        BenchmarkNormalizer benchmarkNormalizer)
+        BenchmarkNormalizer benchmarkNormalizer,
+        ICacheRepository cacheRepository,
+        ILogger<AdminBenchmarkService> logger)
     {
         _benchmarkRepository = benchmarkRepository ?? throw new ArgumentNullException(nameof(benchmarkRepository));
         _adminModelRepository = adminModelRepository ?? throw new ArgumentNullException(nameof(adminModelRepository));
         _benchmarkNormalizer = benchmarkNormalizer ?? throw new ArgumentNullException(nameof(benchmarkNormalizer));
+        _cacheRepository = cacheRepository ?? throw new ArgumentNullException(nameof(cacheRepository));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     /// <inheritdoc />
@@ -105,8 +115,10 @@ public class AdminBenchmarkService : IAdminBenchmarkService
         await _benchmarkRepository.AddAsync(benchmark, cancellationToken);
         await _benchmarkRepository.SaveChangesAsync(cancellationToken);
 
-        // 5. TODO: Invalidate cache patterns (cache:benchmarks:*, cache:qaps:*, cache:bestvalue:*)
-        // Requires ICacheRepository.RemoveByPatternAsync() to be implemented
+        // 5. Invalidate benchmark and model caches (Story 2.13 Task 4.5)
+        await InvalidateBenchmarkCachesAsync(cancellationToken);
+        _logger.LogInformation("Created benchmark {BenchmarkId} ({Name}) and invalidated caches",
+            benchmark.Id, benchmark.BenchmarkName);
 
         return benchmark.Id;
     }
@@ -149,8 +161,11 @@ public class AdminBenchmarkService : IAdminBenchmarkService
         await _benchmarkRepository.UpdateAsync(benchmark, cancellationToken);
         await _benchmarkRepository.SaveChangesAsync(cancellationToken);
 
-        // 5. TODO: Invalidate cache patterns (especially if WeightInQaps changed)
-        // Requires ICacheRepository.RemoveByPatternAsync() to be implemented
+        // 5. Invalidate benchmark and model caches (Story 2.13 Task 4.5)
+        //    Critical if WeightInQaps changed - affects QAPS calculations
+        await InvalidateBenchmarkCachesAsync(cancellationToken);
+        _logger.LogInformation("Updated benchmark {BenchmarkId} ({Name}) and invalidated caches",
+            id, benchmark.BenchmarkName);
 
         // 6. Return updated benchmark as DTO
         return MapToDto(benchmark);
@@ -171,8 +186,12 @@ public class AdminBenchmarkService : IAdminBenchmarkService
         // 2. Perform soft delete (sets IsActive = false)
         var deleted = await _benchmarkRepository.DeleteAsync(id, cancellationToken);
 
-        // 3. TODO: Invalidate cache patterns
-        // Requires ICacheRepository.RemoveByPatternAsync() to be implemented
+        if (deleted)
+        {
+            // 3. Invalidate benchmark and model caches (Story 2.13 Task 4.5)
+            await InvalidateBenchmarkCachesAsync(cancellationToken);
+            _logger.LogInformation("Deleted benchmark {BenchmarkId} and invalidated caches", id);
+        }
 
         return deleted;
     }
@@ -411,11 +430,52 @@ public class AdminBenchmarkService : IAdminBenchmarkService
         // 2. Delete score (hard delete)
         var deleted = await _benchmarkRepository.DeleteScoreAsync(scoreId, cancellationToken);
 
-        // 3. TODO: Invalidate cache patterns
-        // - cache:model:{modelId}:*
-        // - cache:bestvalue:*
-        // - cache:qaps:*
+        if (deleted)
+        {
+            // 3. Invalidate benchmark and model caches (Story 2.13 Task 4.5)
+            await InvalidateBenchmarkCachesAsync(cancellationToken);
+            _logger.LogInformation("Deleted benchmark score {ScoreId} for model {ModelId} and invalidated caches",
+                scoreId, modelId);
+        }
 
         return deleted;
+    }
+
+    /// <summary>
+    /// Invalidates all cache patterns related to benchmarks and model data.
+    /// Called after any benchmark or score mutation (create/update/delete).
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <remarks>
+    /// Story 2.13 Task 4.5: Cache invalidation on admin CRUD operations.
+    ///
+    /// Invalidates:
+    /// - cache:models:* (model list and details - benchmarks affect top 3 scores)
+    /// - cache:qaps:* (QAPS calculations depend on benchmark weights)
+    /// - cache:bestvalue:* (best value calculations depend on QAPS)
+    /// </remarks>
+    private async Task InvalidateBenchmarkCachesAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            // Invalidate all model caches (benchmark changes affect model data)
+            var modelsInvalidated = await _cacheRepository.RemoveByPatternAsync(
+                CacheConfiguration.InvalidationPatterns.AllModels,
+                cancellationToken);
+
+            // Invalidate all QAPS calculation caches (benchmark weights affect QAPS)
+            var qapsInvalidated = await _cacheRepository.RemoveByPatternAsync(
+                CacheConfiguration.InvalidationPatterns.AllQaps,
+                cancellationToken);
+
+            _logger.LogInformation(
+                "Cache invalidation complete: {ModelsInvalidated} model keys, {QapsInvalidated} QAPS keys",
+                modelsInvalidated, qapsInvalidated);
+        }
+        catch (Exception ex)
+        {
+            // Log error but don't throw - cache invalidation failure shouldn't break CRUD operations
+            _logger.LogError(ex, "Cache invalidation failed after benchmark mutation. Cache may be stale.");
+        }
     }
 }

@@ -232,4 +232,23 @@ public interface IBenchmarkRepository
     /// Typically used after AddAsync/UpdateAsync operations to commit transaction.
     /// </remarks>
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Begins a new database transaction scope for all-or-nothing operations.
+    /// Story 2.13 Task 6: Enables transactional CSV import (rollback on any error).
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token for async operation.</param>
+    /// <returns>Transaction scope that must be committed or will auto-rollback on disposal.</returns>
+    /// <remarks>
+    /// Use this for operations that must be atomic (all succeed or all fail).
+    /// Example: CSV import where all rows must be valid before importing any.
+    /// IMPORTANT: Caller must await CommitAsync() to persist changes, otherwise transaction rolls back.
+    /// Usage pattern:
+    /// <code>
+    /// await using var transaction = await repository.BeginTransactionAsync();
+    /// // ... perform operations ...
+    /// await transaction.CommitAsync(); // Commit if all succeeded
+    /// </code>
+    /// </remarks>
+    Task<ITransactionScope> BeginTransactionAsync(CancellationToken cancellationToken = default);
 }

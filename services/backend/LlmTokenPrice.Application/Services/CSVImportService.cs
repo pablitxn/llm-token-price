@@ -10,10 +10,15 @@ using Microsoft.Extensions.Logging;
 namespace LlmTokenPrice.Application.Services;
 
 /// <summary>
-/// Service for importing benchmark scores via CSV file upload (Story 2.11)
-/// Implements partial success pattern: valid rows imported even if some fail
+/// Service for importing benchmark scores via CSV file upload (Story 2.11, Story 2.13 Task 6)
+/// Implements all-or-nothing transaction pattern: validates ALL rows before importing ANY (atomic operation)
 /// Uses streaming with CsvHelper to handle large files efficiently
 /// </summary>
+/// <remarks>
+/// Story 2.13 Task 6: Changed from partial success to all-or-nothing using database transactions.
+/// If ANY row fails validation, NO rows are imported (rollback).
+/// Uses ITransactionScope from Domain layer to maintain Hexagonal Architecture (no Infrastructure dependency).
+/// </remarks>
 public class CSVImportService
 {
     private readonly IModelRepository _modelRepository;
@@ -34,13 +39,17 @@ public class CSVImportService
     }
 
     /// <summary>
-    /// Imports benchmark scores from CSV stream
-    /// Validates each row, imports valid scores in batch, returns detailed results
+    /// Imports benchmark scores from CSV stream using all-or-nothing transaction pattern
+    /// Story 2.13 Task 6: Validates ALL rows first, only imports if ALL are valid (atomic operation)
     /// </summary>
     /// <param name="fileStream">CSV file stream</param>
     /// <param name="skipDuplicates">If true, skips rows where model+benchmark already exists. If false, updates existing scores.</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Import result with success/failure counts and error details</returns>
+    /// <remarks>
+    /// IMPORTANT: This method uses all-or-nothing pattern. If ANY row fails validation,
+    /// NO rows are imported. The entire transaction is rolled back.
+    /// </remarks>
     public async Task<CSVImportResultDto> ImportBenchmarkScoresAsync(
         Stream fileStream,
         bool skipDuplicates = true,
@@ -52,7 +61,7 @@ public class CSVImportService
 
         try
         {
-            // Task 4: Parse CSV with CsvHelper
+            // PHASE 1: Parse and validate ALL rows (no database changes yet)
             using var reader = new StreamReader(fileStream);
             var config = new CsvConfiguration(CultureInfo.InvariantCulture)
             {
@@ -69,7 +78,7 @@ public class CSVImportService
 
             _logger.LogInformation("Parsing CSV: {RowCount} rows found", rows.Count);
 
-            // Task 5 & 6: Validate and transform each row
+            // Validate ALL rows first (Task 6.2: collect all errors before importing)
             for (int i = 0; i < rows.Count; i++)
             {
                 var row = rows[i];
@@ -101,32 +110,62 @@ public class CSVImportService
                 validScores.Add(validationResult.Score!);
             }
 
-            // Task 6: Batch insert valid scores
-            if (validScores.Any())
+            // Task 6.2: If ANY row failed validation, return errors WITHOUT importing anything
+            if (errors.Any())
             {
-                _logger.LogInformation("Importing {Count} valid benchmark scores", validScores.Count);
+                result.FailedImports = errors.Count;
+                result.SuccessfulImports = 0;
+                result.Errors = errors;
 
-                await _benchmarkRepository.BulkAddScoresAsync(validScores, cancellationToken);
-                await _benchmarkRepository.SaveChangesAsync(cancellationToken);
-
-                result.SuccessfulImports = validScores.Count;
-
-                // TODO Story 2.11: Invalidate cache patterns
-                // await _cacheService.RemoveByPatternAsync("cache:model:*:v1");
-                // await _cacheService.RemoveByPatternAsync("cache:benchmarks:*");
-                // await _cacheService.RemoveByPatternAsync("cache:qaps:*");
-                // await _cacheService.RemoveByPatternAsync("cache:bestvalue:*");
-
-                _logger.LogInformation(
-                    "CSV import completed: {Successful} successful, {Failed} failed, {Skipped} skipped",
-                    result.SuccessfulImports,
+                _logger.LogWarning(
+                    "CSV import aborted due to validation errors: {Failed} failed rows out of {Total} total rows. " +
+                    "All-or-nothing policy: NO rows were imported.",
                     errors.Count,
-                    result.SkippedDuplicates);
+                    result.TotalRows);
+
+                return result;
             }
 
-            result.FailedImports = errors.Count;
-            result.Errors = errors;
+            // PHASE 2: All rows valid - import using database transaction (Task 6.1 & 6.3)
+            if (validScores.Any())
+            {
+                _logger.LogInformation(
+                    "All {Count} rows validated successfully. Starting transactional import...",
+                    validScores.Count);
 
+                // Task 6.1: Wrap import in database transaction (all-or-nothing)
+                // Uses ITransactionScope from Domain layer (Hexagonal Architecture)
+                await using var transaction = await _benchmarkRepository.BeginTransactionAsync(cancellationToken);
+
+                try
+                {
+                    await _benchmarkRepository.BulkAddScoresAsync(validScores, cancellationToken);
+                    await _benchmarkRepository.SaveChangesAsync(cancellationToken);
+
+                    // Task 6.3: Only commit if all rows successfully imported
+                    await transaction.CommitAsync(cancellationToken);
+
+                    result.SuccessfulImports = validScores.Count;
+                    result.FailedImports = 0;
+
+                    _logger.LogInformation(
+                        "CSV import transaction committed successfully: {Successful} rows imported, {Skipped} duplicates skipped",
+                        result.SuccessfulImports,
+                        result.SkippedDuplicates);
+                }
+                catch (Exception ex)
+                {
+                    // Task 6.2: Rollback transaction on any database error
+                    await transaction.RollbackAsync(cancellationToken);
+
+                    _logger.LogError(ex,
+                        "CSV import transaction rolled back due to database error. NO rows were imported.");
+
+                    throw; // Re-throw to be caught by outer catch block
+                }
+            }
+
+            result.Errors = errors;
             return result;
         }
         catch (Exception ex)

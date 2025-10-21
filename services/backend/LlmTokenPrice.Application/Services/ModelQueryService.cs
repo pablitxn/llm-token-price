@@ -237,4 +237,94 @@ public class ModelQueryService : IModelQueryService
             NormalizedScore = benchmarkScore.NormalizedScore
         };
     }
+
+    /// <inheritdoc />
+    public async Task<CachedResult<List<ModelDto>>> GetAllModelsWithCacheInfoAsync(
+        CancellationToken cancellationToken = default)
+    {
+        // 1. Try to get from cache
+        var cached = await _cacheRepository.GetAsync<List<ModelDto>>(
+            CacheConfiguration.ModelListKey,
+            cancellationToken);
+
+        if (cached != null)
+        {
+            _logger.LogDebug("Cache hit for model list ({Count} models)", cached.Count);
+            return CachedResult<List<ModelDto>>.FromCacheHit(cached);
+        }
+
+        // 2. Cache miss - fetch from database
+        _logger.LogDebug("Cache miss for model list - fetching from database");
+        var models = await _modelRepository.GetAllAsync(cancellationToken);
+        var dtos = models.Select(MapToDto).ToList();
+
+        // 3. Cache result with 1 hour TTL
+        await _cacheRepository.SetAsync(
+            CacheConfiguration.ModelListKey,
+            dtos,
+            CacheConfiguration.DefaultTtl.ApiResponses,
+            cancellationToken);
+
+        _logger.LogInformation("Cached model list ({Count} models) with TTL {TTL}",
+            dtos.Count, CacheConfiguration.DefaultTtl.ApiResponses);
+
+        return CachedResult<List<ModelDto>>.FromCacheMiss(dtos);
+    }
+
+    /// <inheritdoc />
+    public async Task<CachedResult<PagedResult<ModelDto>>> GetAllModelsPagedWithCacheInfoAsync(
+        PaginationParams pagination,
+        CancellationToken cancellationToken = default)
+    {
+        // Validate pagination parameters
+        if (!pagination.IsValid())
+        {
+            throw new ArgumentException("Invalid pagination parameters", nameof(pagination));
+        }
+
+        // 1. Build cache key with pagination parameters
+        var cacheKey = CacheConfiguration.ModelListKey + pagination.ToCacheKeySuffix();
+
+        // 2. Try to get from cache
+        var cached = await _cacheRepository.GetAsync<PagedResult<ModelDto>>(cacheKey, cancellationToken);
+
+        if (cached != null)
+        {
+            _logger.LogDebug("Cache hit for model list page {Page} size {PageSize}",
+                pagination.Page, pagination.PageSize);
+            return CachedResult<PagedResult<ModelDto>>.FromCacheHit(cached);
+        }
+
+        // 3. Cache miss - fetch from database
+        _logger.LogDebug("Cache miss for model list page {Page} size {PageSize} - fetching from database",
+            pagination.Page, pagination.PageSize);
+
+        var (models, totalCount) = await _modelRepository.GetAllPagedAsync(
+            pagination.Page,
+            pagination.PageSize,
+            cancellationToken);
+
+        // 4. Map entities to DTOs
+        var dtos = models.Select(MapToDto).ToList();
+
+        // 5. Create paged result
+        var pagedResult = PagedResult<ModelDto>.Create(
+            dtos,
+            pagination.Page,
+            pagination.PageSize,
+            totalCount);
+
+        // 6. Cache result with 1 hour TTL (same as non-paginated list)
+        await _cacheRepository.SetAsync(
+            cacheKey,
+            pagedResult,
+            CacheConfiguration.DefaultTtl.ApiResponses,
+            cancellationToken);
+
+        _logger.LogInformation(
+            "Cached model list page {Page} size {PageSize} ({Count}/{Total} models) with TTL {TTL}",
+            pagination.Page, pagination.PageSize, dtos.Count, totalCount, CacheConfiguration.DefaultTtl.ApiResponses);
+
+        return CachedResult<PagedResult<ModelDto>>.FromCacheMiss(pagedResult);
+    }
 }
