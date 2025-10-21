@@ -1,5 +1,6 @@
 using FluentValidation;
 using LlmTokenPrice.Application.DTOs;
+using LlmTokenPrice.Application.Resources;
 
 namespace LlmTokenPrice.Application.Validators;
 
@@ -26,11 +27,11 @@ public class CreateBenchmarkScoreValidator : AbstractValidator<CreateBenchmarkSc
     {
         // BenchmarkId validation
         RuleFor(x => x.BenchmarkId)
-            .NotEmpty().WithMessage("Benchmark is required");
+            .NotEmpty().WithMessage(ValidationMessages.BenchmarkRequired);
 
         // Score validation
         RuleFor(x => x.Score)
-            .NotNull().WithMessage("Score is required");
+            .NotNull().WithMessage(ValidationMessages.ScoreRequired);
 
         // MaxScore validation (only when provided)
         When(x => x.MaxScore.HasValue, () =>
@@ -38,7 +39,7 @@ public class CreateBenchmarkScoreValidator : AbstractValidator<CreateBenchmarkSc
             // Cross-field validation: Score <= MaxScore
             RuleFor(x => x)
                 .Must(x => x.Score <= x.MaxScore!.Value)
-                .WithMessage("Score cannot exceed max score")
+                .WithMessage(ValidationMessages.ScoreExceedsMaxScore)
                 .WithName(nameof(CreateBenchmarkScoreDto.Score));
         });
 
@@ -48,13 +49,13 @@ public class CreateBenchmarkScoreValidator : AbstractValidator<CreateBenchmarkSc
         When(x => !string.IsNullOrWhiteSpace(x.SourceUrl), () =>
         {
             RuleFor(x => x.SourceUrl)
-                .Must(BeValidUrl).WithMessage("Source URL must be a valid URL format")
+                .Must(BeValidUrl).WithMessage(ValidationMessages.SourceUrlInvalidFormat)
                 .When(x => !string.IsNullOrWhiteSpace(x.SourceUrl));
         });
 
         // Notes validation (optional, max length)
         RuleFor(x => x.Notes)
-            .MaximumLength(500).WithMessage("Notes cannot exceed 500 characters")
+            .MaximumLength(500).WithMessage(ValidationMessages.NotesMaxLength)
             .When(x => !string.IsNullOrEmpty(x.Notes));
 
         // Verified field: No validation needed (boolean with default)

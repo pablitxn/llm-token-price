@@ -251,8 +251,119 @@ public class AdminBenchmarksController : ControllerBase
     }
 
     /// <summary>
+    /// Imports multiple benchmark scores via CSV file upload with real-time progress updates via SSE (Story 2.13 Task 12).
+    /// Streams progress events using Server-Sent Events (text/event-stream).
+    /// Supports cancellation by client disconnect.
+    /// </summary>
+    /// <param name="file">CSV file with columns: model_id, benchmark_name, score, max_score, test_date, source_url, verified, notes</param>
+    /// <param name="cancellationToken">Cancellation token for async operation (auto-linked to client disconnect)</param>
+    /// <returns>
+    /// 200 OK: text/event-stream with real-time progress updates
+    /// 400 Bad Request: No file uploaded, invalid file format
+    /// 401 Unauthorized: Missing or invalid JWT token
+    /// 413 Payload Too Large: File exceeds 10MB limit (handled by [RequestSizeLimit] attribute)
+    /// </returns>
+    /// <remarks>
+    /// SSE Event Format:
+    /// data: {"phase":"Validating","totalRows":120,"processedRows":45,"successCount":40,"failureCount":5,"skippedCount":0,"percentComplete":37.5,"message":"Validating row 45 of 120..."}
+    ///
+    /// Phases: Parsing → Validating → Importing → Complete/Cancelled/Failed
+    /// Client receives real-time updates every 10 rows during validation.
+    /// Final event has Phase="Complete" with FinalResult containing detailed error list.
+    /// </remarks>
+    [HttpPost("import-csv-stream")]
+    [RequestSizeLimit(10_485_760)] // 10MB file size limit
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
+    public async Task ImportBenchmarkScoresCSVStream(
+        IFormFile file,
+        CancellationToken cancellationToken = default)
+    {
+        // Validate file presence
+        if (file == null || file.Length == 0)
+        {
+            _logger.LogWarning("Admin: CSV import stream attempted with no file");
+            Response.StatusCode = StatusCodes.Status400BadRequest;
+            await Response.WriteAsync("{\"error\":\"No file uploaded\"}", cancellationToken);
+            return;
+        }
+
+        // Validate file extension
+        if (!file.FileName.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
+        {
+            _logger.LogWarning("Admin: CSV import stream attempted with invalid file format: {FileName}", file.FileName);
+            Response.StatusCode = StatusCodes.Status400BadRequest;
+            await Response.WriteAsync("{\"error\":\"File must be CSV format\"}", cancellationToken);
+            return;
+        }
+
+        // Configure SSE response
+        Response.ContentType = "text/event-stream";
+        Response.Headers.Append("Cache-Control", "no-cache");
+        Response.Headers.Append("X-Accel-Buffering", "no"); // Disable nginx buffering
+
+        _logger.LogInformation(
+            "Admin: Starting CSV import stream - File: {FileName}, Size: {FileSize} bytes",
+            file.FileName,
+            file.Length);
+
+        // Create progress reporter that sends SSE events
+        var progress = new Progress<CSVImportProgressDto>(async progressData =>
+        {
+            try
+            {
+                var json = System.Text.Json.JsonSerializer.Serialize(progressData, new System.Text.Json.JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
+                });
+
+                // SSE format: "data: {json}\n\n"
+                await Response.WriteAsync($"data: {json}\n\n", cancellationToken);
+                await Response.Body.FlushAsync(cancellationToken);
+
+                _logger.LogDebug("Admin: CSV import progress - Phase: {Phase}, Processed: {Processed}/{Total}",
+                    progressData.Phase, progressData.ProcessedRows, progressData.TotalRows);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Admin: Failed to send SSE progress update (client likely disconnected)");
+            }
+        });
+
+        try
+        {
+            // Process CSV file with progress reporting
+            using var stream = file.OpenReadStream();
+            var result = await _csvImportService.ImportBenchmarkScoresAsync(
+                stream,
+                skipDuplicates: true,
+                progress: progress,
+                cancellationToken);
+
+            _logger.LogInformation(
+                "Admin: CSV import stream completed - Total: {Total}, Successful: {Success}, Failed: {Failed}, Skipped: {Skipped}",
+                result.TotalRows,
+                result.SuccessfulImports,
+                result.FailedImports,
+                result.SkippedDuplicates);
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogWarning("Admin: CSV import stream cancelled by client disconnect or user action - File: {FileName}", file.FileName);
+            // Client disconnected - SSE stream naturally ends
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Admin: Fatal error during CSV import stream - File: {FileName}", file.FileName);
+            // Error already reported via progress, SSE stream ends
+        }
+    }
+
+    /// <summary>
     /// Imports multiple benchmark scores via CSV file upload (Story 2.11 AC#3).
     /// Validates each row, imports valid scores in batch, returns detailed results.
+    /// NOTE: For real-time progress updates, use POST /api/admin/benchmarks/import-csv-stream (Story 2.13 Task 12)
     /// </summary>
     /// <param name="file">CSV file with columns: model_id, benchmark_name, score, max_score, test_date, source_url, verified, notes</param>
     /// <param name="cancellationToken">Cancellation token for async operation</param>
@@ -302,6 +413,7 @@ public class AdminBenchmarksController : ControllerBase
             var result = await _csvImportService.ImportBenchmarkScoresAsync(
                 stream,
                 skipDuplicates: true, // Task 9: Default to skip duplicates
+                progress: null, // No progress tracking for this endpoint (use import-csv-stream for progress)
                 cancellationToken);
 
             _logger.LogInformation(

@@ -1,92 +1,58 @@
 /**
  * ImportProgress Component
- * Multi-stage progress indicator for CSV import operations
+ * Real-time progress indicator for CSV import operations via SSE
  * Story 2.13 Task 12: Add CSV import progress indicator
  *
- * Shows staged progress for better UX:
- * - Stage 1: Uploading file (0-33%)
- * - Stage 2: Validating data (33-66%)
- * - Stage 3: Importing records (66-100%)
+ * Displays live progress updates from backend:
+ * - Parsing → Validating → Importing → Complete
+ * - Real row counts (processed/total)
+ * - Success/failure/skipped counters
+ * - Cancellation support
  */
 
-import { useEffect, useState } from 'react'
-import { Upload, CheckCircle2, Database } from 'lucide-react'
+import { Upload, CheckCircle2, Database, XCircle } from 'lucide-react'
+
+export interface CSVImportProgressData {
+  phase: string // "Parsing" | "Validating" | "Importing" | "Complete" | "Cancelled" | "Failed"
+  totalRows: number
+  processedRows: number
+  successCount: number
+  failureCount: number
+  skippedCount: number
+  percentComplete: number
+  message: string
+}
 
 export interface ImportProgressProps {
   /** File being imported */
   fileName: string
   /** File size in bytes */
   fileSize: number
-  /** Estimated number of rows (optional) */
-  estimatedRows?: number
+  /** Real-time progress data from SSE stream */
+  progressData?: CSVImportProgressData
+  /** Cancel import callback */
+  onCancel?: () => void
 }
 
-type Stage = 'uploading' | 'validating' | 'importing'
+type Stage = 'parsing' | 'validating' | 'importing' | 'complete'
 
 interface ProgressStage {
   id: Stage
   label: string
   icon: typeof Upload
-  minProgress: number
-  maxProgress: number
 }
 
 const STAGES: ProgressStage[] = [
-  { id: 'uploading', label: 'Uploading file', icon: Upload, minProgress: 0, maxProgress: 33 },
-  { id: 'validating', label: 'Validating data', icon: CheckCircle2, minProgress: 33, maxProgress: 66 },
-  { id: 'importing', label: 'Importing records', icon: Database, minProgress: 66, maxProgress: 100 },
+  { id: 'parsing', label: 'Parsing CSV', icon: Upload },
+  { id: 'validating', label: 'Validating data', icon: CheckCircle2 },
+  { id: 'importing', label: 'Importing records', icon: Database },
 ]
 
 /**
- * Multi-stage progress indicator for CSV imports
- * Provides better perceived performance by showing distinct processing stages
+ * Real-time progress indicator for CSV imports using SSE updates from backend
+ * Displays actual progress instead of simulated stages
  */
-export function ImportProgress({ fileName, fileSize, estimatedRows }: ImportProgressProps) {
-  const [currentStage, setCurrentStage] = useState<Stage>('uploading')
-  const [progress, setProgress] = useState(0)
-
-  // Simulate stage progression (since backend is synchronous)
-  useEffect(() => {
-    // Stage 1: Uploading (0-33%) - 1 second
-    const uploadTimer = setTimeout(() => {
-      setCurrentStage('validating')
-    }, 1000)
-
-    // Stage 2: Validating (33-66%) - 1.5 seconds
-    const validateTimer = setTimeout(() => {
-      setCurrentStage('importing')
-    }, 2500)
-
-    return () => {
-      clearTimeout(uploadTimer)
-      clearTimeout(validateTimer)
-    }
-  }, [])
-
-  // Animate progress bar smoothly within current stage
-  useEffect(() => {
-    const stage = STAGES.find(s => s.id === currentStage)
-    if (!stage) return
-
-    const duration = 1000 // 1 second per stage
-    const interval = 16 // ~60fps
-    const steps = duration / interval
-    const progressPerStep = (stage.maxProgress - stage.minProgress) / steps
-
-    let currentProgress = stage.minProgress
-
-    const timer = setInterval(() => {
-      currentProgress += progressPerStep
-      if (currentProgress >= stage.maxProgress) {
-        currentProgress = stage.maxProgress
-        clearInterval(timer)
-      }
-      setProgress(Math.min(currentProgress, stage.maxProgress))
-    }, interval)
-
-    return () => clearInterval(timer)
-  }, [currentStage])
-
+export function ImportProgress({ fileName, fileSize, progressData, onCancel }: ImportProgressProps) {
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return '0 Bytes'
     const k = 1024
@@ -94,6 +60,20 @@ export function ImportProgress({ fileName, fileSize, estimatedRows }: ImportProg
     const i = Math.floor(Math.log(bytes) / Math.log(k))
     return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i]
   }
+
+  // Determine current stage from progress data
+  const getCurrentStage = (): Stage => {
+    if (!progressData) return 'parsing'
+    const phase = progressData.phase.toLowerCase()
+    if (phase === 'parsing') return 'parsing'
+    if (phase === 'validating') return 'validating'
+    if (phase === 'importing') return 'importing'
+    return 'complete'
+  }
+
+  const currentStage = getCurrentStage()
+  const progress = progressData?.percentComplete ?? 0
+  const message = progressData?.message ?? 'Starting import...'
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-6 space-y-6" role="status" aria-live="polite">
@@ -104,17 +84,29 @@ export function ImportProgress({ fileName, fileSize, estimatedRows }: ImportProg
           <p className="mt-1 text-sm text-gray-600">{fileName}</p>
           <div className="mt-2 flex items-center gap-4 text-xs text-gray-500">
             <span>Size: {formatFileSize(fileSize)}</span>
-            {estimatedRows && <span>Est. {estimatedRows} rows</span>}
+            {progressData && progressData.totalRows > 0 && (
+              <span>{progressData.totalRows} rows</span>
+            )}
           </div>
         </div>
+        {/* Cancel Button (Task 12.6) */}
+        {onCancel && currentStage !== 'complete' && (
+          <button
+            type="button"
+            onClick={onCancel}
+            className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-red-700 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+            aria-label="Cancel import"
+          >
+            <XCircle className="w-4 h-4" />
+            Cancel
+          </button>
+        )}
       </div>
 
-      {/* Progress Bar */}
+      {/* Progress Bar (Task 12.3, 12.4) */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-gray-700">
-            {STAGES.find(s => s.id === currentStage)?.label}
-          </span>
+          <span className="text-sm font-medium text-gray-700">{message}</span>
           <span className="text-sm font-medium text-gray-900">{Math.round(progress)}%</span>
         </div>
         <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
@@ -128,6 +120,31 @@ export function ImportProgress({ fileName, fileSize, estimatedRows }: ImportProg
             aria-label={`Import progress: ${Math.round(progress)}%`}
           />
         </div>
+        {/* Real-time counters (Task 12.4) */}
+        {progressData && progressData.totalRows > 0 && (
+          <div className="mt-3 flex items-center justify-between text-xs">
+            <span className="text-gray-600">
+              Processing row {progressData.processedRows} of {progressData.totalRows}
+            </span>
+            <div className="flex items-center gap-4">
+              {progressData.successCount > 0 && (
+                <span className="text-green-600 font-medium">
+                  ✓ {progressData.successCount} valid
+                </span>
+              )}
+              {progressData.failureCount > 0 && (
+                <span className="text-red-600 font-medium">
+                  ✗ {progressData.failureCount} failed
+                </span>
+              )}
+              {progressData.skippedCount > 0 && (
+                <span className="text-yellow-600 font-medium">
+                  ⊘ {progressData.skippedCount} skipped
+                </span>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Stage Indicators */}
@@ -135,7 +152,9 @@ export function ImportProgress({ fileName, fileSize, estimatedRows }: ImportProg
         {STAGES.map((stage) => {
           const Icon = stage.icon
           const isActive = stage.id === currentStage
-          const isCompleted = STAGES.findIndex(s => s.id === currentStage) > STAGES.findIndex(s => s.id === stage.id)
+          const currentIndex = STAGES.findIndex(s => s.id === currentStage)
+          const stageIndex = STAGES.findIndex(s => s.id === stage.id)
+          const isCompleted = currentIndex > stageIndex
 
           return (
             <div
@@ -176,7 +195,11 @@ export function ImportProgress({ fileName, fileSize, estimatedRows }: ImportProg
       {/* Helper Text */}
       <div className="pt-2 border-t border-gray-200">
         <p className="text-xs text-gray-500">
-          Please wait while we process your import. This may take a few moments depending on the file size.
+          {progressData?.phase === 'Cancelled'
+            ? 'Import cancelled. No rows were imported.'
+            : progressData?.phase === 'Failed'
+              ? 'Import failed. Please check the error message and try again.'
+              : 'Please wait while we process your import. You can cancel anytime by clicking the Cancel button.'}
         </p>
       </div>
     </div>

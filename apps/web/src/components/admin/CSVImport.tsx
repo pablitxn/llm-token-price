@@ -7,7 +7,7 @@
 
 import { useState, useRef, DragEvent, ChangeEvent } from 'react'
 import { Upload, FileText, AlertCircle, Download } from 'lucide-react'
-import { useImportBenchmarkCSV } from '@/hooks/useBenchmarkScores'
+import { useCSVImportSSE } from '@/hooks/useCSVImportSSE'
 import { ImportResults } from './ImportResults'
 import { ImportProgress } from './ImportProgress'
 
@@ -25,7 +25,8 @@ export function CSVImport() {
   const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const importMutation = useImportBenchmarkCSV()
+  // Task 12: Use SSE hook for real-time progress updates
+  const { isImporting, progressData, result, error, startImport, cancelImport, reset } = useCSVImportSSE()
 
   /**
    * Handle file selection from input or drop
@@ -51,7 +52,7 @@ export function CSVImport() {
 
     setSelectedFile(file)
     // Clear previous results
-    importMutation.reset()
+    reset()
   }
 
   /**
@@ -108,15 +109,15 @@ export function CSVImport() {
   }
 
   /**
-   * Upload CSV file
+   * Upload CSV file via SSE stream (Task 12)
    */
-  const handleUpload = () => {
+  const handleUpload = async () => {
     if (!selectedFile) return
 
     const formData = new FormData()
     formData.append('file', selectedFile)
 
-    importMutation.mutate(formData)
+    await startImport(formData)
   }
 
   /**
@@ -145,7 +146,7 @@ export function CSVImport() {
    */
   const handleImportAnother = () => {
     setSelectedFile(null)
-    importMutation.reset()
+    reset()
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
     }
@@ -213,16 +214,18 @@ export function CSVImport() {
         </div>
       </div>
 
-      {/* Progress Indicator - Story 2.13 Task 12: Enhanced progress indication */}
-      {importMutation.isPending && selectedFile && (
+      {/* Progress Indicator - Story 2.13 Task 12: Real-time SSE progress */}
+      {isImporting && selectedFile && (
         <ImportProgress
           fileName={selectedFile.name}
           fileSize={selectedFile.size}
+          progressData={progressData || undefined}
+          onCancel={cancelImport}
         />
       )}
 
       {/* Upload Section - Only show if not processing and no results yet */}
-      {!importMutation.isPending && !importMutation.isSuccess && (
+      {!isImporting && !result && (
         <div className="bg-white shadow rounded-lg p-6">
           {/* Drag and Drop Zone */}
           <div
@@ -301,13 +304,13 @@ export function CSVImport() {
           </div>
 
           {/* Error Display */}
-          {importMutation.isError && (
+          {error && (
             <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
               <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
               <div>
                 <h4 className="text-sm font-medium text-red-900">Upload failed</h4>
                 <p className="mt-1 text-sm text-red-800">
-                  {importMutation.error?.message || 'An error occurred while processing the CSV file. Please try again.'}
+                  {error || 'An error occurred while processing the CSV file. Please try again.'}
                 </p>
               </div>
             </div>
@@ -315,10 +318,10 @@ export function CSVImport() {
         </div>
       )}
 
-      {/* Import Results Display - Story 2.11 AC#6 */}
-      {importMutation.isSuccess && importMutation.data && (
+      {/* Import Results Display - Story 2.11 AC#6, Task 12.5 */}
+      {result && (
         <ImportResults
-          result={importMutation.data}
+          result={result}
           onImportAnother={handleImportAnother}
         />
       )}
