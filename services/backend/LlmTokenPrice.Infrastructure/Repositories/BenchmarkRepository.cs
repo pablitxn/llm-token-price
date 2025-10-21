@@ -1,4 +1,5 @@
 using LlmTokenPrice.Domain.Entities;
+using LlmTokenPrice.Domain.Enums;
 using LlmTokenPrice.Domain.Repositories;
 using LlmTokenPrice.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -47,7 +48,11 @@ public class BenchmarkRepository : IBenchmarkRepository
         // Apply category filter if provided
         if (!string.IsNullOrWhiteSpace(categoryFilter))
         {
-            query = query.Where(b => b.Category.ToString() == categoryFilter);
+            // Parse string to enum BEFORE query (EF Core can't translate .ToString())
+            if (Enum.TryParse<BenchmarkCategory>(categoryFilter, ignoreCase: true, out var categoryEnum))
+            {
+                query = query.Where(b => b.Category == categoryEnum);
+            }
         }
 
         // Order alphabetically by BenchmarkName
