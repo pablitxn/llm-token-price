@@ -4,6 +4,7 @@ using LlmTokenPrice.Application.Services;
 using LlmTokenPrice.Domain.Entities;
 using LlmTokenPrice.Domain.Enums;
 using LlmTokenPrice.Domain.Repositories;
+using Microsoft.Extensions.Logging;
 using Moq;
 
 namespace LlmTokenPrice.Application.Tests.Services;
@@ -15,12 +16,26 @@ namespace LlmTokenPrice.Application.Tests.Services;
 public class ModelQueryServiceTests
 {
     private readonly Mock<IModelRepository> _mockRepository;
+    private readonly Mock<ICacheRepository> _mockCacheRepository;
+    private readonly Mock<ILogger<ModelQueryService>> _mockLogger;
     private readonly ModelQueryService _service;
 
     public ModelQueryServiceTests()
     {
         _mockRepository = new Mock<IModelRepository>();
-        _service = new ModelQueryService(_mockRepository.Object);
+        _mockCacheRepository = new Mock<ICacheRepository>();
+        _mockLogger = new Mock<ILogger<ModelQueryService>>();
+
+        // Setup cache to always return null (cache miss) for unit tests
+        _mockCacheRepository
+            .Setup(c => c.GetAsync<List<ModelDto>>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((List<ModelDto>?)null);
+
+        _mockCacheRepository
+            .Setup(c => c.GetAsync<ModelDto>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((ModelDto?)null);
+
+        _service = new ModelQueryService(_mockRepository.Object, _mockCacheRepository.Object, _mockLogger.Object);
     }
 
     [Fact]

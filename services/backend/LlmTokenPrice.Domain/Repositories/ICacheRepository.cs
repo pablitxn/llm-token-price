@@ -44,4 +44,21 @@ public interface ICacheRepository
     /// <param name="cancellationToken">Cancellation token (reserved for future use; StackExchange.Redis 2.7.10 doesn't support cancellation in core operations)</param>
     /// <returns>True if key exists, false otherwise</returns>
     Task<bool> ExistsAsync(string key, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Deletes all cache keys matching the specified pattern.
+    /// Useful for bulk cache invalidation (e.g., "llmpricing:models:*" to clear all model caches).
+    /// </summary>
+    /// <param name="pattern">The glob-style pattern to match keys (e.g., "llmpricing:models:*")</param>
+    /// <param name="cancellationToken">Cancellation token (reserved for future use; StackExchange.Redis 2.7.10 doesn't support cancellation in core operations)</param>
+    /// <returns>The number of keys deleted</returns>
+    /// <remarks>
+    /// Uses Redis SCAN command for safe iteration over large key sets.
+    /// Pattern syntax: * matches any characters, ? matches single character.
+    /// Example patterns:
+    /// - "llmpricing:models:*" - All model caches
+    /// - "llmpricing:model:*:v1" - All model detail caches
+    /// - "llmpricing:qaps:*" - All QAPS calculation caches
+    /// </remarks>
+    Task<int> RemoveByPatternAsync(string pattern, CancellationToken cancellationToken = default);
 }

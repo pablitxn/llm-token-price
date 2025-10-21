@@ -1,6 +1,8 @@
 using LlmTokenPrice.Application.DTOs;
+using LlmTokenPrice.Domain.Caching;
 using LlmTokenPrice.Domain.Entities;
 using LlmTokenPrice.Domain.Repositories;
+using Microsoft.Extensions.Logging;
 
 namespace LlmTokenPrice.Application.Services;
 
@@ -13,18 +15,28 @@ namespace LlmTokenPrice.Application.Services;
 /// 1. Calling admin repository to fetch entities (including inactive)
 /// 2. Mapping entities to AdminModelDto for admin API consumption
 /// 3. Applying business rules (e.g., top 3 benchmarks, sort by updated_at DESC)
+/// 4. Invalidating caches on CRUD operations (model data + QAPS scores)
 /// </remarks>
 public class AdminModelService : IAdminModelService
 {
     private readonly IAdminModelRepository _adminRepository;
+    private readonly ICacheRepository _cacheRepository;
+    private readonly ILogger<AdminModelService> _logger;
 
     /// <summary>
     /// Initializes a new instance of the AdminModelService.
     /// </summary>
     /// <param name="adminRepository">The admin model repository for data access.</param>
-    public AdminModelService(IAdminModelRepository adminRepository)
+    /// <param name="cacheRepository">The cache repository for invalidation.</param>
+    /// <param name="logger">The logger for tracking cache operations.</param>
+    public AdminModelService(
+        IAdminModelRepository adminRepository,
+        ICacheRepository cacheRepository,
+        ILogger<AdminModelService> logger)
     {
         _adminRepository = adminRepository ?? throw new ArgumentNullException(nameof(adminRepository));
+        _cacheRepository = cacheRepository ?? throw new ArgumentNullException(nameof(cacheRepository));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     /// <inheritdoc />
@@ -53,7 +65,16 @@ public class AdminModelService : IAdminModelService
     /// <inheritdoc />
     public async Task<bool> DeleteModelAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        return await _adminRepository.DeleteModelAsync(id, cancellationToken);
+        var deleted = await _adminRepository.DeleteModelAsync(id, cancellationToken);
+
+        if (deleted)
+        {
+            // Invalidate model caches and QAPS calculations
+            await InvalidateModelCachesAsync(cancellationToken);
+            _logger.LogInformation("Deleted model {ModelId} and invalidated caches", id);
+        }
+
+        return deleted;
     }
 
     /// <inheritdoc />
@@ -115,6 +136,10 @@ public class AdminModelService : IAdminModelService
         // 4. Persist model and capability in single transaction
         var modelId = await _adminRepository.CreateModelAsync(model, cancellationToken);
         await _adminRepository.CreateCapabilityAsync(capability, cancellationToken);
+
+        // 5. Invalidate model caches and QAPS calculations
+        await InvalidateModelCachesAsync(cancellationToken);
+        _logger.LogInformation("Created model {ModelId} ({Name}) and invalidated caches", modelId, model.Name);
 
         return modelId;
     }
@@ -189,7 +214,11 @@ public class AdminModelService : IAdminModelService
         // 7. Save changes (EF Core change tracking handles UPDATE)
         await _adminRepository.SaveChangesAsync(cancellationToken);
 
-        // 8. Return updated model as DTO
+        // 8. Invalidate model caches and QAPS calculations
+        await InvalidateModelCachesAsync(cancellationToken);
+        _logger.LogInformation("Updated model {ModelId} ({Name}) and invalidated caches", id, model.Name);
+
+        // 9. Return updated model as DTO
         return MapToAdminDto(model);
     }
 
@@ -259,5 +288,43 @@ public class AdminModelService : IAdminModelService
             MaxScore = benchmarkScore.MaxScore,
             NormalizedScore = benchmarkScore.NormalizedScore
         };
+    }
+
+    /// <summary>
+    /// Invalidates all model-related caches and QAPS calculations.
+    /// Called after CREATE, UPDATE, or DELETE operations on models.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <remarks>
+    /// Invalidation strategy:
+    /// 1. Remove ALL model caches (list + details) using pattern "llmpricing:model*"
+    /// 2. Remove ALL QAPS calculation caches using pattern "llmpricing:qaps:*"
+    ///
+    /// This is a conservative approach that ensures cache consistency at the cost of cache misses.
+    /// Future optimization: Track which specific models changed and invalidate selectively.
+    /// </remarks>
+    private async Task InvalidateModelCachesAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            // Invalidate all model-related caches (list + details)
+            var modelsInvalidated = await _cacheRepository.RemoveByPatternAsync(
+                CacheConfiguration.InvalidationPatterns.AllModels,
+                cancellationToken);
+
+            // Invalidate all QAPS calculation caches (model changes affect QAPS scores)
+            var qapsInvalidated = await _cacheRepository.RemoveByPatternAsync(
+                CacheConfiguration.InvalidationPatterns.AllQaps,
+                cancellationToken);
+
+            _logger.LogInformation(
+                "Cache invalidation complete: {ModelsInvalidated} model keys, {QapsInvalidated} QAPS keys",
+                modelsInvalidated, qapsInvalidated);
+        }
+        catch (Exception ex)
+        {
+            // Log error but don't throw - cache invalidation failure should not break CRUD operations
+            _logger.LogError(ex, "Failed to invalidate model caches - some stale data may persist");
+        }
     }
 }
