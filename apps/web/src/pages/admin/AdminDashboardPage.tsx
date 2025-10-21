@@ -107,6 +107,67 @@ export default function AdminDashboardPage() {
           </p>
         </div>
       )}
+
+      {/* Data Quality Metrics (Story 2.13 Task 15) */}
+      {!isLoading && !error && metrics && (
+        <div className="mt-6 bg-white shadow-md rounded-lg border border-slate-200 p-6">
+          <h2 className="text-lg font-semibold text-slate-900 mb-4">Data Quality Metrics</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Incomplete Models */}
+            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+              <p className="text-sm text-purple-600 font-medium">Incomplete Models</p>
+              <p className="text-2xl font-bold text-purple-900 mt-1">{metrics.incompleteModels}</p>
+              <p className="text-xs text-purple-600 mt-2">&lt; 3 benchmark scores</p>
+            </div>
+
+            {/* Recent Additions */}
+            <div className="bg-cyan-50 border border-cyan-200 rounded-lg p-4">
+              <p className="text-sm text-cyan-600 font-medium">Recent Additions</p>
+              <p className="text-2xl font-bold text-cyan-900 mt-1">{metrics.recentAdditions}</p>
+              <p className="text-xs text-cyan-600 mt-2">Added in last 7 days</p>
+            </div>
+
+            {/* Average Benchmarks */}
+            <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+              <p className="text-sm text-indigo-600 font-medium">Avg Benchmarks/Model</p>
+              <p className="text-2xl font-bold text-indigo-900 mt-1">{metrics.averageBenchmarksPerModel.toFixed(1)}</p>
+              <p className="text-xs text-indigo-600 mt-2">Overall coverage quality</p>
+            </div>
+          </div>
+
+          {/* Models by Provider - Simple Bar Chart */}
+          {Object.keys(metrics.modelsByProvider).length > 0 && (
+            <div className="mt-6">
+              <h3 className="text-md font-semibold text-slate-900 mb-3">Models by Provider</h3>
+              <div className="space-y-2">
+                {Object.entries(metrics.modelsByProvider)
+                  .sort(([, a], [, b]) => b - a)
+                  .map(([provider, count]) => {
+                    const maxCount = Math.max(...Object.values(metrics.modelsByProvider))
+                    const percentage = (count / maxCount) * 100
+
+                    return (
+                      <div key={provider} className="flex items-center gap-3">
+                        <span className="text-sm font-medium text-slate-700 w-24 text-right">{provider}</span>
+                        <div className="flex-1 bg-slate-100 rounded-full h-6 relative">
+                          <div
+                            className="bg-blue-600 h-6 rounded-full flex items-center justify-end pr-3 transition-all duration-500"
+                            style={{ width: `${percentage}%` }}
+                          >
+                            <span className="text-xs font-semibold text-white">{count}</span>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+              </div>
+              <p className="text-xs text-slate-500 mt-4">
+                Total providers: {Object.keys(metrics.modelsByProvider).length}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
