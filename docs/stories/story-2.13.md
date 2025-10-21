@@ -164,7 +164,7 @@ so that the admin CRUD system is production-ready, maintainable, and enables con
 - [x] 13.3: Update all FluentValidation rules to use localized messages (all 5 validators updated)
 - [x] 13.4: Detect user language from Accept-Language header (RequestLocalizationMiddleware configured)
 - [x] 13.5: Return validation errors in user's language (automatic via middleware + ResourceManager)
-- [ ] 13.6: Add language selector to admin panel (Spanish/English toggle) - FRONTEND ONLY, NOT IMPLEMENTED
+- [x] 13.6: Add language selector to admin panel (LanguageSelector component integrated in AdminHeader)
 
 ### **Task 14: Implement Audit Log** (AC: #15)
 - [ ] 14.1: Create `AuditLog` entity (Id, Timestamp, UserId, Action, EntityType, EntityId, OldValues, NewValues)
@@ -681,6 +681,7 @@ Pass Rate:           100% (active tests)
 - `LlmTokenPrice.Application/Resources/ValidationMessages.cs` - Strongly-typed ResourceManager wrapper for localized messages (Task 13)
 - `LlmTokenPrice.Tests.E2E/ValidationLocalizationTests.cs` - E2E tests for validation localization (9 test cases) (Task 13)
 - `apps/web/src/hooks/useCSVImportSSE.ts` - Custom React hook for SSE connection management with real-time progress tracking (Task 12)
+- `apps/web/src/components/admin/LanguageSelector.tsx` - Spanish/English language selector component with localStorage persistence and custom events (Task 13.6)
 
 **Modified Files:**
 - `LlmTokenPrice.API/Controllers/Admin/AdminModelsController.cs` - Added pagination support
@@ -701,4 +702,6 @@ Pass Rate:           100% (active tests)
 - `LlmTokenPrice.Application/Validators/UpdateBenchmarkValidator.cs` - Updated to use localized messages (Task 13)
 - `LlmTokenPrice.Application/Validators/CreateCapabilityValidator.cs` - Updated to use localized messages (Task 13)
 - `LlmTokenPrice.Application/Validators/CreateBenchmarkScoreValidator.cs` - Updated to use localized messages (Task 13)
+- `apps/web/src/api/client.ts` - Added Accept-Language header via axios request interceptor (Task 13.6)
+- `apps/web/src/components/layout/AdminHeader.tsx` - Integrated LanguageSelector component in header (Task 13.6)
 - `docs/stories/story-2.13.md` - Task progress tracking (this file)

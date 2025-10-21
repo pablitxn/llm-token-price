@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Menu, LogOut, User } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth.ts'
+import { LanguageSelector } from '@/components/admin/LanguageSelector'
 
 /**
  * Props for AdminHeader component
@@ -67,8 +68,13 @@ export default function AdminHeader({ onMenuClick }: AdminHeaderProps) {
         <h2 className="text-lg font-semibold text-slate-900">Admin Panel</h2>
       </div>
 
-      {/* Right Section: User Dropdown */}
-      <div className="relative" ref={dropdownRef}>
+      {/* Right Section: Language Selector + User Dropdown */}
+      <div className="flex items-center gap-3">
+        {/* Language Selector (Story 2.13 Task 13.6) */}
+        <LanguageSelector />
+
+        {/* User Dropdown */}
+        <div className="relative" ref={dropdownRef}>
         <button
           onClick={() => setIsDropdownOpen(!isDropdownOpen)}
           className="flex items-center gap-2 px-3 py-2 hover:bg-slate-100 rounded-md transition-colors"
@@ -102,6 +108,7 @@ export default function AdminHeader({ onMenuClick }: AdminHeaderProps) {
             </button>
           </div>
         )}
+        </div>
       </div>
     </header>
   )
