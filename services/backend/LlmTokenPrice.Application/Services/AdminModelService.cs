@@ -72,6 +72,7 @@ public class AdminModelService : IAdminModelService
         }
 
         // 2. Create Model entity from request
+        var now = DateTime.UtcNow;
         var model = new Model
         {
             Id = Guid.NewGuid(),
@@ -91,7 +92,9 @@ public class AdminModelService : IAdminModelService
             PricingValidTo = !string.IsNullOrEmpty(request.PricingValidTo)
                 ? DateTime.SpecifyKind(DateTime.Parse(request.PricingValidTo), DateTimeKind.Utc)
                 : null,
-            // Timestamps and IsActive set by repository
+            // Story 2.12: Set pricing timestamp on creation
+            PricingUpdatedAt = now
+            // Other timestamps (CreatedAt, UpdatedAt) and IsActive set by repository
         };
 
         // 3. Create Capability entity from request (Story 2.6: using DTO values instead of defaults)
@@ -139,7 +142,13 @@ public class AdminModelService : IAdminModelService
                 $"A model with name '{request.Name}' and provider '{request.Provider}' already exists.");
         }
 
-        // 3. Update Model entity fields
+        // 3. Detect pricing changes for PricingUpdatedAt timestamp (Story 2.12)
+        var oldInputPrice = model.InputPricePer1M;
+        var oldOutputPrice = model.OutputPricePer1M;
+        var pricingChanged = oldInputPrice != request.InputPricePer1M ||
+                             oldOutputPrice != request.OutputPricePer1M;
+
+        // 4. Update Model entity fields
         model.Name = request.Name;
         model.Provider = request.Provider;
         model.Version = request.Version;
@@ -158,7 +167,13 @@ public class AdminModelService : IAdminModelService
             : null;
         model.UpdatedAt = DateTime.UtcNow;
 
-        // 4. Update Capability entity fields (if exists)
+        // 5. Update PricingUpdatedAt only when pricing fields actually change (Story 2.12)
+        if (pricingChanged)
+        {
+            model.PricingUpdatedAt = DateTime.UtcNow;
+        }
+
+        // 6. Update Capability entity fields (if exists)
         if (model.Capability != null)
         {
             model.Capability.ContextWindow = request.Capabilities.ContextWindow;
@@ -171,10 +186,10 @@ public class AdminModelService : IAdminModelService
             model.Capability.SupportsJsonMode = request.Capabilities.SupportsJsonMode;
         }
 
-        // 5. Save changes (EF Core change tracking handles UPDATE)
+        // 7. Save changes (EF Core change tracking handles UPDATE)
         await _adminRepository.SaveChangesAsync(cancellationToken);
 
-        // 6. Return updated model as DTO
+        // 8. Return updated model as DTO
         return MapToAdminDto(model);
     }
 
@@ -199,6 +214,7 @@ public class AdminModelService : IAdminModelService
             IsActive = model.IsActive,
             CreatedAt = model.CreatedAt,
             UpdatedAt = model.UpdatedAt,
+            PricingUpdatedAt = model.PricingUpdatedAt, // Story 2.12
             Capabilities = model.Capability == null ? null : MapCapabilityToDto(model.Capability),
             TopBenchmarks = model.BenchmarkScores
                 .OrderByDescending(bs => bs.Score)

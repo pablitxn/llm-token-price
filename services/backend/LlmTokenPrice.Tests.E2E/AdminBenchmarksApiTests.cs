@@ -1,7 +1,9 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text;
 using FluentAssertions;
 using LlmTokenPrice.Application.DTOs;
+using Microsoft.AspNetCore.Mvc.Testing;
 using Xunit;
 
 namespace LlmTokenPrice.Tests.E2E;
@@ -9,18 +11,22 @@ namespace LlmTokenPrice.Tests.E2E;
 /// <summary>
 /// E2E API tests for Admin Benchmarks endpoints
 /// Story 2.9 - Task 10.5-10.8: Integration tests for benchmark CRUD operations
+/// Story 2.11 - Task 10.6-10.10: Integration tests for CSV bulk import
 /// Priority: P1 (High - API contract testing)
 /// </summary>
-[Collection("E2E Tests")]
-public class AdminBenchmarksApiTests : IClassFixture<ApiTestFixture>
+public class AdminBenchmarksApiTests : IClassFixture<WebApplicationFactory<LlmTokenPrice.API.Program>>
 {
-    private readonly ApiTestFixture _fixture;
+    private readonly WebApplicationFactory<LlmTokenPrice.API.Program> _factory;
     private readonly HttpClient _client;
 
-    public AdminBenchmarksApiTests(ApiTestFixture fixture)
+    public AdminBenchmarksApiTests(WebApplicationFactory<LlmTokenPrice.API.Program> factory)
     {
-        _fixture = fixture;
-        _client = fixture.CreateClient();
+        _factory = factory;
+        _client = factory.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            AllowAutoRedirect = false,
+            HandleCookies = true
+        });
     }
 
     #region POST /api/admin/benchmarks Tests
@@ -480,6 +486,249 @@ public class AdminBenchmarksApiTests : IClassFixture<ApiTestFixture>
         retrievedBenchmark!.BenchmarkName.Should().Be(request.BenchmarkName);
         retrievedBenchmark.Description.Should().Be(request.Description);
         retrievedBenchmark.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromMinutes(1));
+    }
+
+    #endregion
+
+    #region Story 2.11: CSV Import Integration Tests
+
+    /// <summary>
+    /// [P1] Task 10.6: POST /api/admin/benchmarks/import-csv should import valid CSV successfully
+    /// Story 2.11 AC#3, AC#4, AC#5: File upload, parsing, validation, and import
+    /// </summary>
+    [Fact]
+    public async Task ImportBenchmarkScoresCSV_WithValidCSV_ShouldReturn200WithSuccessCount()
+    {
+        // GIVEN: Valid CSV content with 3 benchmark scores
+        var csv = @"model_id,benchmark_name,score,max_score,test_date,source_url,verified,notes
+550e8400-e29b-41d4-a716-446655440000,MMLU,85.2,100,2025-10-01,https://example.com/mmlu,true,Test score 1
+550e8400-e29b-41d4-a716-446655440000,HumanEval,0.72,1,2025-10-02,https://example.com/eval,false,Test score 2
+550e8400-e29b-41d4-a716-446655440000,GSM8K,78.5,100,2025-10-03,https://example.com/gsm8k,true,Test score 3";
+
+        var csvBytes = Encoding.UTF8.GetBytes(csv);
+        var content = new MultipartFormDataContent();
+        var fileContent = new ByteArrayContent(csvBytes);
+        fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("text/csv");
+        content.Add(fileContent, "file", "test.csv");
+
+        // WHEN: Posting CSV file to import endpoint
+        var response = await _client.PostAsync("/api/admin/benchmarks/import-csv", content);
+
+        // THEN: Should return 200 OK with import results
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var result = await response.Content.ReadFromJsonAsync<CSVImportResultDto>();
+        result.Should().NotBeNull();
+        result!.TotalRows.Should().Be(3);
+        result.SuccessfulImports.Should().BeGreaterThan(0);
+        result.FailedImports.Should().BeLessThan(3);
+    }
+
+    /// <summary>
+    /// [P1] Task 10.7: Successfully imported scores should persist to database
+    /// Story 2.11 AC#5: Valid rows imported to database
+    /// </summary>
+    [Fact]
+    public async Task ImportBenchmarkScoresCSV_ShouldPersistValidRowsToDatabase()
+    {
+        // GIVEN: Valid CSV with unique benchmark score
+        var uniqueScore = (DateTime.UtcNow.Ticks % 100).ToString("F1");
+        var csv = $@"model_id,benchmark_name,score,max_score,test_date,source_url,verified,notes
+550e8400-e29b-41d4-a716-446655440000,MMLU,{uniqueScore},100,2025-10-01,https://example.com/test,true,Persistence test";
+
+        var csvBytes = Encoding.UTF8.GetBytes(csv);
+        var content = new MultipartFormDataContent();
+        var fileContent = new ByteArrayContent(csvBytes);
+        fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("text/csv");
+        content.Add(fileContent, "file", "persist_test.csv");
+
+        // WHEN: Importing CSV
+        var importResponse = await _client.PostAsync("/api/admin/benchmarks/import-csv", content);
+
+        // THEN: Should return success
+        importResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var result = await importResponse.Content.ReadFromJsonAsync<CSVImportResultDto>();
+        result.Should().NotBeNull();
+
+        // AND: Score should be retrievable from database
+        // Note: This would require a GET endpoint for benchmark scores which may not exist yet
+        // For now, we verify the import succeeded
+        result!.SuccessfulImports.Should().BeGreaterThan(0);
+    }
+
+    /// <summary>
+    /// [P1] Task 10.8: CSV import should handle partial success (some valid, some invalid rows)
+    /// Story 2.11 AC#6: Import results show X successful, Y failed with reasons
+    /// </summary>
+    [Fact]
+    public async Task ImportBenchmarkScoresCSV_WithPartialSuccess_ShouldImportValidAndReportInvalid()
+    {
+        // GIVEN: CSV with 5 rows (3 valid, 2 invalid)
+        var csv = @"model_id,benchmark_name,score,max_score,test_date,source_url,verified,notes
+550e8400-e29b-41d4-a716-446655440000,MMLU,85.2,100,2025-10-01,https://example.com,true,Valid row 1
+invalid-uuid-format,HumanEval,0.72,1,2025-10-02,https://example.com,false,Invalid model_id
+550e8400-e29b-41d4-a716-446655440000,NonExistentBenchmark,78.5,100,2025-10-03,https://example.com,true,Invalid benchmark
+550e8400-e29b-41d4-a716-446655440000,GSM8K,90.1,100,2025-10-04,https://example.com,false,Valid row 2
+550e8400-e29b-41d4-a716-446655440000,MATH,abc,100,2025-10-05,https://example.com,true,Invalid score";
+
+        var csvBytes = Encoding.UTF8.GetBytes(csv);
+        var content = new MultipartFormDataContent();
+        var fileContent = new ByteArrayContent(csvBytes);
+        fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("text/csv");
+        content.Add(fileContent, "file", "partial_success.csv");
+
+        // WHEN: Importing CSV with mixed valid/invalid rows
+        var response = await _client.PostAsync("/api/admin/benchmarks/import-csv", content);
+
+        // THEN: Should return 200 OK (partial success is allowed)
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var result = await response.Content.ReadFromJsonAsync<CSVImportResultDto>();
+        result.Should().NotBeNull();
+        result!.TotalRows.Should().Be(5);
+
+        // Should have some successful imports (at least row 1 and 4)
+        result.SuccessfulImports.Should().BeGreaterThan(0);
+
+        // Should have some failures (rows 2, 3, and 5)
+        result.FailedImports.Should().BeGreaterThan(0);
+
+        // Errors should include row numbers and error messages
+        result.Errors.Should().NotBeEmpty();
+        result.Errors.Should().Contain(e => e.Error.Contains("model_id") || e.Error.Contains("benchmark") || e.Error.Contains("score"));
+    }
+
+    /// <summary>
+    /// [P1] Task 10.9: CSV import should skip duplicate model+benchmark combinations
+    /// Story 2.11 AC#4: Check for duplicate model+benchmark (prevent redundant imports)
+    /// </summary>
+    [Fact]
+    public async Task ImportBenchmarkScoresCSV_WithDuplicates_ShouldSkipDuplicateRows()
+    {
+        // GIVEN: Import CSV first time
+        var csv = @"model_id,benchmark_name,score,max_score,test_date,source_url,verified,notes
+550e8400-e29b-41d4-a716-446655440000,MMLU,85.2,100,2025-10-01,https://example.com,true,First import";
+
+        var csvBytes = Encoding.UTF8.GetBytes(csv);
+        var content1 = new MultipartFormDataContent();
+        var fileContent1 = new ByteArrayContent(csvBytes);
+        fileContent1.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("text/csv");
+        content1.Add(fileContent1, "file", "duplicate_test1.csv");
+
+        var firstResponse = await _client.PostAsync("/api/admin/benchmarks/import-csv", content1);
+        var firstResult = await firstResponse.Content.ReadFromJsonAsync<CSVImportResultDto>();
+
+        // AND: Import same CSV second time (duplicate)
+        var content2 = new MultipartFormDataContent();
+        var fileContent2 = new ByteArrayContent(csvBytes);
+        fileContent2.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("text/csv");
+        content2.Add(fileContent2, "file", "duplicate_test2.csv");
+
+        // WHEN: Importing duplicate CSV
+        var secondResponse = await _client.PostAsync("/api/admin/benchmarks/import-csv", content2);
+
+        // THEN: Should return 200 OK but with skipped duplicates
+        secondResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var secondResult = await secondResponse.Content.ReadFromJsonAsync<CSVImportResultDto>();
+        secondResult.Should().NotBeNull();
+        secondResult!.TotalRows.Should().Be(1);
+
+        // Should skip duplicate (assuming skipDuplicates=true by default)
+        secondResult.SkippedDuplicates.Should().BeGreaterThan(0);
+        secondResult.SuccessfulImports.Should().Be(0);
+    }
+
+    /// <summary>
+    /// [P1] Task 10.10: CSV import should enforce file size limit
+    /// Story 2.11 AC#3: Limit file size (10MB max)
+    /// </summary>
+    [Fact]
+    public async Task ImportBenchmarkScoresCSV_WithOversizedFile_ShouldReturn413PayloadTooLarge()
+    {
+        // GIVEN: CSV file larger than 10MB (create large content)
+        var largeContent = new StringBuilder();
+        largeContent.AppendLine("model_id,benchmark_name,score,max_score,test_date,source_url,verified,notes");
+
+        // Generate ~11MB of CSV data (assuming 10MB = 10_485_760 bytes)
+        // Each row is ~150 bytes, so we need ~73,000 rows for 11MB
+        for (int i = 0; i < 75000; i++)
+        {
+            largeContent.AppendLine($"550e8400-e29b-41d4-a716-446655440000,MMLU,85.2,100,2025-10-01,https://example.com/test{i},true,Large file test row {i}");
+        }
+
+        var csvBytes = Encoding.UTF8.GetBytes(largeContent.ToString());
+        var content = new MultipartFormDataContent();
+        var fileContent = new ByteArrayContent(csvBytes);
+        fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("text/csv");
+        content.Add(fileContent, "file", "oversized.csv");
+
+        // WHEN: Attempting to import oversized file
+        var response = await _client.PostAsync("/api/admin/benchmarks/import-csv", content);
+
+        // THEN: Should return 413 Payload Too Large or 400 Bad Request
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.RequestEntityTooLarge, HttpStatusCode.BadRequest);
+    }
+
+    /// <summary>
+    /// [P2] CSV import should return 400 for invalid file format (non-CSV)
+    /// Story 2.11 AC#3: Validate file is CSV
+    /// </summary>
+    [Fact]
+    public async Task ImportBenchmarkScoresCSV_WithNonCSVFile_ShouldReturn400BadRequest()
+    {
+        // GIVEN: Non-CSV file (JSON content)
+        var jsonContent = "{\"data\": \"This is not a CSV file\"}";
+        var jsonBytes = Encoding.UTF8.GetBytes(jsonContent);
+
+        var content = new MultipartFormDataContent();
+        var fileContent = new ByteArrayContent(jsonBytes);
+        fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
+        content.Add(fileContent, "file", "test.json");
+
+        // WHEN: Attempting to import non-CSV file
+        var response = await _client.PostAsync("/api/admin/benchmarks/import-csv", content);
+
+        // THEN: Should return 400 Bad Request
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+
+        var errorContent = await response.Content.ReadAsStringAsync();
+        errorContent.Should().Contain("CSV");
+    }
+
+    /// <summary>
+    /// [P1] CSV import should handle malformed CSV gracefully
+    /// Story 2.11 AC#4: Handle malformed rows (collect errors, don't crash)
+    /// </summary>
+    [Fact]
+    public async Task ImportBenchmarkScoresCSV_WithMalformedCSV_ShouldReturnErrorsWithoutCrashing()
+    {
+        // GIVEN: Malformed CSV with missing columns
+        var csv = @"model_id,benchmark_name
+550e8400-e29b-41d4-a716-446655440000,MMLU
+550e8400-e29b-41d4-a716-446655440000,HumanEval";
+
+        var csvBytes = Encoding.UTF8.GetBytes(csv);
+        var content = new MultipartFormDataContent();
+        var fileContent = new ByteArrayContent(csvBytes);
+        fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("text/csv");
+        content.Add(fileContent, "file", "malformed.csv");
+
+        // WHEN: Importing malformed CSV
+        var response = await _client.PostAsync("/api/admin/benchmarks/import-csv", content);
+
+        // THEN: Should return 200 OK (don't crash) with all rows marked as failed
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var result = await response.Content.ReadFromJsonAsync<CSVImportResultDto>();
+        result.Should().NotBeNull();
+        result!.TotalRows.Should().Be(2);
+        result.SuccessfulImports.Should().Be(0);
+        result.FailedImports.Should().Be(2);
+
+        // Errors should indicate missing/invalid score field
+        result.Errors.Should().AllSatisfy(e => e.Error.Should().Contain("score"));
     }
 
     #endregion

@@ -59,6 +59,13 @@ public record ModelDto
     public required DateTime UpdatedAt { get; init; }
 
     /// <summary>
+    /// Timestamp when pricing fields (InputPricePer1M, OutputPricePer1M) were last updated.
+    /// Null if pricing has never been updated since creation.
+    /// Story 2.12: Enables users to assess pricing data freshness specifically.
+    /// </summary>
+    public DateTime? PricingUpdatedAt { get; init; }
+
+    /// <summary>
     /// Model capabilities (context window, feature flags).
     /// Null if capability data is not available for this model.
     /// </summary>

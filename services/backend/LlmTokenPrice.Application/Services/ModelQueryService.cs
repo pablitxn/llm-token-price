@@ -60,6 +60,7 @@ public class ModelQueryService : IModelQueryService
             OutputPricePer1M = model.OutputPricePer1M,
             Currency = model.Currency,
             UpdatedAt = model.UpdatedAt,
+            PricingUpdatedAt = model.PricingUpdatedAt, // Story 2.12
             Capabilities = model.Capability == null ? null : MapCapabilityToDto(model.Capability),
             TopBenchmarks = model.BenchmarkScores
                 .OrderByDescending(bs => bs.Score)

@@ -17,6 +17,14 @@ namespace LlmTokenPrice.Infrastructure.Data.Migrations
                 type: "timestamp with time zone",
                 nullable: true);
 
+            // Backfill existing models: set pricing_updated_at = updated_at
+            // This ensures existing models have a pricing freshness baseline
+            migrationBuilder.Sql(@"
+                UPDATE models
+                SET ""PricingUpdatedAt"" = ""UpdatedAt""
+                WHERE ""PricingUpdatedAt"" IS NULL;
+            ");
+
             migrationBuilder.CreateIndex(
                 name: "idx_models_pricing_updated",
                 table: "models",
