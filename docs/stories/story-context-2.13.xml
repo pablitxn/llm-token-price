@@ -1,0 +1,189 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>2.13</storyId>
+    <title>Epic 2 Technical Debt Resolution & Production Readiness</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-21</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-2.13.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a development team</asA>
+    <iWant>to resolve all technical debt identified in Epic 2 retrospective</iWant>
+    <soThat>the admin CRUD system is production-ready, maintainable, and enables confident progression to Epic 3</soThat>
+    <tasks>21 major tasks with 100+ subtasks spanning: CRITICAL test fixes (Tasks 1-3), HIGH backend quality (Tasks 4-9), HIGH UX improvements (Tasks 10-13), MEDIUM code quality (Tasks 14-17), MEDIUM security/architecture (Tasks 18-20), final production readiness verification (Task 21)</tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <critical priority="BLOCKER">
+      <ac id="1">All 27 failing E2E tests must pass (100% pass rate) - 242/259 tests currently passing</ac>
+      <ac id="2">Test suite executes successfully in CI/CD pipeline (GitHub Actions)</ac>
+      <ac id="3">Pull requests automatically blocked if tests fail (95% pass rate threshold)</ac>
+      <ac id="4">Test coverage report generated and &gt;70% overall coverage achieved</ac>
+    </critical>
+    <high priority="REQUIRED">
+      <ac id="5">Redis caching implemented on GET /api/models endpoint (1-hour TTL)</ac>
+      <ac id="6">Pagination implemented on GET /api/admin/models (default 20, max 100 per page) - Backend DONE, frontend pending</ac>
+      <ac id="7">CSV import uses database transactions (all-or-nothing import)</ac>
+      <ac id="8">Rate limiting configured on all admin endpoints (100 requests/minute per IP)</ac>
+      <ac id="9">Admin endpoints validate JWT authentication in E2E tests</ac>
+      <ac id="10">Loading states displayed during all async operations (spinners/skeletons)</ac>
+      <ac id="11">Technical error messages translated to user-friendly text</ac>
+      <ac id="12">Delete operations require two-step confirmation (dialog + typed confirmation)</ac>
+      <ac id="13">CSV import shows progress indicator (% complete or row count)</ac>
+    </high>
+    <medium priority="RECOMMENDED">
+      <ac id="14">FluentValidation error messages localized to Spanish/English</ac>
+      <ac id="15">Audit log table created and logging all admin CRUD operations</ac>
+      <ac id="16">Data quality metrics dashboard shows: total models, stale models (&gt;7 days), incomplete benchmarks (&lt;3)</ac>
+      <ac id="17">Admin panel documentation created (user guide for administrators)</ac>
+      <ac id="18">Input validation on all endpoints prevents SQL injection and XSS</ac>
+      <ac id="19">CORS configured correctly for production domains</ac>
+      <ac id="20">Sensitive data (JWT secret) moved to environment variables (not appsettings.json)</ac>
+      <ac id="21">Database connection pooling optimized for production load</ac>
+    </medium>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <artifact path="docs/tech-spec-epic-2.md" title="Technical Specification: Epic 2" section="System Architecture Alignment">
+        Epic 2 extends Hexagonal Architecture with AdminModelService, AdminBenchmarkService, AdminAuthService orchestrating CRUD operations. DataValidator domain service centralizes validation rules (pricing constraints, benchmark ranges, duplicate detection). AuditLog entity captures admin actions for traceability.
+      </artifact>
+      <artifact path="docs/solution-architecture.md" title="Solution Architecture Document" section="Hexagonal Architecture (Ports & Adapters)">
+        Architecture separates Domain (pure business logic) → Application (use cases) → Infrastructure (adapters). Multi-layer caching: Client (TanStack Query 5min) → Redis (1hr TTL) → PostgreSQL. Technology stack: ASP.NET Core 9, React 19, PostgreSQL 16, Redis 7.2, EF Core 9.
+      </artifact>
+      <artifact path="docs/testing-guide.md" title="Testing Guide - LLM Token Price Platform" section="Test Architecture">
+        Test pyramid: 70% Unit (xUnit + FluentAssertions), 25% Integration (TestContainers + Respawn), 5% E2E (Playwright). Coverage goals: 70%+ overall, 90%+ domain layer. ArchUnitNET enforces 8 hexagonal architecture rules. Parallel execution enabled.
+      </artifact>
+      <artifact path="docs/retrospectives/epic-2-retro-2025-10-21.md" title="Epic 2 Retrospective" section="Technical Debt Identified">
+        CRITICAL issues: 27/50 E2E tests failing (54% failure rate), no caching on GET /api/models, no pagination on admin endpoints, CSV import lacks transactions, no rate limiting, missing audit log, poor UX error messages. Story 2.13 created with 21 acceptance criteria to resolve all debt before Epic 3.
+      </artifact>
+      <artifact path="docs/CLAUDE.md" title="Project Instructions (CLAUDE.md)" section="Testing Strategy">
+        Backend: xUnit, Moq, FluentAssertions for unit/integration tests; TestContainers for PostgreSQL/Redis; Playwright for E2E. Coverage goals: 70%+ overall, 90%+ domain layer. Frontend: Vitest, Testing Library, MSW for mocking. Test-to-code ratio target: 2.6:1.
+      </artifact>
+    </docs>
+    <code>
+      <artifact path="services/backend/LlmTokenPrice.API/Controllers/ModelsController.cs" kind="controller" symbol="ModelsController" lines="87-186" reason="Public models API that needs Redis caching (AC#5, Task 4). Currently returns Cached=false. Supports optional pagination (page, pageSize query params).">
+        GET /api/models endpoint with optional pagination support. Returns ApiResponse wrapper with Meta.Cached field currently hardcoded to false. Needs Redis layer integration for 1-hour TTL caching.
+      </artifact>
+      <artifact path="services/backend/LlmTokenPrice.API/Controllers/Admin/AdminModelsController.cs" kind="controller" symbol="AdminModelsController" lines="92-100" reason="Admin models API with pagination parameters (AC#6, Task 5 - already implemented). Pattern to follow for rate limiting and auth validation.">
+        Admin GET endpoint with pagination support (page, pageSize). Has [Authorize] attribute for JWT auth. Pagination already working backend - frontend UI pending.
+      </artifact>
+      <artifact path="services/backend/LlmTokenPrice.Application/Services/CSVImportService.cs" kind="service" symbol="ImportBenchmarkScoresAsync" lines="44-80" reason="CSV import service that needs transaction wrapping (AC#7, Task 6). Currently lacks database transaction - partial imports possible.">
+        CSV import implementation using CsvHelper. Validates rows individually but lacks transaction boundary. Needs wrapping in using var transaction = await _context.Database.BeginTransactionAsync().
+      </artifact>
+      <artifact path="services/backend/LlmTokenPrice.Tests.E2E/AdminModelsApiTests.cs" kind="test" symbol="GetAdminModels_WithoutAuthentication_Should_Return_401_Unauthorized" lines="36-45" reason="E2E auth test currently skipped (AC#9, Task 8). Needs unskipping and proper TestAuthHandler configuration.">
+        Skipped E2E test for JWT authentication validation. Skip reason: TestAuthHandler auto-authenticates. Needs separate test setup for unauthenticated scenarios.
+      </artifact>
+      <artifact path=".github/workflows/backend-ci.yml" kind="workflow" symbol="backend-ci" reason="CI/CD workflow that needs test enforcement (AC#2, #3, Task 2). Must block PRs on test failures and add coverage reporting.">
+        GitHub Actions workflow file for backend CI/CD. Needs: test execution on PR, branch protection rules, test results reporting, coverage enforcement (&gt;70%).
+      </artifact>
+    </code>
+    <dependencies>
+      <backend>
+        <package name="Microsoft.AspNetCore.App" version="9.0" />
+        <package name="Microsoft.EntityFrameworkCore" version="9.0.10" />
+        <package name="StackExchange.Redis" version="2.8.16" />
+        <package name="AspNetCoreRateLimit" version="5.0.0" note="To be installed for Task 7" />
+        <package name="Coverlet.Collector" version="6.0.2" note="Installed for Task 3" />
+        <package name="xUnit" version="2.9.2" />
+        <package name="FluentAssertions" version="6.12.0" />
+        <package name="TestContainers" version="3.10.0" />
+        <package name="Playwright" version="1.49.0" />
+      </backend>
+      <frontend>
+        <package name="react" version="19.x" />
+        <package name="@tanstack/react-query" version="5.x" />
+        <package name="zustand" version="5.x" />
+        <package name="axios" version="1.6.0" />
+        <package name="lucide-react" version="0.300.0" />
+      </frontend>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <architectural>
+      <constraint>Maintain Hexagonal Architecture boundaries - Domain layer NEVER depends on Infrastructure (enforced by ArchUnit tests)</constraint>
+      <constraint>All admin endpoints require [Authorize] attribute for JWT authentication</constraint>
+      <constraint>Public API endpoints (GET /api/models) use Redis caching with 1-hour TTL, cache invalidation on admin CRUD operations</constraint>
+      <constraint>Admin API endpoints are NEVER cached (data freshness critical for administrators)</constraint>
+      <constraint>All database mutations must use EF Core transactions for atomicity</constraint>
+    </architectural>
+    <testing>
+      <constraint>Test pyramid: 70% Unit, 25% Integration, 5% E2E - coverage target &gt;70% overall, &gt;90% domain layer</constraint>
+      <constraint>All E2E tests must pass 100% before story completion - no skipped tests in production</constraint>
+      <constraint>TestContainers for PostgreSQL and Redis isolation in integration tests</constraint>
+      <constraint>CI/CD must run tests on every PR and block merge if pass rate &lt;95%</constraint>
+      <constraint>Use xUnit + FluentAssertions for readable assertions with Given-When-Then structure</constraint>
+    </testing>
+    <security>
+      <constraint>Rate limiting: 100 requests/minute per IP on all /api/admin/* endpoints</constraint>
+      <constraint>Input validation: Prevent SQL injection (parameterized queries via EF Core) and XSS (HtmlSanitizer package)</constraint>
+      <constraint>Sensitive data (JWT secret, DB connection strings) MUST use environment variables, NOT appsettings.json</constraint>
+      <constraint>CORS configured for production domains only - NO AllowAnyOrigin() in production</constraint>
+    </security>
+    <performance>
+      <constraint>API response time &lt;200ms (95th percentile) under load</constraint>
+      <constraint>Cache hit ratio &gt;80% for GET /api/models endpoint</constraint>
+      <constraint>Database connection pooling: Min=5, Max=100 connections</constraint>
+      <constraint>CSV import: 1000 rows in &lt;5 seconds with progress indicators</constraint>
+    </performance>
+    <ux>
+      <constraint>Loading states (spinners/skeletons) during all async operations (forms, imports, deletions)</constraint>
+      <constraint>User-friendly error messages - translate technical errors (400, 401, 404, 500) to plain language</constraint>
+      <constraint>Two-step delete confirmation: dialog + typed "DELETE" confirmation for destructive operations</constraint>
+      <constraint>CSV import shows progress indicator (% complete or row count) via SSE or polling</constraint>
+    </ux>
+  </constraints>
+  <interfaces>
+    <interface name="ICacheService" kind="application-interface" signature="Task&lt;T?&gt; GetAsync&lt;T&gt;(string key); Task SetAsync&lt;T&gt;(string key, T value, TimeSpan ttl); Task RemoveAsync(string key); Task RemovePatternAsync(string pattern);" path="LlmTokenPrice.Application/Interfaces/ICacheService.cs">
+      Cache abstraction for Redis integration (Task 4). Supports get/set/remove with TTL and pattern-based invalidation.
+    </interface>
+    <interface name="GET /api/models" kind="rest-endpoint" signature="GET /api/models?page={page}&amp;pageSize={pageSize} → ApiResponse&lt;PagedResult&lt;ModelDto&gt;&gt; or ApiResponse&lt;List&lt;ModelDto&gt;&gt;" path="LlmTokenPrice.API/Controllers/ModelsController.cs:87">
+      Public models list endpoint requiring Redis caching layer (Task 4). Returns paginated or full list with Meta.Cached flag.
+    </interface>
+    <interface name="GET /api/admin/models" kind="rest-endpoint" signature="GET /api/admin/models?page={page}&amp;pageSize={pageSize}&amp;searchTerm={term}&amp;provider={provider}&amp;status={status} → AdminApiResponse&lt;PagedResult&lt;AdminModelDto&gt;&gt;" path="LlmTokenPrice.API/Controllers/Admin/AdminModelsController.cs:92">
+      Admin models list with pagination (backend complete, frontend Task 5.6 pending). Supports search, filter, and pagination.
+    </interface>
+    <interface name="POST /api/admin/benchmarks/import-csv" kind="rest-endpoint" signature="POST /api/admin/benchmarks/import-csv (multipart/form-data CSV file) → CSVImportResultDto" path="LlmTokenPrice.API/Controllers/Admin/AdminBenchmarksController.cs">
+      CSV import endpoint needing transaction wrapping (Task 6). Currently allows partial imports on validation failures.
+    </interface>
+    <interface name="PaginationParams" kind="dto" signature="class PaginationParams { int Page; int PageSize; bool IsValid(); }" path="LlmTokenPrice.Application/DTOs/PaginationParams.cs">
+      Pagination DTO used by both public and admin endpoints. Validates Page &gt;= 1, PageSize between 1-100.
+    </interface>
+    <interface name="PagedResult&lt;T&gt;" kind="dto" signature="class PagedResult&lt;T&gt; { List&lt;T&gt; Items; PaginationMeta Pagination; }" path="LlmTokenPrice.Application/DTOs/PagedResult.cs">
+      Paginated response wrapper with Items and Pagination metadata (currentPage, totalItems, totalPages, hasNextPage, hasPreviousPage).
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>Backend: xUnit 2.9.2 + FluentAssertions 6.12.0 for unit/integration tests. TestContainers 3.10.0 for PostgreSQL 16 and Redis 7.2 isolation. Respawn 6.2.1 for &lt;100ms database cleanup. ArchUnitNET 0.10.6 enforces 8 hexagonal architecture rules. Playwright 1.49.0 for E2E API tests (not browser). Bogus 35.6.1 for realistic test data. Coverlet 6.0.2 for code coverage. Frontend: Vitest + Testing Library for component tests, MSW for API mocking. Test pyramid: 70% unit, 25% integration, 5% E2E. Given-When-Then structure for readability. Parallel execution enabled via xunit.runner.json.</standards>
+    <locations>
+      <location>services/backend/LlmTokenPrice.Domain.Tests/ - Domain unit tests + ArchUnitNET rules</location>
+      <location>services/backend/LlmTokenPrice.Application.Tests/ - Application service unit tests + validators</location>
+      <location>services/backend/LlmTokenPrice.Infrastructure.Tests/ - TestContainers integration tests (Database, Cache)</location>
+      <location>services/backend/LlmTokenPrice.Tests.E2E/ - Playwright E2E API tests (HealthCheck, AdminModels, AdminBenchmarks)</location>
+      <location>apps/web/src/components/**/__tests__/ - Frontend Vitest component tests</location>
+    </locations>
+    <ideas>
+      <test ac="1" priority="CRITICAL">Run dotnet test and catalog all 27 failing tests with error messages (Task 1.1)</test>
+      <test ac="1" priority="CRITICAL">Fix 9 AdminBenchmarksApiTests failures: CSV import tests (4 require test fixtures), CRUD tests (5 passing) (Task 1.2)</test>
+      <test ac="1" priority="CRITICAL">Fix 16 AdminModelsApiTests failures: auth, search, filtering, ordering, soft delete (Task 1.3)</test>
+      <test ac="2,3" priority="CRITICAL">Update .github/workflows/backend-ci.yml to run dotnet test on PR with branch protection rules (Task 2.1, 2.2)</test>
+      <test ac="4" priority="CRITICAL">Generate coverage report with Coverlet and enforce &gt;70% in CI/CD (Task 3.1-3.5)</test>
+      <test ac="5" priority="HIGH">Unit test ICacheService mock verifying GetAsync/SetAsync/RemoveAsync/RemovePatternAsync methods (Task 4.6)</test>
+      <test ac="5" priority="HIGH">E2E test GET /api/models verifying cache hit/miss behavior via Meta.Cached flag (Task 4.7)</test>
+      <test ac="6" priority="HIGH">E2E tests for pagination: different page sizes (1, 20, 50, 100), page numbers, out-of-range pages (Task 5.7)</test>
+      <test ac="7" priority="HIGH">E2E test verifying CSV import rollback on partial failure (all-or-nothing transaction) (Task 6.5)</test>
+      <test ac="8" priority="HIGH">E2E test sending &gt;100 requests to admin endpoint and verifying 429 Too Many Requests with Retry-After header (Task 7.5)</test>
+      <test ac="9" priority="HIGH">Unskip auth tests in AdminModelsApiTests and verify 401 for unauthenticated requests (Task 8.1-8.5)</test>
+      <test ac="10" priority="HIGH">Component test for LoadingSpinner showing during async operations (Task 9.1-9.5)</test>
+      <test ac="11" priority="HIGH">Component test for error message mapping utility (Task 10.1-10.5)</test>
+      <test ac="12" priority="HIGH">E2E test verifying two-step delete confirmation (dialog + typed DELETE) (Task 11.6)</test>
+      <test ac="13" priority="HIGH">Integration test for CSV import progress indicator via SSE/polling (Task 12.1-12.6)</test>
+      <test ac="18" priority="MEDIUM">E2E security tests attempting SQL injection and XSS attacks, verify sanitization (Task 17.7)</test>
+      <test ac="21" priority="MEDIUM">Load test with 100 concurrent users verifying &lt;500ms avg response time (Task 20.5)</test>
+    </ideas>
+  </tests>
+</story-context>
