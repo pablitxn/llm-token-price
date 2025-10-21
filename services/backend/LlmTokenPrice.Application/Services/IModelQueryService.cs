@@ -34,4 +34,25 @@ public interface IModelQueryService
     /// Includes nested CapabilityDto and top 3 BenchmarkScoreDto entries.
     /// </remarks>
     Task<ModelDto?> GetModelByIdAsync(Guid id, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Retrieves a paginated list of active models with their capabilities and top benchmark scores.
+    /// </summary>
+    /// <param name="pagination">Pagination parameters (page number and page size).</param>
+    /// <param name="cancellationToken">Cancellation token for async operation.</param>
+    /// <returns>PagedResult containing ModelDto objects and pagination metadata.</returns>
+    /// <remarks>
+    /// Story 2.13 Task 5: Pagination implementation.
+    ///
+    /// Returns only active models (IsActive = true).
+    /// Includes nested CapabilityDto and top 3 BenchmarkScoreDto entries per model.
+    /// Uses cache-aside pattern with pagination-aware cache keys.
+    ///
+    /// Response includes:
+    /// - items: List of ModelDto for the requested page
+    /// - pagination: Metadata (currentPage, totalPages, hasNextPage, etc.)
+    /// </remarks>
+    Task<PagedResult<ModelDto>> GetAllModelsPagedAsync(
+        PaginationParams pagination,
+        CancellationToken cancellationToken = default);
 }

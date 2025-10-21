@@ -56,6 +56,47 @@ public class AdminModelService : IAdminModelService
     }
 
     /// <inheritdoc />
+    public async Task<PagedResult<AdminModelDto>> GetAllModelsPagedAsync(
+        PaginationParams pagination,
+        string? searchTerm = null,
+        string? provider = null,
+        string? status = null,
+        CancellationToken cancellationToken = default)
+    {
+        // Validate pagination parameters
+        if (!pagination.IsValid())
+        {
+            throw new ArgumentException("Invalid pagination parameters", nameof(pagination));
+        }
+
+        // Fetch paginated models from repository
+        var (models, totalCount) = await _adminRepository.GetAllModelsPagedAsync(
+            pagination.Page,
+            pagination.PageSize,
+            searchTerm,
+            provider,
+            status,
+            cancellationToken);
+
+        // Map entities to DTOs
+        var dtos = models.Select(MapToAdminDto).ToList();
+
+        // Create paged result
+        var pagedResult = PagedResult<AdminModelDto>.Create(
+            dtos,
+            pagination.Page,
+            pagination.PageSize,
+            totalCount);
+
+        _logger.LogInformation(
+            "Retrieved page {Page} size {PageSize} ({Count}/{Total} models) for admin (search: {SearchTerm}, provider: {Provider}, status: {Status})",
+            pagination.Page, pagination.PageSize, dtos.Count, totalCount,
+            searchTerm ?? "none", provider ?? "none", status ?? "none");
+
+        return pagedResult;
+    }
+
+    /// <inheritdoc />
     public async Task<AdminModelDto?> GetModelByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var model = await _adminRepository.GetByIdAsync(id, cancellationToken);

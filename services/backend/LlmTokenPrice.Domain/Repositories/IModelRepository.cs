@@ -37,4 +37,30 @@ public interface IModelRepository
     /// Eagerly loads Capability and BenchmarkScores.ThenInclude(Benchmark) to avoid N+1 queries.
     /// </remarks>
     Task<Model?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Retrieves a paginated list of active models from the database.
+    /// Includes related Capability and BenchmarkScores with Benchmark data.
+    /// </summary>
+    /// <param name="page">Page number (1-indexed).</param>
+    /// <param name="pageSize">Number of items per page.</param>
+    /// <param name="cancellationToken">Cancellation token for async operation.</param>
+    /// <returns>Tuple containing the list of models for the requested page and the total count of active models.</returns>
+    /// <remarks>
+    /// Story 2.13 Task 5: Pagination implementation.
+    ///
+    /// Only returns models where IsActive = true (excludes soft-deleted models).
+    /// Eagerly loads Capability and BenchmarkScores.ThenInclude(Benchmark) to avoid N+1 queries.
+    ///
+    /// Implementation uses efficient database-level pagination:
+    /// - Skip((page - 1) * pageSize)
+    /// - Take(pageSize)
+    /// - Separate Count() query for total (can be cached)
+    ///
+    /// Page numbering: 1-indexed (page=1 is first page)
+    /// </remarks>
+    Task<(List<Model> Items, int TotalCount)> GetAllPagedAsync(
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken = default);
 }

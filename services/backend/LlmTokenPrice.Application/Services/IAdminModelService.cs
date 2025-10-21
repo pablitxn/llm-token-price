@@ -36,6 +36,36 @@ public interface IAdminModelService
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Retrieves a paginated list of models for admin panel (including inactive).
+    /// Supports search by name/provider and filtering by status.
+    /// </summary>
+    /// <param name="pagination">Pagination parameters (page number and page size).</param>
+    /// <param name="searchTerm">Optional search term to filter by model name or provider (case-insensitive).</param>
+    /// <param name="provider">Optional provider filter (exact match, case-insensitive).</param>
+    /// <param name="status">Optional status filter (exact match, case-insensitive).</param>
+    /// <param name="cancellationToken">Cancellation token for async operation.</param>
+    /// <returns>PagedResult containing AdminModelDto objects and pagination metadata.</returns>
+    /// <remarks>
+    /// Story 2.13 Task 5: Pagination implementation for admin endpoints.
+    ///
+    /// Returns models ordered by UpdatedAt DESC (most recently updated first).
+    /// Includes all statuses: active, deprecated, beta, and IsActive=false models.
+    /// Applies filters FIRST, then pagination on the filtered result set.
+    ///
+    /// Response includes:
+    /// - items: List of AdminModelDto for the requested page
+    /// - pagination: Metadata (currentPage, totalPages, hasNextPage, etc.)
+    ///
+    /// Admin endpoints do NOT use caching (always fresh data from database).
+    /// </remarks>
+    Task<PagedResult<AdminModelDto>> GetAllModelsPagedAsync(
+        PaginationParams pagination,
+        string? searchTerm = null,
+        string? provider = null,
+        string? status = null,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Retrieves a single model by ID for admin editing (including inactive).
     /// </summary>
     /// <param name="id">The unique identifier (GUID) of the model.</param>

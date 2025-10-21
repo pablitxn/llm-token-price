@@ -73,6 +73,56 @@ public class AdminModelRepository : IAdminModelRepository
     }
 
     /// <inheritdoc />
+    public async Task<(List<Model> Items, int TotalCount)> GetAllModelsPagedAsync(
+        int page,
+        int pageSize,
+        string? searchTerm = null,
+        string? provider = null,
+        string? status = null,
+        CancellationToken cancellationToken = default)
+    {
+        // Base query (without eager loading for count efficiency)
+        var query = _context.Models.AsQueryable();
+
+        // Apply search filter (case-insensitive search by name or provider)
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            var lowerSearchTerm = searchTerm.ToLower();
+            query = query.Where(m =>
+                m.Name.ToLower().Contains(lowerSearchTerm) ||
+                m.Provider.ToLower().Contains(lowerSearchTerm));
+        }
+
+        // Apply provider filter (exact match, case-insensitive)
+        if (!string.IsNullOrWhiteSpace(provider))
+        {
+            query = query.Where(m => m.Provider.ToLower() == provider.ToLower());
+        }
+
+        // Apply status filter (exact match, case-insensitive)
+        if (!string.IsNullOrWhiteSpace(status))
+        {
+            query = query.Where(m => m.Status.ToLower() == status.ToLower());
+        }
+
+        // Get total count of filtered results (separate query, no includes for performance)
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        // Get paginated items with eager loading
+        var items = await query
+            .Include(m => m.Capability)
+            .Include(m => m.BenchmarkScores)
+                .ThenInclude(bs => bs.Benchmark)
+            .OrderByDescending(m => m.UpdatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .AsNoTracking() // Read-only query optimization
+            .ToListAsync(cancellationToken);
+
+        return (items, totalCount);
+    }
+
+    /// <inheritdoc />
     public async Task<Model?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         // Unlike public repository, we do NOT filter by IsActive

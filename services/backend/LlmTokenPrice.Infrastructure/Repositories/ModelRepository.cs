@@ -52,4 +52,32 @@ public class ModelRepository : IModelRepository
             .AsNoTracking() // Read-only query optimization
             .FirstOrDefaultAsync(cancellationToken);
     }
+
+    /// <inheritdoc />
+    public async Task<(List<Model> Items, int TotalCount)> GetAllPagedAsync(
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken = default)
+    {
+        // Base query for active models
+        var query = _context.Models
+            .Where(m => m.IsActive);
+
+        // Get total count (separate query, can be optimized/cached)
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        // Get paginated items with eager loading
+        var items = await query
+            .Include(m => m.Capability)
+            .Include(m => m.BenchmarkScores)
+                .ThenInclude(bs => bs.Benchmark)
+            .OrderBy(m => m.Provider)
+                .ThenBy(m => m.Name)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .AsNoTracking() // Read-only query optimization
+            .ToListAsync(cancellationToken);
+
+        return (items, totalCount);
+    }
 }
