@@ -10,32 +10,34 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-col min-h-[60vh]">
-      <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold text-gray-900 mb-4">
+      {/* Hero Section */}
+      <section className="text-center mb-8">
+        <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
           LLM Token Price Comparison
         </h1>
-        <p className="text-xl text-gray-600">
+        <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
           Compare pricing, capabilities, and benchmarks across Large Language Model providers
         </p>
-      </div>
+      </section>
 
+      {/* Main Content Area */}
       <div className="w-full max-w-6xl mx-auto">
         {isLoading && (
-          <div className="text-center py-8">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-            <p className="mt-4 text-gray-600">Loading models...</p>
+          <div className="text-center py-12" role="status" aria-live="polite">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-gray-900 rounded-full"></div>
+            <p className="mt-4 text-gray-600 text-lg">Loading model data...</p>
           </div>
         )}
 
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center" role="alert">
             <p className="text-red-800">Error loading models: {(error as Error).message}</p>
           </div>
         )}
 
         {data && (
-          <div>
-            <div className="mb-4 text-sm text-gray-600">
+          <article>
+            <div className="mb-6 text-sm text-gray-600">
               Found {data.meta.count} models • Last updated: {new Date(data.meta.timestamp).toLocaleString()}
             </div>
 
@@ -44,7 +46,7 @@ export default function HomePage() {
                 <ModelCard key={model.id} model={model} />
               ))}
             </div>
-          </div>
+          </article>
         )}
       </div>
     </div>
