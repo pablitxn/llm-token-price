@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+  <!-- Model validation messages -->
+  <data name="ModelNameRequired" xml:space="preserve">
+    <value>Model name is required</value>
+  </data>
+  <data name="ModelNameMaxLength" xml:space="preserve">
+    <value>Model name cannot exceed 255 characters</value>
+  </data>
+  <data name="ProviderRequired" xml:space="preserve">
+    <value>Provider is required</value>
+  </data>
+  <data name="ProviderMaxLength" xml:space="preserve">
+    <value>Provider cannot exceed 100 characters</value>
+  </data>
+  <data name="VersionMaxLength" xml:space="preserve">
+    <value>Version cannot exceed 50 characters</value>
+  </data>
+  <data name="InputPriceGreaterThanZero" xml:space="preserve">
+    <value>Input price must be greater than 0</value>
+  </data>
+  <data name="InputPriceDecimalPlaces" xml:space="preserve">
+    <value>Input price can have maximum 6 decimal places</value>
+  </data>
+  <data name="OutputPriceGreaterThanZero" xml:space="preserve">
+    <value>Output price must be greater than 0</value>
+  </data>
+  <data name="OutputPriceDecimalPlaces" xml:space="preserve">
+    <value>Output price can have maximum 6 decimal places</value>
+  </data>
+  <data name="CurrencyRequired" xml:space="preserve">
+    <value>Currency is required</value>
+  </data>
+  <data name="CurrencyInvalid" xml:space="preserve">
+    <value>Currency must be one of: {0}</value>
+  </data>
+  <data name="StatusRequired" xml:space="preserve">
+    <value>Status is required</value>
+  </data>
+  <data name="StatusInvalid" xml:space="preserve">
+    <value>Status must be one of: {0}</value>
+  </data>
+  <data name="PricingValidFromBeforeValidTo" xml:space="preserve">
+    <value>Pricing Valid From must be before Pricing Valid To</value>
+  </data>
+  <data name="CapabilitiesRequired" xml:space="preserve">
+    <value>Capabilities are required</value>
+  </data>
+
+  <!-- Benchmark validation messages -->
+  <data name="BenchmarkNameRequired" xml:space="preserve">
+    <value>Benchmark name is required</value>
+  </data>
+  <data name="BenchmarkNameMaxLength" xml:space="preserve">
+    <value>Benchmark name cannot exceed 50 characters</value>
+  </data>
+  <data name="BenchmarkNameFormat" xml:space="preserve">
+    <value>Benchmark name can only contain letters, numbers, and underscores</value>
+  </data>
+  <data name="FullNameRequired" xml:space="preserve">
+    <value>Full name is required</value>
+  </data>
+  <data name="FullNameMaxLength" xml:space="preserve">
+    <value>Full name cannot exceed 255 characters</value>
+  </data>
+  <data name="DescriptionMaxLength" xml:space="preserve">
+    <value>Description cannot exceed 1000 characters</value>
+  </data>
+  <data name="CategoryRequired" xml:space="preserve">
+    <value>Category is required</value>
+  </data>
+  <data name="CategoryInvalid" xml:space="preserve">
+    <value>Category must be one of: {0}</value>
+  </data>
+  <data name="InterpretationRequired" xml:space="preserve">
+    <value>Interpretation is required</value>
+  </data>
+  <data name="InterpretationInvalid" xml:space="preserve">
+    <value>Interpretation must be one of: {0}</value>
+  </data>
+  <data name="TypicalRangeMinRequired" xml:space="preserve">
+    <value>Typical range minimum is required</value>
+  </data>
+  <data name="TypicalRangeMaxRequired" xml:space="preserve">
+    <value>Typical range maximum is required</value>
+  </data>
+  <data name="TypicalRangeMinLessThanMax" xml:space="preserve">
+    <value>Typical range minimum must be less than maximum</value>
+  </data>
+  <data name="QapsWeightRequired" xml:space="preserve">
+    <value>QAPS weight is required</value>
+  </data>
+  <data name="QapsWeightRange" xml:space="preserve">
+    <value>QAPS weight must be between 0.00 and 1.00</value>
+  </data>
+  <data name="QapsWeightDecimalPlaces" xml:space="preserve">
+    <value>QAPS weight can have maximum 2 decimal places</value>
+  </data>
+
+  <!-- Capability validation messages -->
+  <data name="ContextWindowMinimum" xml:space="preserve">
+    <value>Context window must be at least {0:N0} tokens</value>
+  </data>
+  <data name="ContextWindowMaximum" xml:space="preserve">
+    <value>Context window cannot exceed {0:N0} tokens</value>
+  </data>
+  <data name="MaxOutputTokensGreaterThanZero" xml:space="preserve">
+    <value>Max output tokens must be greater than 0</value>
+  </data>
+  <data name="MaxOutputTokensExceedsContextWindow" xml:space="preserve">
+    <value>Max output tokens cannot exceed context window</value>
+  </data>
+
+  <!-- Benchmark Score validation messages -->
+  <data name="BenchmarkRequired" xml:space="preserve">
+    <value>Benchmark is required</value>
+  </data>
+  <data name="ScoreRequired" xml:space="preserve">
+    <value>Score is required</value>
+  </data>
+  <data name="ScoreExceedsMaxScore" xml:space="preserve">
+    <value>Score cannot exceed max score</value>
+  </data>
+  <data name="SourceUrlInvalidFormat" xml:space="preserve">
+    <value>Source URL must be a valid URL format</value>
+  </data>
+  <data name="NotesMaxLength" xml:space="preserve">
+    <value>Notes cannot exceed 500 characters</value>
+  </data>
+</root>

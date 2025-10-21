@@ -41,18 +41,23 @@ public class CSVImportService
     /// <summary>
     /// Imports benchmark scores from CSV stream using all-or-nothing transaction pattern
     /// Story 2.13 Task 6: Validates ALL rows first, only imports if ALL are valid (atomic operation)
+    /// Story 2.13 Task 12: Reports real-time progress via IProgress for SSE streaming
     /// </summary>
     /// <param name="fileStream">CSV file stream</param>
     /// <param name="skipDuplicates">If true, skips rows where model+benchmark already exists. If false, updates existing scores.</param>
-    /// <param name="cancellationToken">Cancellation token</param>
+    /// <param name="progress">Optional progress reporter for real-time updates (Task 12)</param>
+    /// <param name="cancellationToken">Cancellation token for operation cancellation (Task 12.6)</param>
     /// <returns>Import result with success/failure counts and error details</returns>
     /// <remarks>
     /// IMPORTANT: This method uses all-or-nothing pattern. If ANY row fails validation,
     /// NO rows are imported. The entire transaction is rolled back.
+    /// Progress updates: Parsing → Validating (per row) → Importing → Complete
+    /// Supports cancellation via CancellationToken for user-initiated abort
     /// </remarks>
     public async Task<CSVImportResultDto> ImportBenchmarkScoresAsync(
         Stream fileStream,
         bool skipDuplicates = true,
+        IProgress<CSVImportProgressDto>? progress = null,
         CancellationToken cancellationToken = default)
     {
         var result = new CSVImportResultDto();
@@ -62,6 +67,16 @@ public class CSVImportService
         try
         {
             // PHASE 1: Parse and validate ALL rows (no database changes yet)
+
+            // Task 12.2: Report parsing phase start
+            progress?.Report(new CSVImportProgressDto
+            {
+                Phase = "Parsing",
+                TotalRows = 0,
+                ProcessedRows = 0,
+                Message = "Parsing CSV file..."
+            });
+
             using var reader = new StreamReader(fileStream);
             var config = new CsvConfiguration(CultureInfo.InvariantCulture)
             {
@@ -78,9 +93,21 @@ public class CSVImportService
 
             _logger.LogInformation("Parsing CSV: {RowCount} rows found", rows.Count);
 
+            // Task 12.2: Report total rows detected
+            progress?.Report(new CSVImportProgressDto
+            {
+                Phase = "Validating",
+                TotalRows = rows.Count,
+                ProcessedRows = 0,
+                Message = $"Validating {rows.Count} rows..."
+            });
+
             // Validate ALL rows first (Task 6.2: collect all errors before importing)
             for (int i = 0; i < rows.Count; i++)
             {
+                // Task 12.6: Check for cancellation request
+                cancellationToken.ThrowIfCancellationRequested();
+
                 var row = rows[i];
                 row.RowNumber = i + 2; // +2 because CSV is 1-indexed and has header row
 
@@ -93,10 +120,8 @@ public class CSVImportService
                 if (validationResult.WasSkipped)
                 {
                     result.SkippedDuplicates++;
-                    continue;
                 }
-
-                if (!validationResult.IsValid)
+                else if (!validationResult.IsValid)
                 {
                     errors.Add(new FailedRowDto
                     {
@@ -104,10 +129,26 @@ public class CSVImportService
                         Error = validationResult.Error!,
                         Data = RowToDictionary(row)
                     });
-                    continue;
+                }
+                else
+                {
+                    validScores.Add(validationResult.Score!);
                 }
 
-                validScores.Add(validationResult.Score!);
+                // Task 12.2: Report validation progress every 10 rows or on last row
+                if ((i + 1) % 10 == 0 || i == rows.Count - 1)
+                {
+                    progress?.Report(new CSVImportProgressDto
+                    {
+                        Phase = "Validating",
+                        TotalRows = rows.Count,
+                        ProcessedRows = i + 1,
+                        SuccessCount = validScores.Count,
+                        FailureCount = errors.Count,
+                        SkippedCount = result.SkippedDuplicates,
+                        Message = $"Validating row {i + 1} of {rows.Count}..."
+                    });
+                }
             }
 
             // Task 6.2: If ANY row failed validation, return errors WITHOUT importing anything
@@ -123,6 +164,19 @@ public class CSVImportService
                     errors.Count,
                     result.TotalRows);
 
+                // Task 12.2: Report validation failure
+                progress?.Report(new CSVImportProgressDto
+                {
+                    Phase = "Complete",
+                    TotalRows = result.TotalRows,
+                    ProcessedRows = result.TotalRows,
+                    SuccessCount = 0,
+                    FailureCount = errors.Count,
+                    SkippedCount = result.SkippedDuplicates,
+                    Message = $"Validation failed: {errors.Count} rows with errors. No rows imported.",
+                    FinalResult = result
+                });
+
                 return result;
             }
 
@@ -133,12 +187,27 @@ public class CSVImportService
                     "All {Count} rows validated successfully. Starting transactional import...",
                     validScores.Count);
 
+                // Task 12.2: Report import phase start
+                progress?.Report(new CSVImportProgressDto
+                {
+                    Phase = "Importing",
+                    TotalRows = result.TotalRows,
+                    ProcessedRows = result.TotalRows,
+                    SuccessCount = validScores.Count,
+                    FailureCount = 0,
+                    SkippedCount = result.SkippedDuplicates,
+                    Message = $"Importing {validScores.Count} validated rows to database..."
+                });
+
                 // Task 6.1: Wrap import in database transaction (all-or-nothing)
                 // Uses ITransactionScope from Domain layer (Hexagonal Architecture)
                 await using var transaction = await _benchmarkRepository.BeginTransactionAsync(cancellationToken);
 
                 try
                 {
+                    // Task 12.6: Check for cancellation before database operation
+                    cancellationToken.ThrowIfCancellationRequested();
+
                     await _benchmarkRepository.BulkAddScoresAsync(validScores, cancellationToken);
                     await _benchmarkRepository.SaveChangesAsync(cancellationToken);
 
@@ -152,6 +221,19 @@ public class CSVImportService
                         "CSV import transaction committed successfully: {Successful} rows imported, {Skipped} duplicates skipped",
                         result.SuccessfulImports,
                         result.SkippedDuplicates);
+
+                    // Task 12.2: Report successful completion
+                    progress?.Report(new CSVImportProgressDto
+                    {
+                        Phase = "Complete",
+                        TotalRows = result.TotalRows,
+                        ProcessedRows = result.TotalRows,
+                        SuccessCount = result.SuccessfulImports,
+                        FailureCount = 0,
+                        SkippedCount = result.SkippedDuplicates,
+                        Message = $"Import complete: {result.SuccessfulImports} rows imported, {result.SkippedDuplicates} duplicates skipped",
+                        FinalResult = result
+                    });
                 }
                 catch (Exception ex)
                 {
@@ -168,9 +250,37 @@ public class CSVImportService
             result.Errors = errors;
             return result;
         }
+        catch (OperationCanceledException)
+        {
+            // Task 12.6: Handle user-initiated cancellation
+            _logger.LogWarning("CSV import cancelled by user");
+
+            progress?.Report(new CSVImportProgressDto
+            {
+                Phase = "Cancelled",
+                TotalRows = result.TotalRows,
+                ProcessedRows = 0,
+                Message = "Import cancelled by user. No rows were imported.",
+                FinalResult = result
+            });
+
+            throw; // Re-throw to signal cancellation to caller
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Fatal error during CSV import");
+
+            // Task 12.2: Report fatal error
+            progress?.Report(new CSVImportProgressDto
+            {
+                Phase = "Failed",
+                TotalRows = result.TotalRows,
+                ProcessedRows = 0,
+                Message = "Import failed due to an unexpected error",
+                ErrorMessage = ex.Message,
+                FinalResult = result
+            });
+
             throw;
         }
     }

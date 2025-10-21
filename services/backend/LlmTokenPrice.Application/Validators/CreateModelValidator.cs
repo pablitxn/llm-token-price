@@ -1,5 +1,6 @@
 using FluentValidation;
 using LlmTokenPrice.Application.DTOs;
+using LlmTokenPrice.Application.Resources;
 
 namespace LlmTokenPrice.Application.Validators;
 
@@ -16,40 +17,40 @@ public class CreateModelValidator : AbstractValidator<CreateModelRequest>
     {
         // Name validation
         RuleFor(x => x.Name)
-            .NotEmpty().WithMessage("Model name is required")
-            .MaximumLength(255).WithMessage("Model name cannot exceed 255 characters");
+            .NotEmpty().WithMessage(ValidationMessages.ModelNameRequired)
+            .MaximumLength(255).WithMessage(ValidationMessages.ModelNameMaxLength);
 
         // Provider validation
         RuleFor(x => x.Provider)
-            .NotEmpty().WithMessage("Provider is required")
-            .MaximumLength(100).WithMessage("Provider cannot exceed 100 characters");
+            .NotEmpty().WithMessage(ValidationMessages.ProviderRequired)
+            .MaximumLength(100).WithMessage(ValidationMessages.ProviderMaxLength);
 
         // Version validation (optional field)
         RuleFor(x => x.Version)
-            .MaximumLength(50).WithMessage("Version cannot exceed 50 characters")
+            .MaximumLength(50).WithMessage(ValidationMessages.VersionMaxLength)
             .When(x => !string.IsNullOrEmpty(x.Version));
 
         // Input price validation
         RuleFor(x => x.InputPricePer1M)
-            .GreaterThan(0).WithMessage("Input price must be greater than 0")
-            .PrecisionScale(10, 6, ignoreTrailingZeros: true).WithMessage("Input price can have maximum 6 decimal places");
+            .GreaterThan(0).WithMessage(ValidationMessages.InputPriceGreaterThanZero)
+            .PrecisionScale(10, 6, ignoreTrailingZeros: true).WithMessage(ValidationMessages.InputPriceDecimalPlaces);
 
         // Output price validation
         RuleFor(x => x.OutputPricePer1M)
-            .GreaterThan(0).WithMessage("Output price must be greater than 0")
-            .PrecisionScale(10, 6, ignoreTrailingZeros: true).WithMessage("Output price can have maximum 6 decimal places");
+            .GreaterThan(0).WithMessage(ValidationMessages.OutputPriceGreaterThanZero)
+            .PrecisionScale(10, 6, ignoreTrailingZeros: true).WithMessage(ValidationMessages.OutputPriceDecimalPlaces);
 
         // Currency validation
         RuleFor(x => x.Currency)
-            .NotEmpty().WithMessage("Currency is required")
+            .NotEmpty().WithMessage(ValidationMessages.CurrencyRequired)
             .Must(c => ValidCurrencies.Contains(c))
-            .WithMessage($"Currency must be one of: {string.Join(", ", ValidCurrencies)}");
+            .WithMessage(ValidationMessages.CurrencyInvalid(string.Join(", ", ValidCurrencies)));
 
         // Status validation
         RuleFor(x => x.Status)
-            .NotEmpty().WithMessage("Status is required")
+            .NotEmpty().WithMessage(ValidationMessages.StatusRequired)
             .Must(s => ValidStatuses.Contains(s))
-            .WithMessage($"Status must be one of: {string.Join(", ", ValidStatuses)}");
+            .WithMessage(ValidationMessages.StatusInvalid(string.Join(", ", ValidStatuses)));
 
         // Date range validation (conditional - only when both dates provided)
         When(x => !string.IsNullOrEmpty(x.PricingValidFrom) && !string.IsNullOrEmpty(x.PricingValidTo), () =>
@@ -63,12 +64,12 @@ public class CreateModelValidator : AbstractValidator<CreateModelRequest>
                     }
                     return true; // Let other validators handle invalid date formats
                 })
-                .WithMessage("Pricing Valid From must be before Pricing Valid To");
+                .WithMessage(ValidationMessages.PricingValidFromBeforeValidTo);
         });
 
         // Capabilities validation (Story 2.6)
         RuleFor(x => x.Capabilities)
-            .NotNull().WithMessage("Capabilities are required")
+            .NotNull().WithMessage(ValidationMessages.CapabilitiesRequired)
             .SetValidator(new CreateCapabilityValidator());
     }
 }

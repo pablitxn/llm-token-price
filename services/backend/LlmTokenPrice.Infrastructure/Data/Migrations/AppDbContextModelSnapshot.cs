@@ -22,6 +22,63 @@ namespace LlmTokenPrice.Infrastructure.Data.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("LlmTokenPrice.Domain.Entities.AuditLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<Guid>("EntityId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("EntityType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("NewValues")
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("OldValues")
+                        .HasColumnType("jsonb");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Action")
+                        .HasDatabaseName("idx_audit_logs_action");
+
+                    b.HasIndex("EntityId")
+                        .HasDatabaseName("idx_audit_logs_entity_id");
+
+                    b.HasIndex("EntityType")
+                        .HasDatabaseName("idx_audit_logs_entity_type");
+
+                    b.HasIndex("Timestamp")
+                        .IsDescending()
+                        .HasDatabaseName("idx_audit_logs_timestamp");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("idx_audit_logs_user_id");
+
+                    b.HasIndex("EntityType", "EntityId")
+                        .HasDatabaseName("idx_audit_logs_entity");
+
+                    b.ToTable("audit_logs", (string)null);
+                });
+
             modelBuilder.Entity("LlmTokenPrice.Domain.Entities.Benchmark", b =>
                 {
                     b.Property<Guid>("Id")

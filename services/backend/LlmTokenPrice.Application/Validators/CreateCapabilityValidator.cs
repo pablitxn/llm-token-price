@@ -1,5 +1,6 @@
 using FluentValidation;
 using LlmTokenPrice.Application.DTOs;
+using LlmTokenPrice.Application.Resources;
 
 namespace LlmTokenPrice.Application.Validators;
 
@@ -17,18 +18,18 @@ public class CreateCapabilityValidator : AbstractValidator<CreateCapabilityReque
         // Context window validation
         RuleFor(x => x.ContextWindow)
             .GreaterThanOrEqualTo(MinContextWindow)
-            .WithMessage($"Context window must be at least {MinContextWindow:N0} tokens")
+            .WithMessage(ValidationMessages.ContextWindowMinimum(MinContextWindow))
             .LessThanOrEqualTo(MaxContextWindow)
-            .WithMessage($"Context window cannot exceed {MaxContextWindow:N0} tokens");
+            .WithMessage(ValidationMessages.ContextWindowMaximum(MaxContextWindow));
 
         // Max output tokens validation (conditional - only when provided)
         When(x => x.MaxOutputTokens.HasValue, () =>
         {
             RuleFor(x => x.MaxOutputTokens!.Value)
                 .GreaterThan(0)
-                .WithMessage("Max output tokens must be greater than 0")
+                .WithMessage(ValidationMessages.MaxOutputTokensGreaterThanZero)
                 .LessThanOrEqualTo(x => x.ContextWindow)
-                .WithMessage("Max output tokens cannot exceed context window");
+                .WithMessage(ValidationMessages.MaxOutputTokensExceedsContextWindow);
         });
     }
 }

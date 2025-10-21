@@ -1,5 +1,6 @@
 using FluentValidation;
 using LlmTokenPrice.Application.DTOs;
+using LlmTokenPrice.Application.Resources;
 
 namespace LlmTokenPrice.Application.Validators;
 
@@ -20,44 +21,44 @@ public class UpdateBenchmarkValidator : AbstractValidator<UpdateBenchmarkRequest
     {
         // FullName validation
         RuleFor(x => x.FullName)
-            .NotEmpty().WithMessage("Full name is required")
-            .MaximumLength(255).WithMessage("Full name cannot exceed 255 characters");
+            .NotEmpty().WithMessage(ValidationMessages.FullNameRequired)
+            .MaximumLength(255).WithMessage(ValidationMessages.FullNameMaxLength);
 
         // Description validation (optional field)
         RuleFor(x => x.Description)
-            .MaximumLength(1000).WithMessage("Description cannot exceed 1000 characters")
+            .MaximumLength(1000).WithMessage(ValidationMessages.DescriptionMaxLength)
             .When(x => !string.IsNullOrEmpty(x.Description));
 
         // Category validation
         RuleFor(x => x.Category)
-            .NotEmpty().WithMessage("Category is required")
+            .NotEmpty().WithMessage(ValidationMessages.CategoryRequired)
             .Must(c => ValidCategories.Contains(c))
-            .WithMessage($"Category must be one of: {string.Join(", ", ValidCategories)}");
+            .WithMessage(ValidationMessages.CategoryInvalid(string.Join(", ", ValidCategories)));
 
         // Interpretation validation
         RuleFor(x => x.Interpretation)
-            .NotEmpty().WithMessage("Interpretation is required")
+            .NotEmpty().WithMessage(ValidationMessages.InterpretationRequired)
             .Must(i => ValidInterpretations.Contains(i))
-            .WithMessage($"Interpretation must be one of: {string.Join(", ", ValidInterpretations)}");
+            .WithMessage(ValidationMessages.InterpretationInvalid(string.Join(", ", ValidInterpretations)));
 
         // TypicalRangeMin validation
         RuleFor(x => x.TypicalRangeMin)
-            .NotNull().WithMessage("Typical range minimum is required");
+            .NotNull().WithMessage(ValidationMessages.TypicalRangeMinRequired);
 
         // TypicalRangeMax validation
         RuleFor(x => x.TypicalRangeMax)
-            .NotNull().WithMessage("Typical range maximum is required");
+            .NotNull().WithMessage(ValidationMessages.TypicalRangeMaxRequired);
 
         // Range validation: Min < Max
         RuleFor(x => x)
             .Must(x => x.TypicalRangeMin < x.TypicalRangeMax)
-            .WithMessage("Typical range minimum must be less than maximum")
+            .WithMessage(ValidationMessages.TypicalRangeMinLessThanMax)
             .WithName("TypicalRangeMax"); // Error associated with max field
 
         // WeightInQaps validation
         RuleFor(x => x.WeightInQaps)
-            .NotNull().WithMessage("QAPS weight is required")
-            .InclusiveBetween(0m, 1m).WithMessage("QAPS weight must be between 0.00 and 1.00")
-            .PrecisionScale(3, 2, ignoreTrailingZeros: true).WithMessage("QAPS weight can have maximum 2 decimal places");
+            .NotNull().WithMessage(ValidationMessages.QapsWeightRequired)
+            .InclusiveBetween(0m, 1m).WithMessage(ValidationMessages.QapsWeightRange)
+            .PrecisionScale(3, 2, ignoreTrailingZeros: true).WithMessage(ValidationMessages.QapsWeightDecimalPlaces);
     }
 }

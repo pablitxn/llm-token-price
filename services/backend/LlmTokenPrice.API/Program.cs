@@ -30,6 +30,19 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 builder.Services.AddValidatorsFromAssemblyContaining<CreateModelValidator>();
 builder.Services.AddFluentValidationAutoValidation();
 
+// Localization configuration (Story 2.13 Task 13: Spanish/English validation messages)
+builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
+builder.Services.Configure<RequestLocalizationOptions>(options =>
+{
+    var supportedCultures = new[] { "en", "es" };
+    options.SetDefaultCulture("en")
+        .AddSupportedCultures(supportedCultures)
+        .AddSupportedUICultures(supportedCultures);
+
+    // Read language from Accept-Language header
+    options.ApplyCurrentCultureToResponseHeaders = true;
+});
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -123,6 +136,7 @@ builder.Services.AddScoped<ICacheRepository, RedisCacheRepository>();
 builder.Services.AddScoped<IModelRepository, ModelRepository>();
 builder.Services.AddScoped<IAdminModelRepository, AdminModelRepository>();
 builder.Services.AddScoped<IBenchmarkRepository, BenchmarkRepository>();
+builder.Services.AddScoped<IAuditLogRepository, AuditLogRepository>(); // Story 2.13 Task 14: Audit log repository
 
 // Domain services (transient - pure business logic, no state)
 builder.Services.AddTransient<BenchmarkNormalizer>();
@@ -266,6 +280,10 @@ app.Use(async (context, next) =>
 });
 
 app.UseCors(); // Must be before UseAuthentication
+
+// Request localization middleware (Story 2.13 Task 13: Detect language from Accept-Language header)
+// Must be early in the pipeline to set culture for the entire request
+app.UseRequestLocalization();
 
 // Rate limiting middleware (Story 2.13 Task 7: Must be before UseAuthentication)
 app.UseIpRateLimiting();

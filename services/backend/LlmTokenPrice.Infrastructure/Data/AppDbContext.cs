@@ -46,6 +46,11 @@ public class AppDbContext : DbContext
     public DbSet<BenchmarkScore> BenchmarkScores { get; set; } = null!;
 
     /// <summary>
+    /// DbSet for audit log entities (append-only, tracks all admin CRUD operations).
+    /// </summary>
+    public DbSet<AuditLog> AuditLogs { get; set; } = null!;
+
+    /// <summary>
     /// Configures the model that was discovered by convention from entity types.
     /// Applies all IEntityTypeConfiguration implementations from this assembly.
     /// </summary>

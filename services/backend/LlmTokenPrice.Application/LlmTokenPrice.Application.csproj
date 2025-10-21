@@ -16,4 +16,14 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
+    <ItemGroup>
+      <EmbeddedResource Update="Resources\ValidationMessages.resx">
+        <Generator>PublicResXFileCodeGenerator</Generator>
+        <LastGenOutput>ValidationMessages.Designer.cs</LastGenOutput>
+      </EmbeddedResource>
+      <EmbeddedResource Update="Resources\ValidationMessages.es.resx">
+        <DependentUpon>ValidationMessages.resx</DependentUpon>
+      </EmbeddedResource>
+    </ItemGroup>
+
 </Project>

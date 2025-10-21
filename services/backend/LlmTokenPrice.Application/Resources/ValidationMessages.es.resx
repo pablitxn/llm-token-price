@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+  <!-- Mensajes de validación de modelo -->
+  <data name="ModelNameRequired" xml:space="preserve">
+    <value>El nombre del modelo es obligatorio</value>
+  </data>
+  <data name="ModelNameMaxLength" xml:space="preserve">
+    <value>El nombre del modelo no puede exceder 255 caracteres</value>
+  </data>
+  <data name="ProviderRequired" xml:space="preserve">
+    <value>El proveedor es obligatorio</value>
+  </data>
+  <data name="ProviderMaxLength" xml:space="preserve">
+    <value>El proveedor no puede exceder 100 caracteres</value>
+  </data>
+  <data name="VersionMaxLength" xml:space="preserve">
+    <value>La versión no puede exceder 50 caracteres</value>
+  </data>
+  <data name="InputPriceGreaterThanZero" xml:space="preserve">
+    <value>El precio de entrada debe ser mayor que 0</value>
+  </data>
+  <data name="InputPriceDecimalPlaces" xml:space="preserve">
+    <value>El precio de entrada puede tener un máximo de 6 decimales</value>
+  </data>
+  <data name="OutputPriceGreaterThanZero" xml:space="preserve">
+    <value>El precio de salida debe ser mayor que 0</value>
+  </data>
+  <data name="OutputPriceDecimalPlaces" xml:space="preserve">
+    <value>El precio de salida puede tener un máximo de 6 decimales</value>
+  </data>
+  <data name="CurrencyRequired" xml:space="preserve">
+    <value>La moneda es obligatoria</value>
+  </data>
+  <data name="CurrencyInvalid" xml:space="preserve">
+    <value>La moneda debe ser una de: {0}</value>
+  </data>
+  <data name="StatusRequired" xml:space="preserve">
+    <value>El estado es obligatorio</value>
+  </data>
+  <data name="StatusInvalid" xml:space="preserve">
+    <value>El estado debe ser uno de: {0}</value>
+  </data>
+  <data name="PricingValidFromBeforeValidTo" xml:space="preserve">
+    <value>La fecha de validez inicial debe ser anterior a la fecha final</value>
+  </data>
+  <data name="CapabilitiesRequired" xml:space="preserve">
+    <value>Las capacidades son obligatorias</value>
+  </data>
+
+  <!-- Mensajes de validación de benchmark -->
+  <data name="BenchmarkNameRequired" xml:space="preserve">
+    <value>El nombre del benchmark es obligatorio</value>
+  </data>
+  <data name="BenchmarkNameMaxLength" xml:space="preserve">
+    <value>El nombre del benchmark no puede exceder 50 caracteres</value>
+  </data>
+  <data name="BenchmarkNameFormat" xml:space="preserve">
+    <value>El nombre del benchmark solo puede contener letras, números y guiones bajos</value>
+  </data>
+  <data name="FullNameRequired" xml:space="preserve">
+    <value>El nombre completo es obligatorio</value>
+  </data>
+  <data name="FullNameMaxLength" xml:space="preserve">
+    <value>El nombre completo no puede exceder 255 caracteres</value>
+  </data>
+  <data name="DescriptionMaxLength" xml:space="preserve">
+    <value>La descripción no puede exceder 1000 caracteres</value>
+  </data>
+  <data name="CategoryRequired" xml:space="preserve">
+    <value>La categoría es obligatoria</value>
+  </data>
+  <data name="CategoryInvalid" xml:space="preserve">
+    <value>La categoría debe ser una de: {0}</value>
+  </data>
+  <data name="InterpretationRequired" xml:space="preserve">
+    <value>La interpretación es obligatoria</value>
+  </data>
+  <data name="InterpretationInvalid" xml:space="preserve">
+    <value>La interpretación debe ser una de: {0}</value>
+  </data>
+  <data name="TypicalRangeMinRequired" xml:space="preserve">
+    <value>El rango mínimo típico es obligatorio</value>
+  </data>
+  <data name="TypicalRangeMaxRequired" xml:space="preserve">
+    <value>El rango máximo típico es obligatorio</value>
+  </data>
+  <data name="TypicalRangeMinLessThanMax" xml:space="preserve">
+    <value>El rango mínimo típico debe ser menor que el máximo</value>
+  </data>
+  <data name="QapsWeightRequired" xml:space="preserve">
+    <value>El peso QAPS es obligatorio</value>
+  </data>
+  <data name="QapsWeightRange" xml:space="preserve">
+    <value>El peso QAPS debe estar entre 0.00 y 1.00</value>
+  </data>
+  <data name="QapsWeightDecimalPlaces" xml:space="preserve">
+    <value>El peso QAPS puede tener un máximo de 2 decimales</value>
+  </data>
+
+  <!-- Mensajes de validación de capacidades -->
+  <data name="ContextWindowMinimum" xml:space="preserve">
+    <value>La ventana de contexto debe ser de al menos {0:N0} tokens</value>
+  </data>
+  <data name="ContextWindowMaximum" xml:space="preserve">
+    <value>La ventana de contexto no puede exceder {0:N0} tokens</value>
+  </data>
+  <data name="MaxOutputTokensGreaterThanZero" xml:space="preserve">
+    <value>Los tokens máximos de salida deben ser mayores que 0</value>
+  </data>
+  <data name="MaxOutputTokensExceedsContextWindow" xml:space="preserve">
+    <value>Los tokens máximos de salida no pueden exceder la ventana de contexto</value>
+  </data>
+
+  <!-- Mensajes de validación de puntuación de benchmark -->
+  <data name="BenchmarkRequired" xml:space="preserve">
+    <value>El benchmark es obligatorio</value>
+  </data>
+  <data name="ScoreRequired" xml:space="preserve">
+    <value>La puntuación es obligatoria</value>
+  </data>
+  <data name="ScoreExceedsMaxScore" xml:space="preserve">
+    <value>La puntuación no puede exceder la puntuación máxima</value>
+  </data>
+  <data name="SourceUrlInvalidFormat" xml:space="preserve">
+    <value>La URL de origen debe tener un formato válido</value>
+  </data>
+  <data name="NotesMaxLength" xml:space="preserve">
+    <value>Las notas no pueden exceder 500 caracteres</value>
+  </data>
+</root>
