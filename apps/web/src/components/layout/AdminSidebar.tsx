@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, Database, BarChart, type LucideIcon } from 'lucide-react'
+import { LayoutDashboard, Database, BarChart, Shield, type LucideIcon } from 'lucide-react'
 
 /**
  * Navigation item structure
@@ -28,6 +28,11 @@ const navItems: NavItem[] = [
     name: 'Benchmarks',
     icon: BarChart,
     path: '/admin/benchmarks',
+  },
+  {
+    name: 'Audit Log',
+    icon: Shield,
+    path: '/admin/audit-log',
   },
 ]
 
