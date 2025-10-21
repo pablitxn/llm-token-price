@@ -305,13 +305,37 @@ public class AdminModelsController : ControllerBase
     {
         try
         {
+            // Story 2.13 Task 17: Sanitize all text inputs to prevent XSS attacks
+            // Log security event if malicious content was detected BEFORE sanitization
+            if (_sanitizer.ContainsPotentiallyMaliciousContent(request.Name) ||
+                _sanitizer.ContainsPotentiallyMaliciousContent(request.Provider))
+            {
+                _logger.LogWarning(
+                    "Potentially malicious content detected and sanitized in model creation request from {User}",
+                    User.Identity?.Name ?? "Unknown");
+            }
+
+            // Create sanitized request (DTOs are immutable with init-only properties)
+            var sanitizedRequest = new CreateModelRequest
+            {
+                Name = _sanitizer.Sanitize(request.Name) ?? string.Empty,
+                Provider = _sanitizer.Sanitize(request.Provider) ?? string.Empty,
+                Version = _sanitizer.Sanitize(request.Version) ?? string.Empty,
+                Status = _sanitizer.Sanitize(request.Status) ?? string.Empty,
+                Currency = _sanitizer.Sanitize(request.Currency) ?? string.Empty,
+                InputPricePer1M = request.InputPricePer1M,
+                OutputPricePer1M = request.OutputPricePer1M,
+                ReleaseDate = request.ReleaseDate,
+                Capabilities = request.Capabilities // Capabilities don't need text sanitization (boolean/numeric)
+            };
+
             _logger.LogInformation(
                 "Creating new model: {ModelName} by {Provider}",
-                request.Name,
-                request.Provider);
+                sanitizedRequest.Name,
+                sanitizedRequest.Provider);
 
             // Create model (FluentValidation runs automatically via middleware)
-            var modelId = await _adminModelService.CreateModelAsync(request, cancellationToken);
+            var modelId = await _adminModelService.CreateModelAsync(sanitizedRequest, cancellationToken);
 
             // Fetch created model for response
             var createdModel = await _adminModelService.GetModelByIdAsync(modelId, cancellationToken);

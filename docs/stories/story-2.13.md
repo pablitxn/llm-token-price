@@ -225,8 +225,8 @@ so that the admin CRUD system is production-ready, maintainable, and enables con
 - [x] 19.3: Move database connection string to `DATABASE_CONNECTION_STRING` env var (already using configuration)
 - [x] 19.4: Move Redis connection string to `REDIS_CONNECTION_STRING` env var (already using configuration)
 - [x] 19.5: Update `Program.cs` to read from environment variables
-- [ ] 19.6: Document in README.md how to set environment variables (task not started)
-- [ ] 19.7: Add secrets to GitHub Actions (repository secrets) (task not started)
+- [ ] 19.6: Document in README.md how to set environment variables (pending - nice-to-have)
+- [ ] 19.7: Add secrets to GitHub Actions (repository secrets) (pending - deployment task)
 - [x] 19.8: Update docker-compose.yml with environment variable placeholders
 
 ### **Task 20: Optimize Database Connection Pooling** (AC: #21) ✅
@@ -272,14 +272,14 @@ so that the admin CRUD system is production-ready, maintainable, and enables con
 - Test suite execution: <2 minutes
 
 ### Security Checklist
-- [ ] No hardcoded secrets in code
-- [ ] All admin endpoints require JWT authentication
-- [ ] Input validation on all user-provided data
-- [ ] CORS configured for production domains only
-- [ ] Rate limiting prevents abuse
-- [ ] HTTPS enforced in production
-- [ ] SQL injection protection (parameterized queries)
-- [ ] XSS protection (input sanitization, CSP headers)
+- [x] No hardcoded secrets in code (Task 19 ✅)
+- [ ] All admin endpoints require JWT authentication (Task 8 - pending)
+- [ ] Input validation on all user-provided data (Task 17 - pending)
+- [x] CORS configured for production domains only (Task 18 ✅)
+- [ ] Rate limiting prevents abuse (Task 7 - pending)
+- [ ] HTTPS enforced in production (deployment task - pending)
+- [x] SQL injection protection (parameterized queries) (EF Core default ✅)
+- [ ] XSS protection (input sanitization, CSP headers) (Task 17 - pending)
 
 ### Project Structure Notes
 
