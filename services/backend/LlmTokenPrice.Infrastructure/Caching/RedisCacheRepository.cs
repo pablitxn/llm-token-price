@@ -169,4 +169,54 @@ public class RedisCacheRepository : ICacheRepository
             return false;
         }
     }
+
+    /// <inheritdoc />
+    public async Task<int> RemoveByPatternAsync(string pattern, CancellationToken cancellationToken = default)
+    {
+        if (!_isAvailable || _db == null || _redis == null)
+        {
+            _logger.LogDebug("Cache unavailable, skipping pattern delete for pattern: {Pattern}", pattern);
+            return 0;
+        }
+
+        try
+        {
+            var deletedCount = 0;
+
+            // Get server endpoint for SCAN command
+            // Note: This assumes single-server Redis. For cluster, iterate all endpoints.
+            var endpoints = _redis.GetEndPoints();
+            if (endpoints.Length == 0)
+            {
+                _logger.LogWarning("No Redis endpoints available for pattern delete: {Pattern}", pattern);
+                return 0;
+            }
+
+            var server = _redis.GetServer(endpoints[0]);
+
+            // Use SCAN to iterate keys matching pattern (safe for large key sets)
+            // Note: SCAN doesn't block Redis and is production-safe
+            await foreach (var key in server.KeysAsync(pattern: pattern))
+            {
+                var deleted = await _db.KeyDeleteAsync(key);
+                if (deleted)
+                {
+                    deletedCount++;
+                }
+            }
+
+            _logger.LogInformation("Deleted {Count} cache keys matching pattern: {Pattern}", deletedCount, pattern);
+            return deletedCount;
+        }
+        catch (RedisConnectionException ex)
+        {
+            _logger.LogError(ex, "Redis connection failed while deleting pattern: {Pattern}", pattern);
+            return 0; // Graceful degradation: return 0 on connection failure
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error deleting cache keys by pattern: {Pattern}", pattern);
+            return 0;
+        }
+    }
 }

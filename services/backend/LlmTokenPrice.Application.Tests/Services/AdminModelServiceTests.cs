@@ -4,6 +4,7 @@ using LlmTokenPrice.Application.DTOs;
 using LlmTokenPrice.Application.Services;
 using LlmTokenPrice.Domain.Entities;
 using LlmTokenPrice.Domain.Repositories;
+using Microsoft.Extensions.Logging;
 
 namespace LlmTokenPrice.Application.Tests.Services;
 
@@ -15,12 +16,22 @@ namespace LlmTokenPrice.Application.Tests.Services;
 public class AdminModelServiceTests
 {
     private readonly Mock<IAdminModelRepository> _mockRepository;
+    private readonly Mock<ICacheRepository> _mockCacheRepository;
+    private readonly Mock<ILogger<AdminModelService>> _mockLogger;
     private readonly AdminModelService _service;
 
     public AdminModelServiceTests()
     {
         _mockRepository = new Mock<IAdminModelRepository>();
-        _service = new AdminModelService(_mockRepository.Object);
+        _mockCacheRepository = new Mock<ICacheRepository>();
+        _mockLogger = new Mock<ILogger<AdminModelService>>();
+
+        // Setup cache invalidation to succeed silently in tests
+        _mockCacheRepository
+            .Setup(c => c.RemoveByPatternAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(0);
+
+        _service = new AdminModelService(_mockRepository.Object, _mockCacheRepository.Object, _mockLogger.Object);
     }
 
     /// <summary>

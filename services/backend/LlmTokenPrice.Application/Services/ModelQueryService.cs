@@ -1,6 +1,8 @@
 using LlmTokenPrice.Application.DTOs;
+using LlmTokenPrice.Domain.Caching;
 using LlmTokenPrice.Domain.Entities;
 using LlmTokenPrice.Domain.Repositories;
+using Microsoft.Extensions.Logging;
 
 namespace LlmTokenPrice.Application.Services;
 
@@ -10,35 +12,107 @@ namespace LlmTokenPrice.Application.Services;
 /// </summary>
 /// <remarks>
 /// Application layer service that implements use cases by:
-/// 1. Calling domain repositories to fetch entities
-/// 2. Mapping entities to DTOs for API consumption
-/// 3. Applying business rules (e.g., top 3 benchmarks only)
+/// 1. Checking cache for existing data (Redis layer)
+/// 2. On cache miss: Calling domain repositories to fetch entities
+/// 3. Caching result with appropriate TTL
+/// 4. Mapping entities to DTOs for API consumption
+/// 5. Applying business rules (e.g., top 3 benchmarks only)
+///
+/// Cache Strategy:
+/// - Model list: 1 hour TTL (frequently accessed, changes infrequently)
+/// - Model detail: 30 minutes TTL (user-specific, may change more often)
+/// - Cache invalidation: Handled by AdminModelService on CRUD operations
 /// </remarks>
 public class ModelQueryService : IModelQueryService
 {
     private readonly IModelRepository _modelRepository;
+    private readonly ICacheRepository _cacheRepository;
+    private readonly ILogger<ModelQueryService> _logger;
 
     /// <summary>
     /// Initializes a new instance of the ModelQueryService.
     /// </summary>
     /// <param name="modelRepository">The model repository for data access.</param>
-    public ModelQueryService(IModelRepository modelRepository)
+    /// <param name="cacheRepository">The cache repository for Redis operations.</param>
+    /// <param name="logger">The logger for tracking cache hits/misses.</param>
+    public ModelQueryService(
+        IModelRepository modelRepository,
+        ICacheRepository cacheRepository,
+        ILogger<ModelQueryService> logger)
     {
         _modelRepository = modelRepository ?? throw new ArgumentNullException(nameof(modelRepository));
+        _cacheRepository = cacheRepository ?? throw new ArgumentNullException(nameof(cacheRepository));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     /// <inheritdoc />
     public async Task<List<ModelDto>> GetAllModelsAsync(CancellationToken cancellationToken = default)
     {
+        // 1. Try to get from cache
+        var cached = await _cacheRepository.GetAsync<List<ModelDto>>(
+            CacheConfiguration.ModelListKey,
+            cancellationToken);
+
+        if (cached != null)
+        {
+            _logger.LogDebug("Cache hit for model list ({Count} models)", cached.Count);
+            return cached;
+        }
+
+        // 2. Cache miss - fetch from database
+        _logger.LogDebug("Cache miss for model list - fetching from database");
         var models = await _modelRepository.GetAllAsync(cancellationToken);
-        return models.Select(MapToDto).ToList();
+        var dtos = models.Select(MapToDto).ToList();
+
+        // 3. Cache result with 1 hour TTL
+        await _cacheRepository.SetAsync(
+            CacheConfiguration.ModelListKey,
+            dtos,
+            CacheConfiguration.DefaultTtl.ApiResponses,
+            cancellationToken);
+
+        _logger.LogInformation("Cached model list ({Count} models) with TTL {TTL}",
+            dtos.Count, CacheConfiguration.DefaultTtl.ApiResponses);
+
+        return dtos;
     }
 
     /// <inheritdoc />
     public async Task<ModelDto?> GetModelByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
+        // 1. Try to get from cache
+        var cacheKey = CacheConfiguration.BuildModelDetailKey(id);
+        var cached = await _cacheRepository.GetAsync<ModelDto>(cacheKey, cancellationToken);
+
+        if (cached != null)
+        {
+            _logger.LogDebug("Cache hit for model detail: {ModelId}", id);
+            return cached;
+        }
+
+        // 2. Cache miss - fetch from database
+        _logger.LogDebug("Cache miss for model detail: {ModelId} - fetching from database", id);
         var model = await _modelRepository.GetByIdAsync(id, cancellationToken);
-        return model == null ? null : MapToDto(model);
+
+        if (model == null)
+        {
+            _logger.LogDebug("Model not found: {ModelId}", id);
+            return null;
+        }
+
+        var dto = MapToDto(model);
+
+        // 3. Cache result with 30 minutes TTL
+        await _cacheRepository.SetAsync(
+            cacheKey,
+            dto,
+            CacheConfiguration.DefaultTtl.ModelDetail,
+            cancellationToken);
+
+        _logger.LogInformation("Cached model detail: {ModelId} with TTL {TTL}",
+            id, CacheConfiguration.DefaultTtl.ModelDetail);
+
+        return dto;
     }
 
     /// <summary>
