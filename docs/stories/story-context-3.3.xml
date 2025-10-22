@@ -1,0 +1,231 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>3.3</storyId>
+    <title>Integrate TanStack Table for Advanced Features</title>
+    <status>Draft</status>
+    <generatedAt>2025-10-21</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-3.3.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>TanStack Table integrated to replace the basic HTML table</iWant>
+    <soThat>I can implement advanced features like sorting, filtering, and virtualization efficiently in subsequent stories</soThat>
+    <tasks>
+      - Task 1: Install and configure TanStack Table library (AC: #1)
+      - Task 2: Create TypeScript interfaces for table data (AC: #2, #3)
+      - Task 3: Define column definitions for model table (AC: #3)
+      - Task 4: Refactor ModelTable component to use TanStack Table (AC: #2, #4)
+      - Task 5: Test table rendering and functionality (AC: #4, #5)
+      - Task 6: Implement virtual scrolling if needed (AC: #6)
+      - Task 7: Manual testing and verification (AC: #4, #5)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    1. TanStack Table library (@tanstack/react-table v8.11.0+) installed and configured in the frontend
+    2. Models data rendered using TanStack Table component, replacing the basic HTML table from Story 3.2
+    3. Column definitions created for all model fields displayed in Story 3.2 (name, provider, input price, output price)
+    4. Table maintains the same visual appearance and functionality as Story 3.2 (data display, loading states, error states)
+    5. Performance verified with 50+ models - table renders in &lt;500ms with smooth scrolling
+    6. Virtual scrolling implemented if performance degrades with 100+ models (optional based on testing)
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic Breakdown - Epic 3 Story 3.3</title>
+        <section>Story 3.3: Integrate TanStack Table for Advanced Features</section>
+        <snippet>Replaces basic HTML table from Story 3.2 with TanStack Table library. Enables advanced features: sorting (Story 3.4), filtering (Stories 3.5-3.7), selection (Story 3.10), virtualization (Story 3.12). Performance target: 50+ models smoothly.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-3.md</path>
+        <title>Technical Specification Epic 3 - Frontend Architecture Patterns</title>
+        <section>Frontend Components &amp; State Management Architecture</section>
+        <snippet>TanStack Table v8.11.0 headless pattern: provides table logic without imposing UI. Component composition: HomePage → ModelTable → useReactTable hook. State: TanStack Query (server), TanStack Table (table), Zustand (client selection, deferred to Story 3.10).</snippet>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture - Technology Stack</title>
+        <section>Table Library Decision</section>
+        <snippet>TanStack Table v8.11.0: Headless table logic with sorting, filtering, virtualization. Supports 50K+ rows. Chosen over Material-UI/Ant Design for full TailwindCSS control and performance. Architecture enables independent UI evolution.</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR006-FR011: Public Comparison Interface Requirements</section>
+        <snippet>System shall provide sortable, filterable table view (FR006). Allow sorting by any column (FR007). Support filtering by provider, capabilities, price range (FR008). Performance: initial load &lt;2s (FR032), calculations &lt;100ms (FR033), chart render &lt;1s (FR035).</snippet>
+      </doc>
+      <doc>
+        <path>CLAUDE.md</path>
+        <title>Project Instructions - Frontend Stack &amp; Patterns</title>
+        <section>Frontend Architecture &amp; Path Aliases</section>
+        <snippet>React 19 with TypeScript strict mode (zero any types). TanStack Table v8 for data tables. Path aliases: @/* → ./src/*, @components/* → ./src/components/*. State: TanStack Query (server, 5min stale), Zustand (client), local useState (forms).</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>apps/web/src/pages/HomePage.tsx</path>
+        <kind>component</kind>
+        <symbol>HomePage</symbol>
+        <lines>1-105</lines>
+        <reason>Container component using useQuery to fetch models, currently renders ModelCard grid. Story 3.3 will refactor to render ModelTable component instead of grid. Existing loading/error states (LoadingSpinner, ErrorAlert) must be preserved.</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/api/models.ts</path>
+        <kind>api-client</kind>
+        <symbol>fetchModels</symbol>
+        <lines>8-11</lines>
+        <reason>API client function returning ModelsResponse. Used by HomePage's useQuery hook. No changes needed - Story 3.3 only affects presentation layer (table rendering), server state management unchanged.</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/api/client.ts</path>
+        <kind>api-config</kind>
+        <symbol>apiClient</symbol>
+        <lines>4-38</lines>
+        <reason>Axios instance with base URL /api, 10s timeout, withCredentials. Request interceptor adds Accept-Language header. No changes needed for Story 3.3 - existing API client configuration sufficient.</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/components/ui/LoadingSpinner.tsx</path>
+        <kind>ui-component</kind>
+        <symbol>LoadingSpinner</symbol>
+        <lines>11-52</lines>
+        <reason>Reusable loading indicator with configurable size (sm/md/lg) and optional text. Used by HomePage during data fetch. Story 3.3 must preserve loading state display when refactoring to TanStack Table.</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/components/ui/ErrorAlert.tsx</path>
+        <kind>ui-component</kind>
+        <symbol>ErrorAlert</symbol>
+        <lines>96-151</lines>
+        <reason>Error display component with retry button and GitHub issue reporting. Used by HomePage on API failure. Story 3.3 must preserve error state handling when refactoring to TanStack Table.</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/types/models.ts</path>
+        <kind>typescript-types</kind>
+        <symbol>ModelDto, ModelsResponse</symbol>
+        <lines>33-72</lines>
+        <reason>TypeScript interfaces matching backend DTOs. ModelDto contains id, name, provider, pricing (inputPricePer1M, outputPricePer1M), capabilities, topBenchmarks. Story 3.3 column definitions will reference these fields.</reason>
+      </artifact>
+      <artifact>
+        <path>services/backend/LlmTokenPrice.Application/DTOs/ModelDto.cs</path>
+        <kind>backend-dto</kind>
+        <symbol>ModelDto</symbol>
+        <lines>12-79</lines>
+        <reason>Backend DTO defining API contract. Contains 13 properties: Id (Guid), Name, Provider, Version, Status, InputPricePer1M/OutputPricePer1M (decimal), Currency, UpdatedAt, PricingUpdatedAt, Capabilities, TopBenchmarks. Frontend TypeScript types must match.</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/package.json</path>
+        <kind>dependency-manifest</kind>
+        <symbol>dependencies</symbol>
+        <lines>17-31</lines>
+        <reason>TanStack Table already installed: @tanstack/react-table v8.21.3 (exceeds AC #1 requirement of v8.11.0+). Also includes @tanstack/react-query v5.90.5, react v19.1.1, TypeScript, TailwindCSS. No package installation needed - verify version only.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <frontend>
+        <package name="@tanstack/react-table" version="^8.21.3" status="already-installed" />
+        <package name="@tanstack/react-virtual" version="optional" status="not-installed" note="Install only if AC #6 triggered (performance degrades with 100+ models)" />
+        <package name="@tanstack/react-query" version="^5.90.5" status="already-installed" note="Used for server state management (useQuery hook)" />
+        <package name="react" version="^19.1.1" status="already-installed" />
+        <package name="react-dom" version="^19.1.1" status="already-installed" />
+        <package name="typescript" version="~5.9.3" status="already-installed" />
+        <package name="lucide-react" version="^0.546.0" status="already-installed" note="Icon library for table UI elements" />
+      </frontend>
+      <backend>
+        <note>No backend changes required for Story 3.3 - backend API (GET /api/models) already complete from Story 3.2</note>
+      </backend>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <architectural>
+      <constraint>Hexagonal Architecture: Story 3.3 changes are isolated to presentation layer (apps/web/src). No changes to backend domain, application, or infrastructure layers. TanStack Table is a UI library, not a business logic concern.</constraint>
+      <constraint>Component Composition: Follow Epic 3 pattern - HomePage (container) → ModelTable (table logic) → column definitions (separate file). Maintain clear separation of concerns.</constraint>
+      <constraint>State Management Separation: TanStack Query for server state (useModels hook from Story 3.2), TanStack Table for table state (useReactTable hook), Zustand for client state (deferred to Story 3.10 for selection). Do NOT mix state concerns.</constraint>
+      <constraint>Headless UI Pattern: TanStack Table provides logic only (state management, row/column APIs). All UI rendering (HTML, TailwindCSS) controlled by developer. Preserve existing table styling from Story 3.2.</constraint>
+    </architectural>
+    <performance>
+      <constraint>Render Target: Table must render 50+ models in &lt;500ms (AC #5). Measure using Chrome DevTools Performance panel. If render time exceeds 1s with 100+ models, implement virtual scrolling (AC #6, optional).</constraint>
+      <constraint>Client-Side Performance: TanStack Table uses memoization internally. Use getCoreRowModel() for basic rendering (no sorting/filtering overhead). Sorting/filtering will be added in Stories 3.4-3.7.</constraint>
+      <constraint>Backend Caching: GET /api/models endpoint uses Redis caching (1hr TTL, implemented in Epic 2). Frontend should leverage TanStack Query 5min stale time. No additional caching needed in Story 3.3.</constraint>
+    </performance>
+    <code-quality>
+      <constraint>TypeScript Strict Mode: Zero any types allowed. Use TanStack Table generic types for full type safety: useReactTable&lt;ModelDto&gt;, ColumnDef&lt;ModelDto&gt;. Leverage existing ModelDto interface from types/models.ts.</constraint>
+      <constraint>Path Aliases: Use @/ for src imports (e.g., import { ModelDto } from '@/types/models'). Use @components/ for component imports. Configured in vite.config.ts and tsconfig.json.</constraint>
+      <constraint>File Organization: Create apps/web/src/components/models/columns.tsx for column definitions (separate from ModelTable.tsx). Follow pattern: organize by domain (models) not type (tables).</constraint>
+      <constraint>Accessibility: Maintain semantic HTML from Story 3.2. TanStack Table is headless - developer responsible for ARIA attributes, keyboard navigation, screen reader support. Preserve table role="table" semantics.</constraint>
+    </code-quality>
+    <testing>
+      <constraint>Manual Testing Required: Story 3.3 uses manual testing only (per Epic 1/2 retrospective). Automated tests deferred to epic completion. Test checklist: functional (data display), visual regression (matches Story 3.2), performance (50+ models &lt;500ms), accessibility (keyboard nav).</constraint>
+      <constraint>No Test Implementation: Do NOT write Vitest component tests or Playwright E2E tests in Story 3.3. Focus on manual verification of acceptance criteria 1-6.</constraint>
+    </testing>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>GET /api/models</name>
+      <kind>REST API endpoint</kind>
+      <signature>GET /api/models → ModelsResponse { data: ModelDto[], meta: { count, cached, timestamp } }</signature>
+      <path>services/backend/LlmTokenPrice.API/Controllers/ModelsController.cs</path>
+      <usage>Called by fetchModels() in apps/web/src/api/models.ts. Returns array of models with pricing, capabilities, topBenchmarks. Story 3.3 displays this data in TanStack Table - no API changes needed.</usage>
+    </interface>
+    <interface>
+      <name>useQuery (TanStack Query)</name>
+      <kind>React hook</kind>
+      <signature>useQuery({ queryKey: ['models'], queryFn: fetchModels, staleTime: 5min }) → { data, isLoading, error, refetch }</signature>
+      <path>apps/web/src/pages/HomePage.tsx:22-27</path>
+      <usage>Server state management hook. Story 3.3 preserves existing useQuery usage in HomePage - TanStack Table receives data via props, not direct API call.</usage>
+    </interface>
+    <interface>
+      <name>useReactTable (TanStack Table)</name>
+      <kind>React hook (new in Story 3.3)</kind>
+      <signature>useReactTable&lt;ModelDto&gt;({ data: ModelDto[], columns: ColumnDef&lt;ModelDto&gt;[], getCoreRowModel: getCoreRowModel() }) → Table&lt;ModelDto&gt;</signature>
+      <path>apps/web/src/components/models/ModelTable.tsx (to be created)</path>
+      <usage>Table state management hook. Returns table instance with methods: getHeaderGroups(), getRowModel(), etc. Story 3.3 uses basic config (no sorting/filtering - added in Stories 3.4-3.7).</usage>
+    </interface>
+    <interface>
+      <name>ColumnDef&lt;ModelDto&gt;</name>
+      <kind>TypeScript type</kind>
+      <signature>ColumnDef&lt;ModelDto&gt;{ accessor: keyof ModelDto, header: string, cell: (info) =&gt; ReactNode }</signature>
+      <path>apps/web/src/components/models/columns.tsx (to be created)</path>
+      <usage>Column definition array for TanStack Table. Story 3.3 defines 4 columns: name, provider, inputPricePer1M, outputPricePer1M. Use createColumnHelper&lt;ModelDto&gt;() for type safety.</usage>
+    </interface>
+    <interface>
+      <name>LoadingSpinner component</name>
+      <kind>React component</kind>
+      <signature>LoadingSpinner({ size?: 'sm'|'md'|'lg', text?: string }) → JSX.Element</signature>
+      <path>apps/web/src/components/ui/LoadingSpinner.tsx:11-52</path>
+      <usage>Story 3.3 preserves existing loading state. HomePage shows LoadingSpinner during isLoading. ModelTable component receives data after loading completes - no loading state in table itself.</usage>
+    </interface>
+    <interface>
+      <name>ErrorAlert component</name>
+      <kind>React component</kind>
+      <signature>ErrorAlert({ error: UserError, onRetry?: () =&gt; void, rawError?: Error }) → JSX.Element</signature>
+      <path>apps/web/src/components/ui/ErrorAlert.tsx:96-151</path>
+      <usage>Story 3.3 preserves existing error state. HomePage shows ErrorAlert on API error with refetch callback. ModelTable component receives data after successful fetch - no error handling in table itself.</usage>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Manual testing required for Story 3.3 per Epic 1/2 retrospective guidelines. Automated component tests (Vitest + Testing Library) and E2E tests (Playwright) deferred to Epic 3 completion. Testing framework already configured: Vitest v3.2.4, @testing-library/react v16.3.0, MSW v2.11.5 for API mocking. Test standards established in Epic 2: component tests in __tests__ directories, MSW handlers in src/mocks, E2E tests focus on critical user flows.
+    </standards>
+    <locations>
+      - Frontend component tests: apps/web/src/components/**/__tests__/*.test.tsx (Vitest + Testing Library)
+      - E2E tests: apps/web/e2e/**/*.spec.ts (Playwright, not yet created for Epic 3)
+      - Test execution: pnpm run test (Vitest watch), pnpm run test:run (CI), pnpm run test:coverage (coverage report)
+      - Backend tests: services/backend/**/*.Tests/ (xUnit, not relevant for Story 3.3 frontend-only changes)
+    </locations>
+    <ideas>
+      <idea ac="1">Verify TanStack Table package installed: Check package.json shows @tanstack/react-table version ^8.21.3 (exceeds v8.11.0+ requirement). Run pnpm list @tanstack/react-table to confirm installation.</idea>
+      <idea ac="2">Test table renders models data: Navigate to http://localhost:5173, verify table displays all model rows from API. Confirm ModelCard grid replaced with table element. Check loading spinner shows during fetch.</idea>
+      <idea ac="3">Verify column definitions: Inspect table headers - should display "Model Name", "Provider", "Input Price", "Output Price". Check table cells render correct data from ModelDto fields (name, provider, inputPricePer1M, outputPricePer1M).</idea>
+      <idea ac="4">Visual regression test: Compare table appearance before/after Story 3.3. Should match Story 3.2 styling: alternating row colors, hover effects, TailwindCSS classes preserved. Test loading state (LoadingSpinner) and error state (ErrorAlert with retry button).</idea>
+      <idea ac="5">Performance test with 50+ models: Seed database with 50-60 models (use admin panel CSV import or SQL script). Measure table render time using Chrome DevTools Performance panel (target: &lt;500ms from data received to table painted). Test scroll performance (should feel instant, no jank).</idea>
+      <idea ac="6">Virtual scrolling conditional test: If performance test shows &gt;1s render time with 100+ models, install @tanstack/react-virtual, integrate useVirtualizer hook with TanStack Table rows. Re-test render time (should drop to &lt;500ms). If performance acceptable without virtual scrolling, skip this step.</idea>
+    </ideas>
+  </tests>
+</story-context>
