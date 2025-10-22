@@ -266,6 +266,125 @@ ASPNETCORE_ENVIRONMENT=Development dotnet run --project LlmTokenPrice.API
 **Production Note:**
 Sample data seeding runs **only in Development environment**. Production databases use manual CSV imports via the admin panel (Epic 4).
 
+## 🔐 Environment Variables
+
+This application uses environment variables for configuration management. All sensitive credentials and environment-specific settings must be configured via environment variables to ensure security and flexibility across deployment environments.
+
+### Required Environment Variables
+
+| Variable | Description | Development Example | Production Example |
+|----------|-------------|-------------------|-------------------|
+| `DATABASE_CONNECTION_STRING` | PostgreSQL connection string | `Host=localhost;Port=5434;Database=llmpricing_dev;Username=llmpricing;Password=dev_password` | `Host=prod-db.example.com;Port=5432;Database=llmpricing_prod;Username=llmpricing;Password=STRONG_PASSWORD` |
+| `REDIS_CONNECTION_STRING` | Redis connection string | `localhost:6379,abortConnect=false` | `prod-redis.example.com:6379,password=REDIS_PASSWORD,abortConnect=false,ssl=true` |
+| `JWT_SECRET_KEY` | Secret key for JWT token signing (**minimum 32 characters**) | `dev-secret-key-at-least-32-characters-long-for-local` | Generate with: `openssl rand -base64 32` |
+| `CORS_ALLOWED_ORIGINS` | Comma-separated list of allowed CORS origins | `http://localhost:5173,http://localhost:3000` | `https://llmpricing.com,https://www.llmpricing.com` |
+
+### Optional Environment Variables
+
+| Variable | Description | Default | Production Example |
+|----------|-------------|---------|-------------------|
+| `ASPNETCORE_ENVIRONMENT` | Runtime environment | `Development` | `Production` or `Staging` |
+| `LOGGING_LEVEL` | Minimum logging level | `Information` | `Warning` or `Error` |
+| `JWT_TOKEN_LIFETIME_HOURS` | JWT token lifetime in hours | `24` | `24` (access tokens) |
+| `ADMIN_RATE_LIMIT_PER_MINUTE` | Rate limit for admin endpoints (requests/min) | `100` | `100` |
+| `ENABLE_DATABASE_SEEDING` | Enable automatic seeding on startup | `true` (dev only) | `false` |
+
+### Configuration Files
+
+**Development (.env file):**
+
+For local development, create a `.env` file in `services/backend/LlmTokenPrice.API/` directory:
+
+```bash
+# Copy the template
+cp services/backend/LlmTokenPrice.API/.env.example services/backend/LlmTokenPrice.API/.env
+
+# Edit with your local values
+nano services/backend/LlmTokenPrice.API/.env
+```
+
+**Minimum .env for Docker Compose setup:**
+```env
+DATABASE_CONNECTION_STRING=Host=localhost;Port=5434;Database=llmpricing_dev;Username=llmpricing;Password=dev_password
+REDIS_CONNECTION_STRING=localhost:6379,abortConnect=false
+JWT_SECRET_KEY=dev-secret-key-at-least-32-characters-long-for-local
+CORS_ALLOWED_ORIGINS=http://localhost:5173
+```
+
+**⚠️ SECURITY WARNING:**
+- **Never commit `.env` file to version control** - it contains sensitive credentials
+- The `.env` file is already listed in `.gitignore`
+- Use `.env.example` as a template (safe to commit, contains no secrets)
+
+**Production (GitHub Actions Secrets):**
+
+For production deployments via CI/CD, configure repository secrets:
+
+1. Navigate to: **Settings** → **Secrets and variables** → **Actions**
+2. Click **New repository secret**
+3. Add each required variable:
+   - `JWT_SECRET_KEY` (generate with: `openssl rand -base64 32`)
+   - `DATABASE_CONNECTION_STRING` (PostgreSQL connection string)
+   - `REDIS_CONNECTION_STRING` (Redis connection string with auth)
+   - `CORS_ALLOWED_ORIGINS` (production frontend URLs)
+
+**Production (Azure/AWS):**
+
+Use secure secret management services:
+- **Azure:** Azure Key Vault
+- **AWS:** AWS Secrets Manager or Parameter Store
+- **Vercel/Netlify:** Environment variables in dashboard
+
+### Generating Secure JWT Secret
+
+```bash
+# Generate a cryptographically secure 32+ character secret
+openssl rand -base64 32
+
+# Example output (use this as your JWT_SECRET_KEY):
+# 8pQ7vK3jN9mR2wX5yZ8aB1cD4eF6gH7iJ0kL1mN2oP3qR4sT5uV6wX7yZ8aB1cD
+```
+
+### Environment-Specific Configuration
+
+The application uses different configuration files per environment:
+
+- **Development:** `appsettings.Development.json` (local development)
+- **Staging:** `appsettings.Staging.json` (staging environment)
+- **Production:** `appsettings.Production.json` (production environment)
+
+Environment variables **override** values in `appsettings.json` files, providing flexibility for deployment pipelines.
+
+### Troubleshooting Environment Variables
+
+**Variable not loading:**
+1. Verify `.env` file exists in `services/backend/LlmTokenPrice.API/` directory
+2. Check file is named exactly `.env` (not `.env.txt`)
+3. Ensure no spaces around `=` sign in variable definitions
+4. Restart the application after changing `.env` file
+
+**JWT_SECRET_KEY too short error:**
+```
+System.ArgumentException: JWT secret key must be at least 32 characters for HS256 algorithm
+```
+- Solution: Generate a longer secret with `openssl rand -base64 32`
+
+**Database connection refused:**
+- Verify `DATABASE_CONNECTION_STRING` matches your PostgreSQL setup
+- Check host, port, username, password are correct
+- Ensure PostgreSQL container is running: `docker compose ps`
+
+**CORS errors in browser:**
+- Verify `CORS_ALLOWED_ORIGINS` includes your frontend URL
+- Check for exact match (no trailing slash): `http://localhost:5173` not `http://localhost:5173/`
+- Ensure protocol matches (http vs https)
+
+### Reference Files
+
+- **Template:** `services/backend/LlmTokenPrice.API/.env.example`
+- **Documentation:** This README section
+- **Code:** `services/backend/LlmTokenPrice.API/Program.cs` (configuration loading)
+
 ## 🏃 Running the Application
 
 ### Development Mode
