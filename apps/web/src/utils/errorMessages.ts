@@ -252,7 +252,7 @@ export function formatValidationErrors(
 ): string {
   const messages: string[] = []
 
-  for (const [field, error] of Object.entries(validationErrors)) {
+  for (const [, error] of Object.entries(validationErrors)) {
     if (Array.isArray(error)) {
       messages.push(...error)
     } else {
