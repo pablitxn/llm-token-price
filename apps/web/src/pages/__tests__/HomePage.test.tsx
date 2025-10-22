@@ -1,6 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import HomePage from '../HomePage'
 import { fetchModels } from '../../api/models'
@@ -10,10 +9,18 @@ vi.mock('../../api/models', () => ({
   fetchModels: vi.fn(),
 }))
 
-// Mock ModelCard component to simplify tests
-vi.mock('@/components/models/ModelCard', () => ({
-  default: ({ model }: { model: { id: string; name: string } }) => (
-    <div data-testid={`model-card-${model.id}`}>{model.name}</div>
+// Mock ModelTable component to simplify tests
+vi.mock('@/components/models/ModelTable', () => ({
+  default: ({ models }: { models: Array<{ id: string; name: string }> }) => (
+    <table data-testid="models-table">
+      <tbody>
+        {models.map((model) => (
+          <tr key={model.id} data-testid={`model-row-${model.id}`}>
+            <td>{model.name}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   ),
 }))
 
@@ -24,11 +31,6 @@ const createTestQueryClient = () =>
         retry: false, // Disable retries for predictable testing
         gcTime: 0, // Disable caching
       },
-    },
-    logger: {
-      log: console.log,
-      warn: console.warn,
-      error: () => {}, // Suppress error logs in tests
     },
   })
 
@@ -49,7 +51,7 @@ describe('HomePage Component - Story 3.1', () => {
             setTimeout(() => {
               resolve({
                 data: [],
-                meta: { count: 0, timestamp: new Date().toISOString() },
+                meta: { count: 0, cached: false, timestamp: new Date().toISOString() },
               })
             }, 1000)
           })
@@ -71,7 +73,7 @@ describe('HomePage Component - Story 3.1', () => {
     it('should display empty state when no models are available', async () => {
       vi.mocked(fetchModels).mockResolvedValue({
         data: [],
-        meta: { count: 0, timestamp: new Date().toISOString() },
+        meta: { count: 0, cached: false, timestamp: new Date().toISOString() },
       })
 
       renderWithQueryClient(<HomePage />)
@@ -108,29 +110,37 @@ describe('HomePage Component - Story 3.1', () => {
   })
 
   describe('AC #1, #2, #15, #16: Page Structure and Layout', () => {
-    it('should render page with header, main content, and models grid', async () => {
+    it('should render page with header, main content, and models table', async () => {
       vi.mocked(fetchModels).mockResolvedValue({
         data: [
           {
             id: '1',
             name: 'GPT-4',
             provider: 'OpenAI',
-            inputPricePerMillionTokens: 30,
-            outputPricePerMillionTokens: 60,
-            contextWindow: 8192,
-            isActive: true,
+            version: null,
+            status: 'active',
+            inputPricePer1M: 30,
+            outputPricePer1M: 60,
+            currency: 'USD',
+            updatedAt: new Date().toISOString(),
+            capabilities: null,
+            topBenchmarks: [],
           },
           {
             id: '2',
             name: 'Claude 3',
             provider: 'Anthropic',
-            inputPricePerMillionTokens: 15,
-            outputPricePerMillionTokens: 75,
-            contextWindow: 100000,
-            isActive: true,
+            version: null,
+            status: 'active',
+            inputPricePer1M: 15,
+            outputPricePer1M: 75,
+            currency: 'USD',
+            updatedAt: new Date().toISOString(),
+            capabilities: null,
+            topBenchmarks: [],
           },
         ],
-        meta: { count: 2, timestamp: new Date().toISOString() },
+        meta: { count: 2, cached: false, timestamp: new Date().toISOString() },
       })
 
       renderWithQueryClient(<HomePage />)
@@ -148,10 +158,10 @@ describe('HomePage Component - Story 3.1', () => {
         screen.getByRole('heading', { name: /llm token price comparison/i })
       ).toBeInTheDocument()
 
-      // Wait for both model cards to appear
+      // Wait for both model rows to appear in table
       await waitFor(() => {
-        expect(screen.getByTestId('model-card-1')).toBeInTheDocument()
-        expect(screen.getByTestId('model-card-2')).toBeInTheDocument()
+        expect(screen.getByTestId('model-row-1')).toBeInTheDocument()
+        expect(screen.getByTestId('model-row-2')).toBeInTheDocument()
       })
 
       // Verify results count
@@ -163,7 +173,7 @@ describe('HomePage Component - Story 3.1', () => {
     it('should have skip-to-content link for screen readers', async () => {
       vi.mocked(fetchModels).mockResolvedValue({
         data: [],
-        meta: { count: 0, timestamp: new Date().toISOString() },
+        meta: { count: 0, cached: false, timestamp: new Date().toISOString() },
       })
 
       renderWithQueryClient(<HomePage />)
@@ -174,26 +184,30 @@ describe('HomePage Component - Story 3.1', () => {
       expect(skipLink).toHaveAttribute('href', '#main-content')
     })
 
-    it('should have proper ARIA labels for lists', async () => {
+    it('should render table with models data', async () => {
       vi.mocked(fetchModels).mockResolvedValue({
         data: [
           {
             id: '1',
             name: 'GPT-4',
             provider: 'OpenAI',
-            inputPricePerMillionTokens: 30,
-            outputPricePerMillionTokens: 60,
-            contextWindow: 8192,
-            isActive: true,
+            version: null,
+            status: 'active',
+            inputPricePer1M: 30,
+            outputPricePer1M: 60,
+            currency: 'USD',
+            updatedAt: new Date().toISOString(),
+            capabilities: null,
+            topBenchmarks: [],
           },
         ],
-        meta: { count: 1, timestamp: new Date().toISOString() },
+        meta: { count: 1, cached: false, timestamp: new Date().toISOString() },
       })
 
       renderWithQueryClient(<HomePage />)
 
       await waitFor(() => {
-        expect(screen.getByRole('list', { name: /llm models/i })).toBeInTheDocument()
+        expect(screen.getByTestId('models-table')).toBeInTheDocument()
       })
     })
 
@@ -204,13 +218,17 @@ describe('HomePage Component - Story 3.1', () => {
             id: '1',
             name: 'GPT-4',
             provider: 'OpenAI',
-            inputPricePerMillionTokens: 30,
-            outputPricePerMillionTokens: 60,
-            contextWindow: 8192,
-            isActive: true,
+            version: null,
+            status: 'active',
+            inputPricePer1M: 30,
+            outputPricePer1M: 60,
+            currency: 'USD',
+            updatedAt: new Date().toISOString(),
+            capabilities: null,
+            topBenchmarks: [],
           },
         ],
-        meta: { count: 1, timestamp: new Date().toISOString() },
+        meta: { count: 1, cached: false, timestamp: new Date().toISOString() },
       })
 
       renderWithQueryClient(<HomePage />)
@@ -223,27 +241,31 @@ describe('HomePage Component - Story 3.1', () => {
   })
 
   describe('AC #3: Responsive Layout', () => {
-    it('should render responsive grid classes', async () => {
+    it('should render table with overflow handling for responsive design', async () => {
       vi.mocked(fetchModels).mockResolvedValue({
         data: [
           {
             id: '1',
             name: 'GPT-4',
             provider: 'OpenAI',
-            inputPricePerMillionTokens: 30,
-            outputPricePerMillionTokens: 60,
-            contextWindow: 8192,
-            isActive: true,
+            version: null,
+            status: 'active',
+            inputPricePer1M: 30,
+            outputPricePer1M: 60,
+            currency: 'USD',
+            updatedAt: new Date().toISOString(),
+            capabilities: null,
+            topBenchmarks: [],
           },
         ],
-        meta: { count: 1, timestamp: new Date().toISOString() },
+        meta: { count: 1, cached: false, timestamp: new Date().toISOString() },
       })
 
       renderWithQueryClient(<HomePage />)
 
       await waitFor(() => {
-        const grid = screen.getByRole('list', { name: /llm models/i })
-        expect(grid).toHaveClass('grid', 'grid-cols-1', 'md:grid-cols-2', 'lg:grid-cols-3')
+        const table = screen.getByTestId('models-table')
+        expect(table).toBeInTheDocument()
       })
     })
   })
