@@ -2,15 +2,15 @@
 
 **Project:** llm-token-price
 **Created:** 2025-10-16
-**Last Updated:** 2025-10-21 (Story 3.1 Created, Ready, Context Generated - Epic 3 Implementation Started)
+**Last Updated:** 2025-10-21 (Story 3.1b Technical Debt Consolidation - Marked Ready for Development)
 
 ---
 
 ## Current Status
 
-**Current Phase:** 4-Implementation → Epic 1 Complete (11/11), Epic 2 Complete (13/13), Epic 3 In Progress (1/15)
-**Current Workflow:** story-context (Story 3.1) - Complete
-**Current Story:** Story 3.1 - Create Public Homepage with Basic Layout (Status: Ready, Context: Generated)
+**Current Phase:** 4-Implementation → Epic 1 Complete (11/11), Epic 2 Complete (13/13), Epic 3 In Progress (2/15)
+**Current Workflow:** story-context (Story 3.1b) - Complete
+**Current Story:** Story 3.1b - Consolidated Technical Debt Resolution (Status: Ready, Context: Generated)
 **Overall Progress:** 100% (Epic 1: 37 points) + 96% (Epic 2: 48/~50 points - Stories 2.1-2.9, 2.12, 2.13 Complete)
 
 **✅ EPIC 2 TECHNICAL DEBT RESOLVED - EPIC 3 UNBLOCKED!**
@@ -258,6 +258,8 @@ LLM Pricing Calculator - A comprehensive web application for comparing LLM model
 
 ## Decisions Log
 
+- **2025-10-21**: **Story 3.1b Context Generated**. SM (Bob) executed story-context workflow for Story 3.1b (Consolidated Technical Debt Resolution). Context file created at docs/stories/story-context-3.1b.xml with comprehensive implementation guidance: 7 documentation artifacts (Story 2.13, Epic 1/2 retrospectives, admin panel guide, deployment checklist, ADRs, README), 7 code artifacts (CI/CD workflow, Program.cs, CSVImport component, ErrorAlert component, DashboardMetricsService, story-ready workflow, .env.example), dependencies (backend, frontend, devops tools), constraints (architectural, documentation, deployment, code quality, process), 5 interfaces (GitHub Actions, environment variables, badges, ADR format, staging deployment), testing standards (manual testing for CRITICAL tasks, documentation review, component tests for MEDIUM tasks, process verification for LOW tasks), 9 test ideas mapped to acceptance criteria. Story 3.1b ready for DEV agent implementation.
+- **2025-10-21**: **Story 3.1b (Technical Debt Consolidation) Created and Marked Ready**. PM (John) conducted comprehensive technical debt audit across 5 sources: Story 2.13 (17 pending tasks), Epic 1 Retrospective (11 action items), Epic 2 Retrospective (process improvements), 14 completed stories with unchecked tasks (129 total), and tech specs (deferred items). Story 3.1b consolidates ALL relevant technical debt into 20 acceptance criteria organized by priority: 4 CRITICAL (production blockers: staging smoke test, HTTPS enforcement, GitHub Actions secrets, CORS testing), 6 HIGH (documentation: CI/CD badges, environment variables docs, rate limits docs, ADR-011, CONTRIBUTING.md, LICENSE), 3 MEDIUM (UX improvements: CSV message, report issue button, dashboard cache), 7 LOW (process improvements: automate story context, ATDD template, wireframes, final sign-off). Story 3.1b excludes items correctly deferred to Post-MVP (observability stack, dark mode, optimistic locking) with documented rationale. Estimated effort: 21-28 hours across 5 major tasks. File: docs/stories/story-3.1b.md. Status: Ready for development - comprehensive audit confirms 100% technical debt coverage.
 - **2025-10-21**: **Story 3.1 Created, Marked Ready, Context Generated**. SM (Bob) created Story 3.1 (Create Public Homepage with Basic Layout) with 16 acceptance criteria, 8 tasks, 46 subtasks. Story marked ready for development. Comprehensive context XML generated at docs/stories/story-context-3.1.xml with 9 sections (docs, code artifacts, dependencies, constraints, interfaces, test standards). Epic 3 implementation officially started.
 - **2025-10-21**: **Story 2.13 (Epic 2 Technical Debt Resolution) Marked as DONE**. PM (John) reviewed all 21 acceptance criteria and confirmed 100% completion. All CRITICAL tasks delivered: (1) 242 tests passing with 0 failures achieving 100% pass rate on active tests, (2) GitHub Actions CI/CD workflow configured with automated test execution on every PR, (3) Branch protection enforcing ≥95% pass rate blocking merges on test failures, (4) Coverlet code coverage with 70% minimum enforcement via CI/CD. All HIGH priority backend tasks complete: (5) Redis caching with ICacheRepository + RedisCacheRepository + ModelQueryService 1hr TTL, (6) Pagination on admin endpoints with default 20/max 100 per page, (7) CSV import with database transactions using BeginTransactionAsync + Commit/Rollback, (8) Rate limiting via AspNetCoreRateLimit at 100 req/min per IP, (9) Admin authentication E2E tests with AuthHelper and AuthorizationTests. All HIGH priority UX tasks complete: (10) Loading states with LoadingSpinner + SkeletonLoader components, (11) User-friendly error messages via mapErrorToUserMessage utility, (12) Two-step delete confirmations with ConfirmDialog + typed confirmation, (13) CSV import progress indicator via Server-Sent Events with real-time updates (CSVImportProgressDto + IProgress pattern + useCSVImportSSE hook + cancel functionality). All MEDIUM code quality tasks complete: (14) FluentValidation localization with ValidationMessages.resx (en/es) + RequestLocalizationMiddleware + LanguageSelector component, (15) Comprehensive audit log with AuditLog entity + CSV export + AdminAuditLogPage + filtering, (16) Data quality dashboard with 9 metrics in AdminDashboardPage, (17) Admin panel documentation at docs/admin-panel-guide.md (800+ lines, 11 sections). All MEDIUM security tasks complete: (18) Input validation with InputSanitizationService + CSP headers + 16 security tests, (19) CORS production config via CORS_ALLOWED_ORIGINS environment variable, (20) Secrets moved to environment variables (JWT_SECRET_KEY with ≥32 char validation), (21) Database connection pooling optimized with Min 5/Max 100 + load test validation (156ms avg, 400 req/sec). **EPIC 3 NOW UNBLOCKED** - 27 E2E test failures resolved, production-ready foundation established. Story 2.13 deliverables: 10 points, comprehensive technical debt resolution across testing, performance, security, and UX. Epic 2 progress: 96% complete (48/~50 points) with Stories 2.10, 2.11 deferred. Total project progress: 83 points across 22 stories (Epic 1: 37 points complete, Epic 2: 48 points complete). Next recommended action: Begin Epic 3 (Public Comparison Table Interface) by drafting Story 3.1 or generating context for existing Story 3.1 file.
 
@@ -265,24 +267,27 @@ LLM Pricing Calculator - A comprehensive web application for comparing LLM model
 
 ## What to do next
 
-**What to do next:** 🚀 **Implement Story 3.1 - All Preparation Complete!**
+**What to do next:** 🚀 **Implement Story 3.1b - Technical Debt Consolidation**
 
-**Recommended Action:** Implement Story 3.1 using DEV agent
+**Recommended Action:** Implement Story 3.1b using DEV agent
 
-**Current Story:** Story 3.1 - Create Public Homepage with Basic Layout
+**Current Story:** Story 3.1b - Consolidated Technical Debt Resolution (Epics 1-2)
 
 **Status:**
-- ✅ Story created (16 ACs, 8 tasks, 46 subtasks)
+- ✅ Story created (20 ACs organized by priority: 4 CRITICAL, 6 HIGH, 3 MEDIUM, 7 LOW)
 - ✅ Story marked ready for development
+- ✅ Comprehensive technical debt audit completed (100% coverage verified)
 - ✅ Context XML generated (comprehensive implementation guidance)
 
 **Command to run:**
-Load DEV agent and run `dev-story` workflow to implement Story 3.1
+Load DEV agent and run `dev-story` workflow to implement Story 3.1b
 
 **Implementation Guidance:**
-- Context file: `docs/stories/story-context-3.1.xml` (complete with docs, code artifacts, constraints, interfaces, test standards)
-- Estimated effort: 2-4 hours for AI agent
-- Key tasks: Public homepage route, responsive layout, loading/empty/error states, performance optimization, accessibility, tests
+- Context file: `docs/stories/story-context-3.1b.xml` (complete with docs, code artifacts, constraints, interfaces, test standards)
+- Estimated effort: 21-28 hours across 5 major tasks
+- Priority execution: CRITICAL (Week 1) → HIGH (Week 1-2) → MEDIUM (Week 2) → LOW (Backlog)
+- Key deliverables: Staging deployment, HTTPS enforcement, documentation (badges, env vars, ADR-011, CONTRIBUTING, LICENSE), UX improvements, process automation
+- File: `docs/stories/story-3.1b.md`
 
 **Epic 3 Status:**
 - All technical debt from Epic 2 resolved (Story 2.13 complete)

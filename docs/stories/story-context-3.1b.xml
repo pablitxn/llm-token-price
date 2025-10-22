@@ -1,0 +1,415 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>3.1b</storyId>
+    <title>Consolidated Technical Debt Resolution (Epics 1-2)</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-21</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-3.1b.xml</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>development team</asA>
+    <iWant>to resolve all remaining technical debt from Epics 1 and 2</iWant>
+    <soThat>we have a production-ready, well-documented, and maintainable foundation before continuing Epic 3 implementation</soThat>
+    <tasks>
+      - Task 1: Production Deployment Preparation (AC: #1-4) - CRITICAL
+      - Task 2: Documentation Updates (AC: #5-10) - HIGH
+      - Task 3: UX Improvements (AC: #11-13) - MEDIUM
+      - Task 4: Process Improvements (AC: #14-16) - LOW
+      - Task 5: Final Sign-Off and Release (AC: #17-20) - LOW
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    ## CRITICAL - Production Readiness (Blocks Deployment)
+    1. Staging Environment Smoke Test (Story 2.13 AC#21.5)
+    2. HTTPS Enforcement in Production (Story 2.13 Security Checklist)
+    3. GitHub Actions Secrets Configuration (Story 2.13 Task 19.7)
+    4. CORS Testing in Staging (Story 2.13 Task 18.6)
+
+    ## HIGH - Documentation & Quality (Important for Maintainability)
+    5. Add CI/CD Badges to README.md (Story 2.13 Tasks 2.5, 3.6)
+    6. Document Environment Variables in README (Story 2.13 Task 19.6)
+    7. Document Rate Limits in API Documentation (Story 2.13 Task 7.6)
+    8. Create ADR-011: Authentication Approach (Epic 1 Item #2)
+    9. Create CONTRIBUTING.md (Epic 1 Item #9)
+    10. Create LICENSE File (Epic 1 Item #9)
+
+    ## MEDIUM - UX Improvements (Nice-to-Have)
+    11. Add CSV Import All-or-Nothing UI Message (Story 2.13 Task 6.6)
+    12. Add "Report Issue" Button on Error Messages (Story 2.13 Task 10.5)
+    13. Cache Dashboard Metrics (5-minute TTL) (Story 2.13 Task 15.6)
+
+    ## LOW - Process Improvements (Deferred/Optional)
+    14. Automate Story Context XML Generation (Epic 1 Item #3)
+    15. Create ATDD Checklist Template (Epic 1 Item #4)
+    16. Wireframe Admin Panel Enhancements (Epic 1 Item #8)
+    17. Review Admin Panel Documentation with Stakeholder (Story 2.13 Task 21.7)
+    18. Tag Release: v1.0.0-epic-2-complete (Story 2.13 Task 21.9)
+    19. Monitor Connection Pool Metrics in Production (Story 2.13 Task 20.6)
+    20. Final Production Readiness Sign-Off (Story 2.13 Task 21.10)
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <artifact>
+        <path>docs/stories/story-2.13.md</path>
+        <title>Story 2.13: Epic 2 Technical Debt Resolution & Production Readiness</title>
+        <section>Tasks / Subtasks</section>
+        <snippet>Source of 17 pending subtasks that were not completed during Story 2.13 implementation. Includes badges (Tasks 2.5, 3.6), documentation (Tasks 19.6, 7.6, 10.5), staging deployment (Task 21.5), secrets configuration (Task 19.7), CORS testing (Task 18.6), and final sign-off items (Tasks 21.7, 21.9, 21.10, 20.6).</snippet>
+      </artifact>
+
+      <artifact>
+        <path>docs/retrospective-action-items.md</path>
+        <title>Epic 1 Retrospective Action Items</title>
+        <section>CRITICAL, IMPORTANT, LOW PRIORITY sections</section>
+        <snippet>11 action items from Epic 1 retrospective. CRITICAL items: ADR-011 Authentication (#2), Story Context Automation (#3). IMPORTANT items: ATDD Checklist Template (#4), Wireframe Admin Panel (#8). LOW PRIORITY items: Complete Story 1.1 Documentation with CONTRIBUTING.md and LICENSE (#9).</snippet>
+      </artifact>
+
+      <artifact>
+        <path>docs/retrospectives/epic-2-retro-2025-10-21.md</path>
+        <title>Epic 2 Retrospective</title>
+        <section>Process Improvements, UX Enhancements</section>
+        <snippet>Retrospective identifying deferred UX improvements (dark mode, CSV progress indicator, error messages, delete confirmation) and process improvements. Most UX items already implemented in Story 2.13, leaving documentation and process automation as remaining debt.</snippet>
+      </artifact>
+
+      <artifact>
+        <path>docs/admin-panel-guide.md</path>
+        <title>Admin Panel User Guide</title>
+        <section>Complete guide (800+ lines, 11 sections)</section>
+        <snippet>Comprehensive admin panel documentation covering authentication, CRUD operations, CSV import, dashboard metrics, audit log, troubleshooting. Created in Story 2.13 Task 16. Needs stakeholder review (AC #17).</snippet>
+      </artifact>
+
+      <artifact>
+        <path>docs/deployment-checklist.md</path>
+        <title>Deployment Checklist</title>
+        <section>Production deployment guide</section>
+        <snippet>Comprehensive production deployment guide created in Story 2.13 Task 21.8. Includes environment setup, migrations, secrets configuration, staging smoke tests, production verification steps.</snippet>
+      </artifact>
+
+      <artifact>
+        <path>docs/architecture-decisions.md</path>
+        <title>Architecture Decision Records (ADRs)</title>
+        <section>All ADRs (ADR-001 through ADR-010)</section>
+        <snippet>Existing ADRs document key architectural decisions. Missing ADR-011 for Authentication Approach (AC #8), which should document JWT + HttpOnly cookies rationale, token structure, security considerations, CORS implications.</snippet>
+      </artifact>
+
+      <artifact>
+        <path>README.md</path>
+        <title>Project README</title>
+        <section>Development Commands, Setup Instructions</section>
+        <snippet>Main project README needs enhancements: CI/CD badges (AC #5), environment variables documentation (AC #6), reference to CONTRIBUTING.md (AC #9), LICENSE badge (AC #10). Currently has basic setup and command documentation.</snippet>
+      </artifact>
+    </docs>
+
+    <code>
+      <artifact>
+        <path>.github/workflows/backend-ci.yml</path>
+        <kind>ci-cd-workflow</kind>
+        <symbol>Backend CI/CD Pipeline</symbol>
+        <lines>1-100</lines>
+        <reason>CI/CD workflow created in Story 2.13. Needs badges added to README (AC #5). Currently runs tests, enforces 95% pass rate and 70% coverage. Secrets need to be added to repository settings (AC #3).</reason>
+      </artifact>
+
+      <artifact>
+        <path>services/backend/LlmTokenPrice.API/Program.cs</path>
+        <kind>configuration</kind>
+        <symbol>Startup Configuration</symbol>
+        <lines>1-250</lines>
+        <reason>Main application startup. HTTPS middleware needs verification (AC #2). CORS configuration uses CORS_ALLOWED_ORIGINS environment variable (Story 2.13 Task 18). JWT secret reads from JWT_SECRET_KEY environment variable (Story 2.13 Task 19).</reason>
+      </artifact>
+
+      <artifact>
+        <path>apps/web/src/components/admin/CSVImport.tsx</path>
+        <kind>component</kind>
+        <symbol>CSVImport</symbol>
+        <lines>1-200</lines>
+        <reason>CSV import component needs all-or-nothing transaction message (AC #11). Currently shows import UI with SSE progress tracking but lacks explicit warning about transaction behavior.</reason>
+      </artifact>
+
+      <artifact>
+        <path>apps/web/src/components/ui/ErrorAlert.tsx</path>
+        <kind>component</kind>
+        <symbol>ErrorAlert</symbol>
+        <lines>1-80</lines>
+        <reason>Error alert component needs "Report Issue" button (AC #12). Currently displays error messages with retry button but no GitHub issue reporting functionality.</reason>
+      </artifact>
+
+      <artifact>
+        <path>services/backend/LlmTokenPrice.Application/Services/DashboardMetricsService.cs</path>
+        <kind>service</kind>
+        <symbol>DashboardMetricsService</symbol>
+        <lines>1-150</lines>
+        <reason>Dashboard metrics service could benefit from 5-minute cache (AC #13). Currently has 1-hour cache which may be too long for real-time admin monitoring. This is MEDIUM priority (nice-to-have).</reason>
+      </artifact>
+
+      <artifact>
+        <path>bmad/bmm/workflows/4-implementation/story-ready/instructions.md</path>
+        <kind>workflow</kind>
+        <symbol>Story Ready Workflow</symbol>
+        <lines>1-167</lines>
+        <reason>Workflow instructions for story-ready process. Needs modification to automatically invoke story-context after approval (AC #14). Currently manual, causing context XML generation to be forgotten.</reason>
+      </artifact>
+
+      <artifact>
+        <path>.env.example</path>
+        <kind>configuration</kind>
+        <symbol>Environment Variables Template</symbol>
+        <lines>1-50</lines>
+        <reason>Environment variables template created in Story 2.13 Task 20. Needs documentation in README.md (AC #6). Lists all required variables: DATABASE_URL, REDIS_URL, JWT_SECRET_KEY, CORS_ALLOWED_ORIGINS.</reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <backend>
+        <package name="ASP.NET Core" version="9.0" />
+        <package name="Entity Framework Core" version="9.0" />
+        <package name="FluentValidation.AspNetCore" version="11.3.0" />
+        <package name="AspNetCoreRateLimit" version="5.0.0" />
+        <package name="StackExchange.Redis" version="2.8.0" />
+        <package name="Coverlet.Collector" version="6.0.0" />
+        <package name="xUnit" version="2.9.0" />
+        <package name="Moq" version="4.20.0" />
+      </backend>
+      <frontend>
+        <package name="react" version="19.0.0" />
+        <package name="vite" version="7.0.0" />
+        <package name="typescript" version="5.9.0" />
+        <package name="@tanstack/react-query" version="5.0.0" />
+        <package name="vitest" version="3.0.0" />
+        <package name="@playwright/test" version="1.49.0" />
+      </frontend>
+      <devops>
+        <tool name="GitHub Actions" />
+        <tool name="Codecov" note="For coverage badges (AC #5)" />
+        <tool name="Staging environment" note="Vercel/Netlify (frontend), Railway/Render (backend) - to be configured (AC #1, #4)" />
+      </devops>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <architectural>
+      - Hexagonal Architecture must be maintained (Domain → Application → Infrastructure → API/Presentation)
+      - No framework dependencies in Domain layer
+      - All secrets must use environment variables (JWT_SECRET_KEY, DATABASE_CONNECTION_STRING, REDIS_CONNECTION_STRING, CORS_ALLOWED_ORIGINS)
+      - HTTPS enforcement required in production (UseHttpsRedirection middleware)
+      - CORS must use environment-based configuration (no hardcoded origins)
+    </architectural>
+
+    <documentation>
+      - All documentation must be in English (communication_language from config)
+      - README.md must follow professional open-source standards
+      - CONTRIBUTING.md must document: git workflow, commit conventions, story workflow, testing standards, code review process
+      - LICENSE file must specify license type (consult with Pablo)
+      - ADR-011 must follow existing ADR format in architecture-decisions.md
+      - API documentation must include rate limits (100 req/min for admin endpoints)
+    </documentation>
+
+    <deployment>
+      - Staging environment required before production deployment
+      - Smoke tests must validate: admin login, model CRUD, benchmark management, CSV import, API endpoints
+      - GitHub Actions secrets must be configured: JWT_SECRET_KEY (≥32 chars), DATABASE_CONNECTION_STRING, REDIS_CONNECTION_STRING, CORS_ALLOWED_ORIGINS
+      - CORS testing in staging required with actual frontend URL
+      - Production deployment checklist (docs/deployment-checklist.md) must be followed
+    </deployment>
+
+    <code-quality>
+      - Zero TypeScript `any` types (strict mode enforced)
+      - Zero ESLint errors
+      - CI/CD must enforce ≥95% pass rate and ≥70% coverage
+      - All user-facing error messages must be friendly (no raw HTTP status codes)
+      - All forms must have clear validation feedback
+    </code-quality>
+
+    <process>
+      - Story workflow automation: story-ready should auto-invoke story-context
+      - ATDD checklist template should enforce test-first discipline
+      - All workflow changes must be documented in bmm-workflow-status.md
+      - Release tagging follows semantic versioning (v1.0.0-epic-2-complete format)
+    </process>
+  </constraints>
+
+  <interfaces>
+    <github-actions>
+      <name>Backend CI/CD Workflow</name>
+      <kind>ci-cd</kind>
+      <signature>
+        name: Backend CI
+        on: [push, pull_request]
+        jobs:
+          - test: dotnet test --collect:"XPlat Code Coverage"
+          - enforce: 95% pass rate, 70% coverage minimum
+          - report: Comment PR with test results and coverage
+      </signature>
+      <path>.github/workflows/backend-ci.yml</path>
+    </github-actions>
+
+    <environment-variables>
+      <name>Production Secrets</name>
+      <kind>configuration</kind>
+      <signature>
+        JWT_SECRET_KEY: string (≥32 characters for HS256)
+        DATABASE_CONNECTION_STRING: PostgreSQL connection string
+        REDIS_CONNECTION_STRING: Redis connection string (with password if required)
+        CORS_ALLOWED_ORIGINS: Comma-separated list of allowed origins (e.g., "https://app.example.com,https://www.example.com")
+      </signature>
+      <path>.env.example</path>
+    </environment-variables>
+
+    <badges>
+      <name>README Badges</name>
+      <kind>markdown</kind>
+      <signature>
+        [![Backend CI](https://github.com/{owner}/{repo}/actions/workflows/backend-ci.yml/badge.svg)](...)
+        [![codecov](https://codecov.io/gh/{owner}/{repo}/branch/main/graph/badge.svg)](...)
+        [![License](https://img.shields.io/badge/License-{type}-blue.svg)](...)
+      </signature>
+      <path>README.md</path>
+    </badges>
+
+    <adr-format>
+      <name>ADR Template</name>
+      <kind>documentation</kind>
+      <signature>
+        ## ADR-011: {Title}
+
+        **Status:** Accepted
+        **Date:** {YYYY-MM-DD}
+        **Deciders:** {Names}
+
+        ### Context
+        {Problem statement}
+
+        ### Decision
+        {Chosen solution}
+
+        ### Consequences
+        **Positive:**
+        - {Benefit 1}
+
+        **Negative:**
+        - {Tradeoff 1}
+
+        **Risks:**
+        - {Risk 1}
+      </signature>
+      <path>docs/architecture-decisions.md</path>
+    </adr-format>
+
+    <staging-deployment>
+      <name>Staging Environment Configuration</name>
+      <kind>deployment</kind>
+      <signature>
+        Frontend: Vercel/Netlify (https://staging.{domain}.com)
+        Backend: Railway/Render (https://api-staging.{domain}.com)
+
+        Environment Variables:
+        - NODE_ENV=staging
+        - ASPNETCORE_ENVIRONMENT=Staging
+        - CORS_ALLOWED_ORIGINS=https://staging.{domain}.com
+
+        Smoke Tests:
+        - GET /api/health → 200 OK
+        - POST /api/admin/auth/login → 200 OK with cookie
+        - GET /api/models → 200 OK with data
+        - POST /api/admin/models → 201 Created
+        - POST /api/admin/benchmarks/import-csv → 200 OK
+      </signature>
+      <path>docs/deployment-checklist.md</path>
+    </staging-deployment>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Story 3.1b focuses on documentation, deployment, and process improvements rather than new feature development. Testing approach:
+
+      1. **Manual Testing (CRITICAL tasks):**
+         - Staging deployment smoke tests (checklist-based)
+         - HTTPS enforcement verification (browser DevTools)
+         - CORS testing with actual staging frontend
+         - GitHub Actions secrets verification (CI/CD pipeline run)
+
+      2. **Documentation Review:**
+         - README.md completeness (badges, env vars, CONTRIBUTING, LICENSE)
+         - ADR-011 format consistency with existing ADRs
+         - CONTRIBUTING.md clarity for new contributors
+
+      3. **Component Tests (MEDIUM tasks):**
+         - CSVImport component shows all-or-nothing message (visual regression test)
+         - ErrorAlert component renders "Report Issue" button (unit test)
+         - Dashboard metrics cache TTL verification (integration test)
+
+      4. **Process Verification (LOW tasks):**
+         - Story-ready workflow auto-invokes story-context (workflow test)
+         - ATDD checklist template is usable (manual validation)
+         - Release tag follows semver format (git tag validation)
+
+      No new E2E tests required - this story enhances existing infrastructure rather than adding new user-facing features.
+    </standards>
+
+    <locations>
+      - Frontend component tests: apps/web/src/components/**/__tests__/*.test.tsx
+      - Workflow tests: Manual validation via workflow execution
+      - Staging smoke tests: Manual checklist execution (docs/deployment-checklist.md)
+      - Documentation review: Manual review with stakeholders
+    </locations>
+
+    <ideas>
+      <testIdea id="AC1-staging-smoke">
+        <ac>AC #1: Staging Environment Smoke Test</ac>
+        <type>Manual</type>
+        <description>Execute staging smoke test checklist: (1) Admin login → verify JWT cookie set, (2) Model CRUD → create/update/delete model, (3) Benchmark management → add benchmark, (4) CSV import → upload test CSV, (5) Public API → GET /api/models returns data. Document any environment-specific issues.</description>
+      </testIdea>
+
+      <testIdea id="AC2-https">
+        <ac>AC #2: HTTPS Enforcement in Production</ac>
+        <type>Manual</type>
+        <description>Deploy to staging with HTTPS. Test: (1) HTTP request redirects to HTTPS, (2) HSTS headers present (Strict-Transport-Security), (3) HttpOnly cookies work over HTTPS, (4) CORS allows credentials with secure origins.</description>
+      </testIdea>
+
+      <testIdea id="AC3-secrets">
+        <ac>AC #3: GitHub Actions Secrets Configuration</ac>
+        <type>Manual</type>
+        <description>Add secrets in GitHub repo Settings → Secrets and variables → Actions. Run CI/CD pipeline and verify secrets are accessible (logs should show "Using secret JWT_SECRET_KEY" without revealing value).</description>
+      </testIdea>
+
+      <testIdea id="AC4-cors">
+        <ac>AC #4: CORS Testing in Staging</ac>
+        <type>Manual</type>
+        <description>Deploy frontend to staging URL (e.g., https://staging.llmpricing.com). Set CORS_ALLOWED_ORIGINS=https://staging.llmpricing.com on backend. Test API calls from staging frontend. Verify: (1) Preflight OPTIONS requests succeed, (2) Credentials (cookies) sent and received, (3) Unauthorized origin rejected (test with different domain).</description>
+      </testIdea>
+
+      <testIdea id="AC5-badges">
+        <ac>AC #5: Add CI/CD Badges to README</ac>
+        <type>Manual</type>
+        <description>Add badges to README.md and verify they render correctly on GitHub. Check: (1) Backend CI badge shows "passing" status, (2) Coverage badge shows percentage, (3) Badges link to correct URLs.</description>
+      </testIdea>
+
+      <testIdea id="AC11-csv-message">
+        <ac>AC #11: CSV Import All-or-Nothing Message</ac>
+        <type>Unit Test</type>
+        <description>Test CSVImport component renders warning message "⚠️ All rows must be valid - import is all-or-nothing" before file upload. Verify message styling (yellow alert) and visibility.</description>
+      </testIdea>
+
+      <testIdea id="AC12-report-issue">
+        <ac>AC #12: Report Issue Button on Error Messages</ac>
+        <type>Unit Test</type>
+        <description>Test ErrorAlert component: (1) Renders "Report Issue" button, (2) Button links to GitHub Issues with pre-filled template, (3) Template includes error message, timestamp, user agent in URL params.</description>
+      </testIdea>
+
+      <testIdea id="AC14-workflow-automation">
+        <ac>AC #14: Automate Story Context XML Generation</ac>
+        <type>Workflow Test</type>
+        <description>Test story-ready workflow modification: (1) Run story-ready for test story, (2) Verify story-context automatically invokes after approval, (3) Verify context XML generated without manual intervention, (4) Update workflow status file documents automation.</description>
+      </testIdea>
+
+      <testIdea id="AC18-release-tag">
+        <ac>AC #18: Tag Release v1.0.0-epic-2-complete</ac>
+        <type>Git Validation</type>
+        <description>Verify release tag follows semantic versioning: (1) Tag format v{major}.{minor}.{patch}-{suffix}, (2) Tag annotation includes release notes, (3) Tag pushed to origin, (4) GitHub Release created with changelog.</description>
+      </testIdea>
+    </ideas>
+  </tests>
+</story-context>

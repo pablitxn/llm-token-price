@@ -154,9 +154,9 @@ public class ValidationLocalizationTests : IClassFixture<TestWebApplicationFacto
             Description = new string('A', 1001), // "La descripción no puede exceder 1000 caracteres"
             Category = "Invalid", // "La categoría debe ser una de:"
             Interpretation = "Invalid", // "La interpretación debe ser una de:"
-            TypicalRangeMin = null, // "El rango mínimo típico es obligatorio"
-            TypicalRangeMax = null, // "El rango máximo típico es obligatorio"
-            WeightInQaps = null // "El peso QAPS es obligatorio"
+            TypicalRangeMin = -100, // Invalid value to trigger validation
+            TypicalRangeMax = -50, // Invalid: max less than min
+            WeightInQaps = 2.0m // Invalid: exceeds 1.00 maximum
         };
 
         // When: POST request to create benchmark
@@ -171,7 +171,7 @@ public class ValidationLocalizationTests : IClassFixture<TestWebApplicationFacto
         responseBody.Should().Contain("La descripción no puede exceder 1000 caracteres");
         responseBody.Should().Contain("La categoría");
         responseBody.Should().Contain("La interpretación");
-        responseBody.Should().Contain("obligatorio");
+        responseBody.Should().Contain("El peso QAPS debe estar entre 0.00 y 1.00");
     }
 
     [Fact]
@@ -194,7 +194,7 @@ public class ValidationLocalizationTests : IClassFixture<TestWebApplicationFacto
         };
         var createResponse = await authenticatedClient.PostAsJsonAsync("/api/admin/benchmarks", createRequest);
         createResponse.EnsureSuccessStatusCode();
-        var createdBenchmark = await createResponse.Content.ReadFromJsonAsync<AdminBenchmarkDto>();
+        var createdBenchmark = await createResponse.Content.ReadFromJsonAsync<BenchmarkResponseDto>();
 
         // Now update with invalid weight, Accept-Language: es
         authenticatedClient.DefaultRequestHeaders.AcceptLanguage.Clear();
