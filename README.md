@@ -976,7 +976,25 @@ pnpm run build
 
 ## 🤝 Contributing
 
-Please read our contributing guidelines before submitting pull requests.
+We welcome contributions from the community! Please read our [CONTRIBUTING.md](./CONTRIBUTING.md) guide for:
+
+- Development workflow and branching strategy
+- Commit message conventions
+- Story workflow (BMM Method)
+- Testing standards (TDD/ATDD)
+- Code review process and pull request guidelines
+- Coding standards for C# and TypeScript
+
+**Quick Start for Contributors:**
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/epic-N-description`
+3. Make your changes following our coding standards
+4. Write tests for your changes (≥70% coverage)
+5. Commit using Conventional Commits: `feat(epic-3): add new feature`
+6. Push to your fork and open a Pull Request
+
+For detailed guidelines, see [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## 📄 License
 
