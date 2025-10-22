@@ -191,7 +191,7 @@ apps/web/
 
 ### Context Reference
 
-<!-- Path(s) to story context XML will be added here by context workflow -->
+- `docs/stories/story-context-3.3.xml` (generated: 2025-10-21)
 
 ### Agent Model Used
 

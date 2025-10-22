@@ -25,3 +25,62 @@ Routing guidance:
 | 2025-10-16 | 1.10 | 1 | TechDebt | Low | Pablo | **Done** | Add unit tests for ModelQueryService mapping edge cases. Created LlmTokenPrice.Application.Tests project with ModelQueryServiceTests.cs containing 6 comprehensive unit tests: (1) GetAllModelsAsync_WithNullCapability_ReturnsNullCapabilityDto, (2) GetAllModelsAsync_WithZeroBenchmarks_ReturnsEmptyTopBenchmarks, (3) GetAllModelsAsync_WithFiveBenchmarks_ReturnsOnlyTop3OrderedByScoreDesc, (4) GetAllModelsAsync_WithValidModel_MapsAllFieldsCorrectly, (5) GetModelByIdAsync_WhenModelNotFound_ReturnsNull, (6) GetModelByIdAsync_WhenModelExists_ReturnsMappedDto. All tests passing (6/6). Completed 2025-10-16. Files: LlmTokenPrice.Application.Tests/Services/ModelQueryServiceTests.cs. Related AC#3. |
 | 2025-10-16 | 1.10 | 1 | Documentation | Low | SM | Open | Generate story context documentation for Story 1.10. Run story-context workflow to create story-context-1.10.xml for Dev Agent Record consistency. Update story-1.10.md:158 with context reference path. |
 | 2025-10-16 | 1.10 | 1 | Bug | Low | Pablo | **Done** | Fix EF Core version conflict in Infrastructure.Tests. Updated LlmTokenPrice.Infrastructure.Tests.csproj to use EF Core 9.0.10 (aligned with Infrastructure project). Build now shows 0 warnings, 0 errors. Completed 2025-10-16. Command: dotnet add package Microsoft.EntityFrameworkCore.Relational --version 9.0.10. Files: services/backend/LlmTokenPrice.Infrastructure.Tests/LlmTokenPrice.Infrastructure.Tests.csproj:9. |
+
+| Epic | Story | ID  | Title | File |
+| ---- | ----- | --- | ----- | ---- |
+| 4    | 1     | 4.1 | Create Model Detail Modal Component | story-4.1.md |
+| 4    | 2     | 4.2 | Add Overview Tab with Model Specifications | story-4.2.md |
+| 4    | 3     | 4.3 | Create Backend API for Model Detail | story-4.3.md |
+| 4    | 4     | 4.4 | Add Benchmarks Tab with All Scores | story-4.4.md |
+| 4    | 5     | 4.5 | Add Pricing Tab with Detailed Breakdown | story-4.5.md |
+| 4    | 6     | 4.6 | Create Cost Calculator Component | story-4.6.md |
+| 4    | 7     | 4.7 | Embed Calculator in Pricing Tab and Create Standalone Page | story-4.7.md |
+| 4    | 8     | 4.8 | Add Cost Comparison Table to Standalone Calculator | story-4.8.md |
+| 4    | 9     | 4.9 | Add Preset Workload Scenarios | story-4.9.md |
+| 4    | 10    | 4.10 | Add Visualization to Calculator Results | story-4.10.md |
+| 4    | 11    | 4.11 | Add Export/Share Calculator Results | story-4.11.md |
+| 4    | 12    | 4.12 | Optimize Calculator Performance | story-4.12.md |
+| 5    | 1     | 5.1 | Create Comparison Page Route and Layout | story-5.1.md |
+| 5    | 2     | 5.2 | Display Selected Models in Side-by-Side Cards | story-5.2.md |
+| 5    | 3     | 5.3 | Create Comparison Table Component | story-5.3.md |
+| 5    | 4     | 5.4 | Add Benchmark Comparison Section | story-5.4.md |
+| 5    | 5     | 5.5 | Integrate Chart.js Library | story-5.5.md |
+| 5    | 6     | 5.6 | Create Bar Chart for Benchmark Comparison | story-5.6.md |
+| 5    | 7     | 5.7 | Add Metric Selector for Chart | story-5.7.md |
+| 5    | 8     | 5.8 | Add Pricing Comparison Visualization | story-5.8.md |
+| 5    | 9     | 5.9 | Add Capabilities Comparison Matrix | story-5.9.md |
+| 5    | 10    | 5.10 | Add Chart Type Switcher | story-5.10.md |
+| 5    | 11    | 5.11 | Implement Chart Interactions (Hover, Click) | story-5.11.md |
+| 5    | 12    | 5.12 | Add Export Comparison Feature | story-5.12.md |
+| 5    | 13    | 5.13 | Add Comparison Page Navigation and State Management | story-5.13.md |
+| 5    | 14    | 5.14 | Optimize Comparison Page Performance | story-5.14.md |
+| 6    | 1     | 6.1 | Design QAPS Calculation Algorithm | story-6.1.md |
+| 6    | 2     | 6.2 | Create Backend Service for QAPS Calculation | story-6.2.md |
+| 6    | 3     | 6.3 | Create API Endpoint for Best Value Filter | story-6.3.md |
+| 6    | 4     | 6.4 | Add Best Value Filter Button to Main Table | story-6.4.md |
+| 6    | 5     | 6.5 | Display QAPS Score and Value Indicator | story-6.5.md |
+| 6    | 6     | 6.6 | Add Explanation Panel for Best Value Filter | story-6.6.md |
+| 6    | 7     | 6.7 | Add Quality Score Breakdown in Model Detail | story-6.7.md |
+| 6    | 8     | 6.8 | Handle Edge Cases in QAPS Calculation | story-6.8.md |
+| 6    | 9     | 6.9 | Add Filter Toggle and Clear Functionality | story-6.9.md |
+| 6    | 10    | 6.10 | Cache and Optimize Best Value Calculation | story-6.10.md |
+| 7    | 1     | 7.1 | Add Pricing Validation Rules | story-7.1.md |
+| 7    | 2     | 7.2 | Add Benchmark Score Validation | story-7.2.md |
+| 7    | 3     | 7.3 | Add Timestamp Tracking for All Updates | story-7.3.md |
+| 7    | 4     | 7.4 | Create Data Freshness Indicator for Users | story-7.4.md |
+| 7    | 5     | 7.5 | Add Bulk Operations in Admin Panel | story-7.5.md |
+| 7    | 6     | 7.6 | Enhance CSV Import with Validation and Error Reporting | story-7.6.md |
+| 7    | 7     | 7.7 | Add Admin Dashboard with Data Quality Metrics | story-7.7.md |
+| 7    | 8     | 7.8 | Add Model Duplicate Detection | story-7.8.md |
+| 7    | 9     | 7.9 | Add Audit Log for Admin Actions | story-7.9.md |
+| 7    | 10    | 7.10 | Add Data Export Feature for Backups | story-7.10.md |
+| 8    | 1     | 8.1 | Audit Current Responsive Behavior | story-8.1.md |
+| 8    | 2     | 8.2 | Implement Mobile-First Table View | story-8.2.md |
+| 8    | 3     | 8.3 | Create Mobile-Friendly Filter Drawer | story-8.3.md |
+| 8    | 4     | 8.4 | Optimize Model Detail Modal for Mobile | story-8.4.md |
+| 8    | 5     | 8.5 | Make Cost Calculator Touch-Friendly | story-8.5.md |
+| 8    | 6     | 8.6 | Optimize Comparison View for Mobile | story-8.6.md |
+| 8    | 7     | 8.7 | Improve Touch Interactions and Gestures | story-8.7.md |
+| 8    | 8     | 8.8 | Test and Fix Tablet Experience | story-8.8.md |
+| 8    | 9     | 8.9 | Optimize Performance for Mobile Networks | story-8.9.md |
+| 8    | 10    | 8.10 | Add Progressive Web App (PWA) Features | story-8.10.md |
