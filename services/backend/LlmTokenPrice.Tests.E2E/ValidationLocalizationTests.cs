@@ -57,7 +57,7 @@ public class ValidationLocalizationTests : IClassFixture<TestWebApplicationFacto
         responseBody.Should().Contain("Model name is required");
         responseBody.Should().Contain("Provider is required");
         responseBody.Should().Contain("Input price must be greater than 0");
-        responseBody.Should().Contain("Input price can have maximum 6 decimal places");
+        responseBody.Should().Contain("Output price can have maximum 6 decimal places");
         responseBody.Should().Contain("Currency must be one of:");
         responseBody.Should().Contain("Status must be one of:");
         responseBody.Should().Contain("Context window must be at least");
