@@ -128,7 +128,27 @@ If BACKLOG had 1 story and is now empty:
 
 </step>
 
-<step n="5" goal="Confirm completion to user">
+<step n="5" goal="Automatically invoke story-context workflow">
+
+<critical>Story-ready workflow now automatically generates Story Context XML (AC #14 from Story 3.1b)</critical>
+<critical>This eliminates the manual step that was causing context XML to be forgotten</critical>
+
+<action>Load workflow.xml from {project-root}/bmad/core/tasks/workflow.xml</action>
+<action>Execute workflow with parameters:</action>
+
+- workflow-config: "{project-root}/bmad/bmm/workflows/4-implementation/story-context/workflow.yaml"
+- story_path: "{{story_dir}}/{{todo_story_file}}"
+- auto_update_status: false (story-ready already updated status)
+- non_interactive: true (no user prompts during auto-generation)
+
+<action>Wait for story-context workflow to complete</action>
+<action>Capture context file path from workflow output</action>
+
+<critical>If story-context fails, do NOT halt - continue to step 6 and warn user</critical>
+
+</step>
+
+<step n="6" goal="Confirm completion to user">
 
 <action>Display summary</action>
 
@@ -136,30 +156,30 @@ If BACKLOG had 1 story and is now empty:
 
 ✅ Story file updated: `{{todo_story_file}}` → Status: Ready
 ✅ Status file updated: Story moved TODO → IN PROGRESS
+✅ Story Context XML auto-generated: `{{context_file_path}}`
 {{#if next_story}}✅ Next story moved: BACKLOG → TODO ({{next_story_id}}: {{next_story_title}}){{/if}}
 {{#if no_more_stories}}✅ All stories have been drafted - backlog is empty{{/if}}
+
+{{#if story_context_failed}}
+⚠️ **Warning:** Story Context XML generation failed. You may need to run `story-context` workflow manually before implementing this story.
+{{/if}}
 
 **Current Story (IN PROGRESS):**
 
 - **ID:** {{todo_story_id}}
 - **Title:** {{todo_story_title}}
 - **File:** `{{todo_story_file}}`
+- **Context File:** `{{context_file_path}}`
 - **Status:** Ready for development
 
 **Next Steps:**
 
-1. **Recommended:** Run `story-context` workflow to generate implementation context
-   - This creates a comprehensive context XML for the DEV agent
-   - Includes relevant architecture, dependencies, and existing code
+Load DEV agent and run `dev-story` workflow to begin implementation.
 
-2. **Alternative:** Skip context generation and go directly to `dev-story` workflow
-   - Faster, but DEV agent will have less context
-   - Only recommended for simple, well-understood stories
+**Automation Note:**
 
-**To proceed:**
-
-- For context generation: Stay with SM agent and run `story-context` workflow
-- For direct implementation: Load DEV agent and run `dev-story` workflow
+Story Context XML is now automatically generated when marking stories ready (Story 3.1b AC #14).
+This ensures DEV agent always has comprehensive context without manual intervention.
 
 </step>
 
