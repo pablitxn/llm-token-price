@@ -1,0 +1,480 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>3.2</storyId>
+    <title>Fetch and Display Models in Basic Table</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-21</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-3.2.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user</asA>
+    <iWant>to see all available models in a table</iWant>
+    <soThat>I can get an overview of options</soThat>
+    <tasks>
+      <task id="1" priority="high">
+        <name>Implement TanStack Query Hook for Models Data (AC: #1, #3)</name>
+        <subtasks>
+          <subtask>Install TanStack Query (@tanstack/react-query) if not already present</subtask>
+          <subtask>Create API client function fetchModels() in src/api/models.ts to call GET /api/models</subtask>
+          <subtask>Create custom hook useModels() in src/hooks/useModels.ts using useQuery</subtask>
+          <subtask>Configure query with 5min staleTime and 30min cacheTime (per Architecture)</subtask>
+          <subtask>Export hook for use in components</subtask>
+        </subtasks>
+      </task>
+      <task id="2" priority="high">
+        <name>Create Basic Table Component (AC: #2, #6)</name>
+        <subtasks>
+          <subtask>Create ModelTable.tsx component in src/components/models/</subtask>
+          <subtask>Define table columns: name, provider, input_price_per_1m, output_price_per_1m</subtask>
+          <subtask>Render basic HTML table with proper semantic markup (thead, tbody)</subtask>
+          <subtask>Map over models data and render rows</subtask>
+          <subtask>Format pricing values with currency symbol and proper decimal places</subtask>
+          <subtask>Add basic TailwindCSS styling for readability (borders, padding, alternating rows)</subtask>
+        </subtasks>
+      </task>
+      <task id="3" priority="high">
+        <name>Integrate Table into HomePage (AC: #3)</name>
+        <subtasks>
+          <subtask>Import ModelTable component in HomePage.tsx</subtask>
+          <subtask>Call useModels() hook to fetch data</subtask>
+          <subtask>Pass models data to ModelTable component</subtask>
+          <subtask>Ensure table renders in main content area defined in Story 3.1</subtask>
+        </subtasks>
+      </task>
+      <task id="4" priority="medium">
+        <name>Implement Loading State (AC: #4)</name>
+        <subtasks>
+          <subtask>Create LoadingSpinner component in src/components/ui/ (or reuse if exists)</subtask>
+          <subtask>Check isLoading state from useModels() hook</subtask>
+          <subtask>Conditionally render LoadingSpinner when isLoading === true</subtask>
+          <subtask>Hide table while loading</subtask>
+          <subtask>Add message: "Loading models..."</subtask>
+        </subtasks>
+      </task>
+      <task id="5" priority="medium">
+        <name>Implement Error Handling (AC: #5)</name>
+        <subtasks>
+          <subtask>Create ErrorMessage component in src/components/ui/ for displaying errors</subtask>
+          <subtask>Check isError and error states from useModels() hook</subtask>
+          <subtask>Conditionally render ErrorMessage when isError === true</subtask>
+          <subtask>Display user-friendly error message: "Failed to load models. Please try again later."</subtask>
+          <subtask>Add retry button that calls refetch() from TanStack Query</subtask>
+          <subtask>Log detailed error to console for debugging</subtask>
+        </subtasks>
+      </task>
+      <task id="6" priority="high">
+        <name>Verify Backend Endpoint (AC: #1, #6)</name>
+        <subtasks>
+          <subtask>Confirm GET /api/models endpoint exists from Story 1.10</subtask>
+          <subtask>Test endpoint returns JSON array with at least 10 models</subtask>
+          <subtask>Verify response includes: id, name, provider, input_price_per_1m, output_price_per_1m</subtask>
+          <subtask>Check CORS is configured to allow frontend origin (localhost:5173 in dev)</subtask>
+          <subtask>If endpoint missing required fields, update backend to include them</subtask>
+        </subtasks>
+      </task>
+      <task id="7" priority="high">
+        <name>Test End-to-End Flow (All ACs)</name>
+        <subtasks>
+          <subtask>Start backend API server (dotnet run)</subtask>
+          <subtask>Start frontend dev server (pnpm run dev)</subtask>
+          <subtask>Navigate to homepage (http://localhost:5173)</subtask>
+          <subtask>Verify loading spinner appears briefly</subtask>
+          <subtask>Verify table renders with 10+ models</subtask>
+          <subtask>Verify all 4 columns display correctly</subtask>
+          <subtask>Test error handling by stopping backend and verify error message appears</subtask>
+          <subtask>Test retry button and verify data reloads when backend restarted</subtask>
+        </subtasks>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1" priority="critical">
+      <description>Frontend fetches models from GET /api/models endpoint</description>
+      <testIdeas>
+        <idea>Verify TanStack Query hook calls correct API endpoint with proper HTTP method</idea>
+        <idea>Verify API client uses correct base URL and timeout configuration</idea>
+        <idea>Check network tab shows GET request to /api/models when page loads</idea>
+      </testIdeas>
+    </criterion>
+    <criterion id="2" priority="critical">
+      <description>Basic HTML table displays models with columns: name, provider, input price, output price</description>
+      <testIdeas>
+        <idea>Verify table has semantic HTML structure (table, thead, tbody, tr, th, td)</idea>
+        <idea>Verify 4 columns render in correct order: Name, Provider, Input Price, Output Price</idea>
+        <idea>Verify each row displays correct model data in corresponding columns</idea>
+      </testIdeas>
+    </criterion>
+    <criterion id="3" priority="critical">
+      <description>Data loads automatically on page mount</description>
+      <testIdeas>
+        <idea>Verify useModels hook is called on HomePage mount</idea>
+        <idea>Verify data fetch happens without user interaction</idea>
+        <idea>Verify models data is passed to ModelTable component after fetch completes</idea>
+      </testIdeas>
+    </criterion>
+    <criterion id="4" priority="high">
+      <description>Loading spinner shown while fetching data</description>
+      <testIdeas>
+        <idea>Verify LoadingSpinner component renders when isLoading is true</idea>
+        <idea>Verify loading message displays: "Loading models..."</idea>
+        <idea>Verify spinner disappears after data loads or error occurs</idea>
+      </testIdeas>
+    </criterion>
+    <criterion id="5" priority="high">
+      <description>Error message displayed if API fails</description>
+      <testIdeas>
+        <idea>Verify ErrorAlert component renders when isError is true</idea>
+        <idea>Verify user-friendly error message displays</idea>
+        <idea>Verify retry button appears and triggers refetch when clicked</idea>
+        <idea>Verify error is logged to console for debugging</idea>
+      </testIdeas>
+    </criterion>
+    <criterion id="6" priority="high">
+      <description>Table displays 10+ models with sample data</description>
+      <testIdeas>
+        <idea>Verify backend returns at least 10 models in response</idea>
+        <idea>Verify all 10+ models render as table rows</idea>
+        <idea>Verify pricing values display with proper formatting (currency, decimals)</idea>
+      </testIdeas>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <artifact>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>Functional Requirements - Public Comparison Interface</section>
+        <snippet>FR006: System shall provide a sortable, filterable table view displaying all active models with pricing, capabilities, and key benchmark scores. FR032: System shall load initial comparison table view in under 2 seconds.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture Document</title>
+        <section>Technology Stack - Frontend State Management</section>
+        <snippet>TanStack Query 5.17.0 for declarative data fetching, caching, optimistic updates, background refetch, devtools. Zustand 4.4.7 for minimal boilerplate client state management, TypeScript-first.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>Frontend Components and Data Flow</section>
+        <snippet>Story 3.2 establishes canonical TanStack Query pattern with 5min stale time, basic HTML table component architecture, and error handling patterns for all future frontend development.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/architecture-decisions.md</path>
+        <title>Architecture Decision Records</title>
+        <section>ADR-002: SPA (React) Over SSR</section>
+        <snippet>Client-side filtering/sorting faster than server round-trips for 100 models. Multi-layer caching: Client (5min) via TanStack Query, Redis (1hr), PostgreSQL. Clean API boundary enables future mobile apps.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/epics.md</path>
+        <title>Epic Breakdown</title>
+        <section>Epic 3: Public Comparison Table Interface - Story 3.2</section>
+        <snippet>Fetch and Display Models in Basic Table: Integrate TanStack Query, create basic HTML table, implement loading/error states. Foundation for Stories 3.3-3.14 advanced features.</snippet>
+      </artifact>
+      <artifact>
+        <path>CLAUDE.md</path>
+        <title>Claude Code Project Instructions</title>
+        <section>State Architecture and Multi-Layer Caching</section>
+        <snippet>Server state: TanStack Query (5min stale time). Client state: Zustand (comparison basket, filter state). Local state: useState (forms, modals). Multi-layer caching: Client → Redis (1hr) → PostgreSQL.</snippet>
+      </artifact>
+    </docs>
+
+    <code>
+      <artifact>
+        <path>apps/web/src/pages/HomePage.tsx</path>
+        <kind>component</kind>
+        <symbol>HomePage</symbol>
+        <lines>1-106</lines>
+        <reason>Existing HomePage component from Story 3.1 with ModelCard grid view. Story 3.2 will replace ModelCard grid with ModelTable component while preserving loading/error/empty state patterns established here.</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/api/models.ts</path>
+        <kind>api-client</kind>
+        <symbol>fetchModels</symbol>
+        <lines>8-11</lines>
+        <reason>Existing API client function that fetches models from GET /api/models. Already implemented in Story 3.1. Story 3.2 uses this function in TanStack Query hook.</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/api/client.ts</path>
+        <kind>api-client</kind>
+        <symbol>apiClient</symbol>
+        <lines>1-39</lines>
+        <reason>Axios instance configured with base URL /api, 10s timeout, withCredentials for cookies, Accept-Language header for localization. Used by all API client functions.</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/components/ui/LoadingSpinner.tsx</path>
+        <kind>component</kind>
+        <symbol>LoadingSpinner</symbol>
+        <lines>1-53</lines>
+        <reason>Reusable loading spinner component with size variants (sm/md/lg) and optional text message. Already used in HomePage for Story 3.1. Reuse for Story 3.2 loading state.</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/components/ui/ErrorAlert.tsx</path>
+        <kind>component</kind>
+        <symbol>ErrorAlert</symbol>
+        <lines>1-164</lines>
+        <reason>Comprehensive error display component with user-friendly messages, retry button, and automated GitHub issue reporting. Already used in HomePage for Story 3.1. Reuse for Story 3.2 error handling.</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/types/models.ts</path>
+        <kind>types</kind>
+        <symbol>ModelDto, ModelsResponse, ApiResponse</symbol>
+        <lines>1-73</lines>
+        <reason>TypeScript types matching backend DTOs. Defines ModelDto interface with all model fields, ModelsResponse type for API response, and ApiResponse wrapper with meta information.</reason>
+      </artifact>
+      <artifact>
+        <path>services/backend/LlmTokenPrice.API/Controllers/ModelsController.cs</path>
+        <kind>controller</kind>
+        <symbol>ModelsController.GetAll</symbol>
+        <lines>87-189</lines>
+        <reason>Backend GET /api/models endpoint that returns all active models. Supports optional pagination. Returns ApiResponse wrapper with data array and meta info (count, cached, timestamp).</reason>
+      </artifact>
+      <artifact>
+        <path>services/backend/LlmTokenPrice.Application/DTOs/ModelDto.cs</path>
+        <kind>dto</kind>
+        <symbol>ModelDto</symbol>
+        <lines>1-80</lines>
+        <reason>Backend DTO definition for model data. Contains id, name, provider, version, status, inputPricePer1M, outputPricePer1M, currency, updatedAt, pricingUpdatedAt, capabilities, topBenchmarks. Frontend types must match this structure.</reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <frontend>
+        <package name="@tanstack/react-query" version="^5.90.5" purpose="Server state management, data fetching, caching" />
+        <package name="react" version="^19.1.1" purpose="Component framework" />
+        <package name="react-dom" version="^19.1.1" purpose="React DOM rendering" />
+        <package name="axios" version="^1.12.2" purpose="HTTP client for API calls" />
+        <package name="lucide-react" version="^0.546.0" purpose="Icon library for UI elements" />
+        <package name="tailwindcss" version="^4.1.14" purpose="Utility-first CSS framework for styling" />
+        <package name="typescript" version="~5.9.3" purpose="Type-safe language with strict mode" />
+        <package name="vite" version="npm:rolldown-vite@7.1.14" purpose="Build tool with fast HMR and optimized production builds" />
+      </frontend>
+      <backend>
+        <package name="ASP.NET Core" version="9.0" purpose="Web API framework" />
+        <package name="Entity Framework Core" version="9.0" purpose="ORM for database access" />
+        <package name="PostgreSQL" version="16" purpose="Relational database" />
+        <package name="Redis" version="7.2" purpose="Cache layer for API responses and computed values" />
+      </backend>
+      <testing>
+        <package name="vitest" version="^3.2.4" purpose="Unit testing framework for frontend" />
+        <package name="@testing-library/react" version="^16.3.0" purpose="React component testing utilities" />
+        <package name="msw" version="^2.11.5" purpose="Mock Service Worker for API mocking in tests" />
+      </testing>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <architectural>
+      <constraint>TypeScript strict mode enforced - zero any types allowed. All types must be explicitly defined and match backend DTOs exactly.</constraint>
+      <constraint>Frontend cannot directly access database - all data must come from REST API via /api/models endpoint.</constraint>
+      <constraint>TanStack Query configuration must follow architecture: 5min staleTime, 30min cacheTime, retry: 2 for failed requests.</constraint>
+      <constraint>Component organization by domain not type - ModelTable goes in src/components/models/ not src/components/tables/.</constraint>
+      <constraint>Path aliases must be used: @components/*, @api/*, @/utils/* as defined in vite.config.ts and tsconfig.json.</constraint>
+    </architectural>
+    <performance>
+      <constraint>Initial table load must complete in under 2 seconds including API call and render (PR032 requirement).</constraint>
+      <constraint>Table must render in under 100ms after data received from API (measured from data arrival to DOM paint).</constraint>
+      <constraint>Loading state must appear within 50ms of page mount to avoid perceived lag.</constraint>
+    </performance>
+    <ui-ux>
+      <constraint>Loading spinner must display "Loading models..." text for screen reader accessibility.</constraint>
+      <constraint>Error messages must be user-friendly, not technical. Use mapErrorToUserMessage utility to transform errors.</constraint>
+      <constraint>Retry button required on error state to allow users to recover from transient failures.</constraint>
+      <constraint>Empty state must display when API returns 0 models with helpful message: "No models available".</constraint>
+      <constraint>Table must use semantic HTML (table, thead, tbody, tr, th, td) for accessibility and SEO.</constraint>
+    </ui-ux>
+    <code-quality>
+      <constraint>No inline styles - all styling via TailwindCSS utility classes.</constraint>
+      <constraint>Components must be functional components using React hooks, not class components.</constraint>
+      <constraint>PropTypes not needed - TypeScript interfaces provide type safety.</constraint>
+      <constraint>All components must have clear JSDoc comments explaining purpose and acceptance criteria implemented.</constraint>
+      <constraint>Console.error for errors, console.log for debugging only (remove before commit).</constraint>
+    </code-quality>
+    <testing>
+      <constraint>Manual testing required for story approval: happy path, loading state, error handling, retry functionality, data accuracy.</constraint>
+      <constraint>Automated tests deferred to post-story: unit tests for useModels hook with MSW mock, integration tests for ModelTable rendering.</constraint>
+    </testing>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>GET /api/models</name>
+      <kind>REST endpoint</kind>
+      <signature>
+        GET /api/models
+        Response: 200 OK
+        {
+          "data": [
+            {
+              "id": "guid",
+              "name": "string",
+              "provider": "string",
+              "version": "string | null",
+              "status": "string",
+              "inputPricePer1M": number,
+              "outputPricePer1M": number,
+              "currency": "string",
+              "updatedAt": "ISO8601 datetime",
+              "pricingUpdatedAt": "ISO8601 datetime | null",
+              "capabilities": { ... } | null,
+              "topBenchmarks": [ ... ]
+            }
+          ],
+          "meta": {
+            "count": number,
+            "cached": boolean,
+            "timestamp": "ISO8601 datetime"
+          }
+        }
+      </signature>
+      <path>services/backend/LlmTokenPrice.API/Controllers/ModelsController.cs</path>
+      <notes>Backend endpoint already implemented in Story 1.10. Returns all active models. Supports optional pagination via ?page=1&amp;pageSize=20. CORS configured for localhost:5173 in development.</notes>
+    </interface>
+
+    <interface>
+      <name>useQuery Hook Configuration</name>
+      <kind>React Hook Pattern</kind>
+      <signature>
+        const { data, isLoading, error, refetch } = useQuery({
+          queryKey: ['models'],
+          queryFn: fetchModels,
+          staleTime: 5 * 60 * 1000,  // 5 min (architecture requirement)
+          cacheTime: 30 * 60 * 1000, // 30 min (architecture requirement)
+          retry: 2, // Retry failed requests up to 2 times
+        })
+      </signature>
+      <path>docs/solution-architecture.md - TanStack Query Configuration</path>
+      <notes>Canonical TanStack Query pattern for all Epic 3+ stories. StaleTime controls when data is considered stale and refetched. CacheTime controls how long inactive data stays in cache. Retry policy handles transient network failures.</notes>
+    </interface>
+
+    <interface>
+      <name>ModelTable Component Props</name>
+      <kind>Component Interface</kind>
+      <signature>
+        interface ModelTableProps {
+          models: ModelDto[]
+        }
+
+        Basic HTML table structure:
+        - thead: Name | Provider | Input Price | Output Price
+        - tbody: One row per model
+        - Pricing formatted with $ symbol and 2 decimal places
+        - TailwindCSS styling: borders, padding, alternating row colors
+      </signature>
+      <path>Story 3.2 Implementation (new component)</path>
+      <notes>Simple presentational component. Receives models data as prop. No state or effects. Story 3.3 upgrades to TanStack Table for sorting, filtering, virtualization.</notes>
+    </interface>
+
+    <interface>
+      <name>LoadingSpinner Component Props</name>
+      <kind>Component Interface</kind>
+      <signature>
+        interface LoadingSpinnerProps {
+          size?: 'sm' | 'md' | 'lg'
+          className?: string
+          text?: string
+        }
+
+        Usage: &lt;LoadingSpinner size="lg" text="Loading models..." /&gt;
+      </signature>
+      <path>apps/web/src/components/ui/LoadingSpinner.tsx</path>
+      <notes>Existing component from Story 2.13. Reuse for Story 3.2 loading state. Size "lg" for page-level loading, "md" for section loading, "sm" for inline loading.</notes>
+    </interface>
+
+    <interface>
+      <name>ErrorAlert Component Props</name>
+      <kind>Component Interface</kind>
+      <signature>
+        interface ErrorAlertProps {
+          error: UserError  // from mapErrorToUserMessage utility
+          onRetry?: () =&gt; void
+          onReport?: () =&gt; void
+          className?: string
+          rawError?: Error
+        }
+
+        Usage:
+        const userError = mapErrorToUserMessage(error)
+        &lt;ErrorAlert
+          error={userError}
+          onRetry={() =&gt; refetch()}
+          rawError={error}
+        /&gt;
+      </signature>
+      <path>apps/web/src/components/ui/ErrorAlert.tsx</path>
+      <notes>Existing component from Story 2.13/3.1b. Displays user-friendly error messages with retry button and optional GitHub issue reporting. Always transform raw errors using mapErrorToUserMessage before passing to ErrorAlert.</notes>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Story 3.2 requires manual testing for approval. Automated tests deferred to post-story per Epic 3 test strategy.
+
+      **Manual Testing Checklist (Required for Story Approval):**
+      1. Happy Path: Navigate to http://localhost:5173, verify table loads with 10+ models, all 4 columns display correctly, pricing formatted with $ and 2 decimals
+      2. Loading State: Reload page, verify LoadingSpinner appears with "Loading models..." text, spinner disappears after data loads
+      3. Error Handling: Stop backend server, reload page, verify ErrorAlert displays user-friendly message, verify retry button appears
+      4. Retry Functionality: Click retry button, verify refetch is triggered, verify loading spinner appears during refetch
+      5. Data Accuracy: Verify table data matches backend response in network tab, verify pricing values are correct
+
+      **Future Automated Tests (Post-Story):**
+      - Unit test: useModels hook with MSW mock (verify query config, data transformation)
+      - Integration test: ModelTable component renders with sample data (verify columns, row count, formatting)
+      - E2E test: Full page load with Playwright (verify loading → success → table render flow)
+
+      **Testing Frameworks Available:**
+      - Frontend Unit: Vitest + Testing Library + MSW
+      - Frontend E2E: Playwright (configured in Epic 1)
+      - Backend Integration: xUnit + TestContainers (PostgreSQL/Redis)
+    </standards>
+
+    <locations>
+      Frontend tests: apps/web/src/**/__tests__/*.test.tsx
+      Backend tests: services/backend/*.Tests/**/*.cs
+      E2E tests: services/backend/LlmTokenPrice.Tests.E2E/**/*.cs
+    </locations>
+
+    <ideas>
+      <idea ac="1">
+        **AC #1: Frontend fetches models from GET /api/models**
+        - Unit test useModels hook: Mock fetchModels with MSW, verify queryKey is ['models'], verify queryFn calls fetchModels, verify staleTime is 5min, verify cacheTime is 30min
+        - Integration test: Render HomePage with MSW mock, verify fetch is called on mount, verify network request uses GET /api/models endpoint
+        - E2E test: Start real backend, navigate to homepage, verify network tab shows GET /api/models with 200 OK response
+      </idea>
+      <idea ac="2">
+        **AC #2: Table displays models with 4 columns**
+        - Unit test ModelTable: Render with sample models array, verify table element exists, verify thead has 4 th elements with correct text (Name, Provider, Input Price, Output Price), verify tbody has rows matching models.length
+        - Integration test: Render ModelTable with 3 sample models, verify 3 tr elements in tbody, verify each td contains correct model data
+        - Visual test: Screenshot comparison for table styling (borders, padding, alternating rows)
+      </idea>
+      <idea ac="3">
+        **AC #3: Data loads automatically on page mount**
+        - Unit test HomePage: Mock useModels hook, verify it's called on mount (not on user action)
+        - Integration test: Render HomePage with MSW, verify fetchModels is called immediately, verify no user interaction required
+        - E2E test: Navigate to /, verify network request happens automatically, verify table appears without clicking anything
+      </idea>
+      <idea ac="4">
+        **AC #4: Loading spinner shown while fetching**
+        - Unit test HomePage: Mock useModels with isLoading: true, verify LoadingSpinner component renders, verify text "Loading models..." displays
+        - Integration test: Render HomePage with delayed MSW response (500ms), verify LoadingSpinner appears during delay, verify it disappears after data loads
+        - E2E test: Throttle network in Playwright, verify spinner appears on slow connection
+      </idea>
+      <idea ac="5">
+        **AC #5: Error message displayed on API failure**
+        - Unit test HomePage: Mock useModels with isError: true and error object, verify ErrorAlert component renders, verify retry button calls refetch
+        - Integration test: Mock MSW to return 500 error, verify ErrorAlert displays user-friendly message (not raw error), verify retry button appears
+        - E2E test: Stop backend server, reload page, verify error message appears, click retry, verify refetch happens
+      </idea>
+      <idea ac="6">
+        **AC #6: Table displays 10+ models**
+        - Integration test: Mock MSW to return array of 15 models, verify table renders 15 rows, verify all rows have data
+        - E2E test: Seed database with 10+ models, verify table displays all models, verify pricing formatting ($ symbol, 2 decimals)
+        - Data validation test: Verify model data types match TypeScript ModelDto interface
+      </idea>
+    </ideas>
+  </tests>
+</story-context>
