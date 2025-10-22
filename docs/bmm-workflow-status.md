@@ -2,16 +2,16 @@
 
 **Project:** llm-token-price
 **Created:** 2025-10-16
-**Last Updated:** 2025-10-21 (Story 3.3 Created - TanStack Table Integration)
+**Last Updated:** 2025-10-22 (Story 3.2 Implementation Complete - Basic Table with TanStack Query)
 
 ---
 
 ## Current Status
 
-**Current Phase:** 4-Implementation → Epic 1 Complete (11/11), Epic 2 Complete (13/13), Epic 3 In Progress (2/15)
-**Current Workflow:** create-story (Story 3.3) - Complete
-**Current Story:** Story 3.3 - Integrate TanStack Table for Advanced Features (Status: Draft, needs review)
-**Overall Progress:** 100% (Epic 1: 37 points) + 96% (Epic 2: 48/~50 points - Stories 2.1-2.9, 2.12, 2.13 Complete)
+**Current Phase:** 4-Implementation → Epic 1 Complete (11/11), Epic 2 Complete (13/13), Epic 3 In Progress (3/15)
+**Current Workflow:** dev-story (Story 3.2) - Complete (Ready for Review)
+**Current Story:** Story 3.2 - Fetch and Display Models in Basic Table (Status: Ready for Review)
+**Overall Progress:** 100% (Epic 1: 37 points) + 96% (Epic 2: 48/~50 points) + Story 3.2 Complete
 
 **✅ EPIC 2 TECHNICAL DEBT RESOLVED - EPIC 3 UNBLOCKED!**
 **🚀 Story 2.13 COMPLETE:** All 21 acceptance criteria delivered (242 tests passing, 0 failures, CI/CD enforced, production-ready)
@@ -136,13 +136,6 @@ go to the file docs/backlog.md
 
 **Also in Progress:**
 
-- **Story ID:** 3.2
-- **Story Title:** Fetch and Display Models in Basic Table
-- **Story File:** `docs/stories/story-3.2.md`
-- **Story Status:** Ready
-- **Context File:** `docs/stories/story-context-3.2.xml` (auto-generated)
-- **Action:** DEV should run `dev-story` workflow to implement this story
-
 - **Story ID:** 3.1b
 - **Story Title:** Consolidated Technical Debt Resolution (Epics 1-2)
 - **Story File:** `docs/stories/story-3.1b.md`
@@ -161,6 +154,7 @@ go to the file docs/backlog.md
 
 | Story ID | File                        | Completed Date | Points |
 |----------|-----------------------------|----------------|--------|
+| 3.2      | docs/stories/story-3.2.md   | 2025-10-22     | 5      |
 | 1-2      | docs/stories/story-{1-2}.md | 2025-10-21     | -      |
 
 ---
@@ -195,6 +189,8 @@ LLM Pricing Calculator - A comprehensive web application for comparing LLM model
 ---
 
 ## Decisions Log
+
+- **2025-10-22**: Completed dev-story for Story 3.2 (Fetch and Display Models in Basic Table). All tasks complete, tests passing. Story status: Ready for Review. Implementation includes useModels() TanStack Query hook, ModelTable component with semantic HTML, integration into HomePage, and comprehensive test updates. Next: User reviews and runs story-approved when satisfied with implementation.
 
 ---
 
