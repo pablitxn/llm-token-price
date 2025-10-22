@@ -1,6 +1,5 @@
-import { useQuery } from '@tanstack/react-query'
-import { fetchModels } from '../api/models'
-import ModelCard from '@/components/models/ModelCard'
+import { useModels } from '../hooks/useModels'
+import ModelTable from '@/components/models/ModelTable'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { ErrorAlert } from '@/components/ui/ErrorAlert'
@@ -8,23 +7,28 @@ import { mapErrorToUserMessage } from '@/utils/errorMessages'
 import { Database } from 'lucide-react'
 
 /**
- * HomePage component - Public homepage with model listing
+ * HomePage component - Public homepage with model table listing
  * Story 3.1: Create Public Homepage with Basic Layout
+ * Story 3.2: Fetch and Display Models in Basic Table
  *
  * Acceptance Criteria implemented:
+ * Story 3.1:
  * - AC #1: Public route at `/` accessible without authentication
  * - AC #4: Loading state with spinner
  * - AC #5: Empty state when no models available
  * - AC #6: Error state with retry button
  * - AC #13, #14: Accessibility (semantic HTML, ARIA labels)
+ *
+ * Story 3.2:
+ * - AC #1: Frontend fetches models from GET /api/models endpoint
+ * - AC #2: Basic HTML table displays models with columns: name, provider, input price, output price
+ * - AC #3: Data loads automatically on page mount
+ * - AC #4: Loading spinner shown while fetching data
+ * - AC #5: Error message displayed if API fails
+ * - AC #6: Table displays 10+ models with sample data
  */
 export default function HomePage() {
-  const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['models'],
-    queryFn: fetchModels,
-    staleTime: 5 * 60 * 1000, // 5 minutes (as per architecture)
-    retry: 2, // Retry failed requests up to 2 times
-  })
+  const { data, isLoading, error, refetch } = useModels()
 
   return (
     <>
@@ -75,7 +79,7 @@ export default function HomePage() {
             />
           )}
 
-          {/* Success State - Models Grid */}
+          {/* Success State - Models Table */}
           {!isLoading && !error && data && data.data.length > 0 && (
             <div>
               {/* Results Count */}
@@ -84,18 +88,8 @@ export default function HomePage() {
                 {new Date(data.meta.timestamp).toLocaleString()}
               </div>
 
-              {/* Models Grid (Responsive: AC #3) */}
-              <div
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
-                role="list"
-                aria-label="LLM models"
-              >
-                {data.data.map((model) => (
-                  <div key={model.id} role="listitem">
-                    <ModelCard model={model} />
-                  </div>
-                ))}
-              </div>
+              {/* Models Table (AC #2, #6: Basic HTML table with 4 columns) */}
+              <ModelTable models={data.data} />
             </div>
           )}
         </div>
