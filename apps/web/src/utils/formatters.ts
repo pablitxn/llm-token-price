@@ -74,3 +74,25 @@ export function getFreshnessStatus(date: string | Date): 'fresh' | 'stale' | 'cr
   if (days < 30) return 'stale'
   return 'critical'
 }
+
+/**
+ * Formats a price value as currency with appropriate precision.
+ * Story 3.3: Used for displaying model pricing in table columns.
+ *
+ * @param price - The price value to format (per 1M tokens)
+ * @param currency - Currency code (default: 'USD')
+ * @returns Formatted currency string with $ symbol
+ *
+ * @example
+ * formatPrice(5.0) // "$5.00"
+ * formatPrice(0.15) // "$0.15"
+ * formatPrice(15.99) // "$15.99"
+ */
+export function formatPrice(price: number, currency: string = 'USD'): string {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(price)
+}

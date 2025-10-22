@@ -1,4 +1,6 @@
+import { useReactTable, getCoreRowModel, flexRender } from '@tanstack/react-table'
 import type { ModelDto } from '@/types/models'
+import { modelColumns } from './columns'
 
 /**
  * Props for the ModelTable component
@@ -8,106 +10,71 @@ interface ModelTableProps {
 }
 
 /**
- * Formats a price value with currency symbol and proper decimal places
- * @param price - The price value in dollars per 1M tokens
- * @param currency - The currency code (default: USD)
- * @returns Formatted price string (e.g., "$2.50")
- */
-const formatPrice = (price: number, currency: string = 'USD'): string => {
-  if (currency === 'USD') {
-    return `$${price.toFixed(2)}`
-  }
-  // For other currencies, use Intl.NumberFormat
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(price)
-}
-
-/**
- * Basic HTML table component for displaying models
+ * TanStack Table component for displaying models
  *
- * Story 3.2: Fetch and Display Models in Basic Table
- * Implements AC #2 (Basic HTML table displays models with columns: name, provider, input price, output price)
- * and AC #6 (Table displays 10+ models with sample data)
+ * Story 3.3: Integrate TanStack Table for Advanced Features
+ * Refactored from basic HTML table (Story 3.2) to use TanStack Table library
  *
  * Features:
- * - Semantic HTML markup (table, thead, tbody, tr, th, td)
- * - Currency formatting with $ symbol and 2 decimal places
- * - TailwindCSS styling for readability (borders, padding, alternating rows)
- * - Responsive design
- * - Accessibility attributes
+ * - TanStack Table v8 with headless UI pattern
+ * - Maintains same visual appearance as Story 3.2 (alternating rows, hover effects)
+ * - Type-safe column definitions with TypeScript
+ * - Prepares foundation for sorting (Story 3.4) and filtering (Stories 3.5-3.7)
+ * - Semantic HTML markup with accessibility attributes
  *
  * @param props - Component props
  * @param props.models - Array of model data to display
  */
 export default function ModelTable({ models }: ModelTableProps) {
+  const table = useReactTable({
+    data: models,
+    columns: modelColumns,
+    getCoreRowModel: getCoreRowModel()
+  })
+
   return (
     <div className="w-full overflow-x-auto">
       <table className="min-w-full bg-white border border-gray-200 shadow-sm rounded-lg">
         <thead className="bg-gray-50 border-b border-gray-200">
-          <tr>
-            <th
-              scope="col"
-              className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider"
-            >
-              Name
-            </th>
-            <th
-              scope="col"
-              className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider"
-            >
-              Provider
-            </th>
-            <th
-              scope="col"
-              className="px-6 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider"
-            >
-              Input Price
-              <span className="block text-[10px] font-normal text-gray-500 normal-case">
-                per 1M tokens
-              </span>
-            </th>
-            <th
-              scope="col"
-              className="px-6 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider"
-            >
-              Output Price
-              <span className="block text-[10px] font-normal text-gray-500 normal-case">
-                per 1M tokens
-              </span>
-            </th>
-          </tr>
+          {table.getHeaderGroups().map((headerGroup) => (
+            <tr key={headerGroup.id}>
+              {headerGroup.headers.map((header) => {
+                const isPriceColumn =
+                  header.column.id === 'inputPricePer1M' ||
+                  header.column.id === 'outputPricePer1M'
+
+                return (
+                  <th
+                    key={header.id}
+                    scope="col"
+                    className={`px-6 py-3 text-xs font-medium text-gray-700 uppercase tracking-wider ${
+                      isPriceColumn ? 'text-right' : 'text-left'
+                    }`}
+                  >
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(header.column.columnDef.header, header.getContext())}
+                  </th>
+                )
+              })}
+            </tr>
+          ))}
         </thead>
         <tbody className="divide-y divide-gray-200">
-          {models.map((model, index) => (
+          {table.getRowModel().rows.map((row, index) => (
             <tr
-              key={model.id}
+              key={row.id}
               className={`hover:bg-gray-50 transition-colors ${
                 index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'
               }`}
             >
-              <td className="px-6 py-4 whitespace-nowrap">
-                <div className="text-sm font-medium text-gray-900">{model.name}</div>
-                {model.version && (
-                  <div className="text-xs text-gray-500">v{model.version}</div>
-                )}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <div className="text-sm text-gray-900">{model.provider}</div>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-right">
-                <div className="text-sm font-semibold text-gray-900">
-                  {formatPrice(model.inputPricePer1M, model.currency)}
-                </div>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-right">
-                <div className="text-sm font-semibold text-gray-900">
-                  {formatPrice(model.outputPricePer1M, model.currency)}
-                </div>
-              </td>
+              {row.getVisibleCells().map((cell) => (
+                <td key={cell.id} className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm text-gray-900">
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </div>
+                </td>
+              ))}
             </tr>
           ))}
         </tbody>
