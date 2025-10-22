@@ -2,15 +2,15 @@
 
 **Project:** llm-token-price
 **Created:** 2025-10-16
-**Last Updated:** 2025-10-21 (Story 3.2 Marked Ready - Context Auto-Generated)
+**Last Updated:** 2025-10-21 (Story 3.3 Created - TanStack Table Integration)
 
 ---
 
 ## Current Status
 
 **Current Phase:** 4-Implementation → Epic 1 Complete (11/11), Epic 2 Complete (13/13), Epic 3 In Progress (2/15)
-**Current Workflow:** story-context (Story 3.2) - Complete
-**Current Story:** Story 3.2 - Fetch and Display Models in Basic Table (Status: Ready, Context: Generated)
+**Current Workflow:** create-story (Story 3.3) - Complete
+**Current Story:** Story 3.3 - Integrate TanStack Table for Advanced Features (Status: Draft, needs review)
 **Overall Progress:** 100% (Epic 1: 37 points) + 96% (Epic 2: 48/~50 points - Stories 2.1-2.9, 2.12, 2.13 Complete)
 
 **✅ EPIC 2 TECHNICAL DEBT RESOLVED - EPIC 3 UNBLOCKED!**
@@ -180,13 +180,18 @@
 
 ### TODO (Needs Drafting)
 
+(Empty - No stories pending drafting at this time)
+
+### IN PROGRESS (Approved for Development)
+
 - **Story ID:** 3.3
 - **Story Title:** Integrate TanStack Table for Advanced Features
 - **Story File:** `docs/stories/story-3.3.md`
-- **Status:** Not created
-- **Action:** SM should run `create-story` workflow to draft this story
+- **Story Status:** Draft (needs review via story-ready)
+- **Context File:** Not yet generated
+- **Action:** SM should review story and run `story-ready` workflow to approve
 
-### IN PROGRESS (Approved for Development)
+**Also in Progress:**
 
 - **Story ID:** 3.2
 - **Story Title:** Fetch and Display Models in Basic Table
@@ -194,8 +199,6 @@
 - **Story Status:** Ready
 - **Context File:** `docs/stories/story-context-3.2.xml` (auto-generated)
 - **Action:** DEV should run `dev-story` workflow to implement this story
-
-**Also in Progress:**
 
 - **Story ID:** 3.1b
 - **Story Title:** Consolidated Technical Debt Resolution (Epics 1-2)
@@ -274,6 +277,7 @@ LLM Pricing Calculator - A comprehensive web application for comparing LLM model
 
 ## Decisions Log
 
+- **2025-10-21**: **Story 3.3 Created (Integrate TanStack Table for Advanced Features)**. SM (Bob) drafted Story 3.3 with 6 acceptance criteria and 7 tasks covering TanStack Table v8.11.0 integration, column definitions, performance testing (50+ models <500ms target), and optional virtual scrolling for 100+ models. Story establishes **TanStack Table as the foundational table library** for Epic 3, replacing basic HTML table from Story 3.2. Key architectural decision: TanStack Table's headless pattern (logic separate from UI) enables advanced features (sorting in Story 3.4, filtering in Stories 3.5-3.7, selection in Story 3.10) while maintaining full control over TailwindCSS styling. Story includes comprehensive dev notes with component composition patterns, state management architecture (TanStack Query for server state, TanStack Table for table state, Zustand deferred to Story 3.10), performance considerations, and 15+ technical references. File: docs/stories/story-3.3.md. Status: Draft (needs review via story-ready workflow). Next: SM should review story completeness, run story-ready workflow to approve, which will auto-generate context XML per Story 3.1b workflow automation.
 - **2025-10-21**: **Story 3.2 Context Generated Successfully**. Story-context workflow executed for Story 3.2 (Fetch and Display Models in Basic Table). Context file created at docs/stories/story-context-3.2.xml with comprehensive implementation guidance: 6 documentation artifacts (PRD, Solution Architecture, Tech Spec Epic 3, ADRs, Epics, CLAUDE.md), 8 code artifacts (HomePage, fetchModels API client, apiClient config, LoadingSpinner, ErrorAlert, TypeScript types, ModelsController backend, ModelDto backend), dependencies (frontend: TanStack Query, React, Axios, TailwindCSS; backend: ASP.NET Core, EF Core, PostgreSQL, Redis), 5 constraint categories (architectural, performance, UI/UX, code quality, testing), 5 interfaces (GET /api/models REST endpoint, useQuery hook pattern, ModelTable props, LoadingSpinner props, ErrorAlert props), testing standards (manual testing required, automated tests deferred), 6 test ideas mapped to acceptance criteria. Story 3.2 ready for DEV agent implementation via dev-story workflow.
 - **2025-10-21**: **Story 3.2 Marked Ready for Development**. SM (Bob) executed story-ready workflow to approve Story 3.2 (Fetch and Display Models in Basic Table). Story file status updated: Draft → Ready. Story Context XML will be auto-generated via automated workflow integration (Story 3.1b AC #14). Story 3.2 now ready for DEV agent implementation with comprehensive context guidance. File: docs/stories/story-3.2.md, Context: docs/stories/story-context-3.2.xml. This demonstrates the improved story-ready workflow with automated context generation, eliminating manual steps that caused context XMLs to be forgotten during Epic 1.
 - **2025-10-21**: **Story 3.2 Created (Fetch and Display Models in Basic Table)**. SM (Bob) drafted Story 3.2 with 6 acceptance criteria and 7 tasks covering TanStack Query integration, basic HTML table component, loading/error states, and end-to-end testing. Story establishes canonical frontend patterns: TanStack Query for server state (5min stale time), basic table component architecture, and error handling patterns. File: docs/stories/story-3.2.md. Status: Draft (needs review via story-ready workflow). Next: SM should review story completeness and run story-ready workflow to approve and generate context XML.
