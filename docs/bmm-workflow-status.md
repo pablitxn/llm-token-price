@@ -2,14 +2,14 @@
 
 **Project:** llm-token-price
 **Created:** 2025-10-16
-**Last Updated:** 2025-10-21 (Story 3.1b Technical Debt Consolidation - Marked Ready for Development)
+**Last Updated:** 2025-10-21 (Story 3.2 Created - Fetch and Display Models in Basic Table)
 
 ---
 
 ## Current Status
 
 **Current Phase:** 4-Implementation → Epic 1 Complete (11/11), Epic 2 Complete (13/13), Epic 3 In Progress (2/15)
-**Current Workflow:** story-context (Story 3.1b) - Complete
+**Current Workflow:** create-story (Story 3.2) - Complete
 **Current Story:** Story 3.1b - Consolidated Technical Debt Resolution (Status: Ready, Context: Generated)
 **Overall Progress:** 100% (Epic 1: 37 points) + 96% (Epic 2: 48/~50 points - Stories 2.1-2.9, 2.12, 2.13 Complete)
 
@@ -180,13 +180,29 @@
 
 ### TODO (Needs Drafting)
 
-- **Story ID:** 3.2
-- **Story Title:** Fetch and Display Models in Basic Table
-- **Story File:** `docs/stories/story-3.2.md`
+- **Story ID:** 3.3
+- **Story Title:** Integrate TanStack Table for Advanced Features
+- **Story File:** `docs/stories/story-3.3.md`
 - **Status:** Not created
 - **Action:** SM should run `create-story` workflow to draft this story
 
 ### IN PROGRESS (Approved for Development)
+
+- **Story ID:** 3.2
+- **Story Title:** Fetch and Display Models in Basic Table
+- **Story File:** `docs/stories/story-3.2.md`
+- **Story Status:** Draft (needs review via story-ready)
+- **Context File:** Not yet generated (run story-ready workflow)
+- **Action:** SM should review story and run `story-ready` workflow to approve
+
+**Also in Progress:**
+
+- **Story ID:** 3.1b
+- **Story Title:** Consolidated Technical Debt Resolution (Epics 1-2)
+- **Story File:** `docs/stories/story-3.1b.md`
+- **Story Status:** Ready
+- **Context File:** `docs/stories/story-context-3.1b.xml`
+- **Action:** DEV should run `dev-story` workflow to implement this story
 
 - **Story ID:** 3.1
 - **Story Title:** Create Public Homepage with Basic Layout
@@ -258,6 +274,7 @@ LLM Pricing Calculator - A comprehensive web application for comparing LLM model
 
 ## Decisions Log
 
+- **2025-10-21**: **Story 3.2 Created (Fetch and Display Models in Basic Table)**. SM (Bob) drafted Story 3.2 with 6 acceptance criteria and 7 tasks covering TanStack Query integration, basic HTML table component, loading/error states, and end-to-end testing. Story establishes canonical frontend patterns: TanStack Query for server state (5min stale time), basic table component architecture, and error handling patterns. File: docs/stories/story-3.2.md. Status: Draft (needs review via story-ready workflow). Next: SM should review story completeness and run story-ready workflow to approve and generate context XML.
 - **2025-10-21**: **Workflow Automation Implemented (Story 3.1b AC #14)**. DEV agent (Amelia) updated story-ready workflow to automatically invoke story-context workflow after approval. Changes: Added new step 5 to instructions.md that loads workflow.xml and executes story-context with non_interactive mode, captures context file path, and continues even if context generation fails. Updated step 6 (formerly step 5) to display auto-generated context file path and automation note. This eliminates manual step that was causing context XML to be forgotten (Epic 1 retrospective finding). Workflow change documented in bmm-workflow-status.md Decision Log. Implementation completes Story 3.1b Subtask 4.1 (Process Improvements - LOW priority).
 - **2025-10-21**: **Story 3.1b Context Generated**. SM (Bob) executed story-context workflow for Story 3.1b (Consolidated Technical Debt Resolution). Context file created at docs/stories/story-context-3.1b.xml with comprehensive implementation guidance: 7 documentation artifacts (Story 2.13, Epic 1/2 retrospectives, admin panel guide, deployment checklist, ADRs, README), 7 code artifacts (CI/CD workflow, Program.cs, CSVImport component, ErrorAlert component, DashboardMetricsService, story-ready workflow, .env.example), dependencies (backend, frontend, devops tools), constraints (architectural, documentation, deployment, code quality, process), 5 interfaces (GitHub Actions, environment variables, badges, ADR format, staging deployment), testing standards (manual testing for CRITICAL tasks, documentation review, component tests for MEDIUM tasks, process verification for LOW tasks), 9 test ideas mapped to acceptance criteria. Story 3.1b ready for DEV agent implementation.
 - **2025-10-21**: **Story 3.1b (Technical Debt Consolidation) Created and Marked Ready**. PM (John) conducted comprehensive technical debt audit across 5 sources: Story 2.13 (17 pending tasks), Epic 1 Retrospective (11 action items), Epic 2 Retrospective (process improvements), 14 completed stories with unchecked tasks (129 total), and tech specs (deferred items). Story 3.1b consolidates ALL relevant technical debt into 20 acceptance criteria organized by priority: 4 CRITICAL (production blockers: staging smoke test, HTTPS enforcement, GitHub Actions secrets, CORS testing), 6 HIGH (documentation: CI/CD badges, environment variables docs, rate limits docs, ADR-011, CONTRIBUTING.md, LICENSE), 3 MEDIUM (UX improvements: CSV message, report issue button, dashboard cache), 7 LOW (process improvements: automate story context, ATDD template, wireframes, final sign-off). Story 3.1b excludes items correctly deferred to Post-MVP (observability stack, dark mode, optimistic locking) with documented rationale. Estimated effort: 21-28 hours across 5 major tasks. File: docs/stories/story-3.1b.md. Status: Ready for development - comprehensive audit confirms 100% technical debt coverage.

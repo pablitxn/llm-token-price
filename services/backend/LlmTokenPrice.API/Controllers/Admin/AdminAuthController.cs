@@ -8,6 +8,10 @@ namespace LlmTokenPrice.API.Controllers.Admin;
 /// Controller handling admin authentication endpoints
 /// Provides login and logout functionality with JWT-based authentication
 /// </summary>
+/// <remarks>
+/// **Rate Limiting:** This endpoint is rate-limited to 100 requests per minute per IP address.
+/// If the limit is exceeded, the API returns HTTP 429 (Too Many Requests) with a Retry-After header.
+/// </remarks>
 [ApiController]
 [Route("api/admin/auth")]
 [Produces("application/json")]

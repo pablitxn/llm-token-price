@@ -50,7 +50,43 @@ builder.Services.AddSwaggerGen(c =>
     {
         Title = "LLM Token Price Comparison API",
         Version = "v1",
-        Description = "REST API for LLM model pricing and benchmark data comparison"
+        Description = "REST API for LLM model pricing and benchmark data comparison. " +
+                      "All /api/admin/* endpoints are rate-limited to 100 requests per minute per IP address. " +
+                      "Rate limit exceeded responses return HTTP 429 with Retry-After header."
+    });
+
+    // Enable XML documentation comments
+    var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    if (File.Exists(xmlPath))
+    {
+        c.IncludeXmlComments(xmlPath);
+    }
+
+    // Add JWT Bearer authentication to Swagger UI
+    c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    {
+        Description = "JWT Authorization header using the Bearer scheme. Note: This API uses HttpOnly cookies for authentication. " +
+                      "To test authenticated endpoints in Swagger UI, first call POST /api/admin/auth/login to receive the cookie.",
+        Name = "Authorization",
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
+    });
+
+    c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    {
+        {
+            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            {
+                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                {
+                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
     });
 });
 

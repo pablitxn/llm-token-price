@@ -16,6 +16,17 @@ namespace LlmTokenPrice.API.Controllers.Admin;
 /// Admin endpoints return ALL models (including inactive) and are NOT cached.
 /// Story 2.13 Task 17: All text inputs are sanitized to prevent XSS attacks.
 /// Story 2.13 Task 14: All CRUD operations logged to audit trail for compliance.
+///
+/// **Rate Limiting:** This endpoint is rate-limited to 100 requests per minute per IP address.
+/// If the limit is exceeded, the API returns HTTP 429 (Too Many Requests) with a Retry-After header
+/// indicating when to retry. Rate limit response format:
+/// {
+///   "error": {
+///     "code": "RATE_LIMIT_EXCEEDED",
+///     "message": "API rate limit exceeded. Please try again later.",
+///     "retryAfter": "30s"
+///   }
+/// }
 /// </remarks>
 [ApiController]
 [Route("api/admin/models")]

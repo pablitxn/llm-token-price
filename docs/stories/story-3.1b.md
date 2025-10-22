@@ -1,6 +1,6 @@
 # Story 3.1b: Consolidated Technical Debt Resolution (Epics 1-2)
 
-Status: Ready
+Status: Done
 
 ## Story
 
@@ -161,23 +161,23 @@ Many critical infrastructure items from Story 2.13 are complete (tests passing, 
 
 ### **Task 1: Production Deployment Preparation** (AC: #1, #2, #3, #4) - CRITICAL
 
-- [ ] **Subtask 1.1:** Configure HTTPS redirect middleware
+- [x] **Subtask 1.1:** Configure HTTPS redirect middleware
   - Update Program.cs with `app.UseHttpsRedirection()`
   - Configure HSTS headers (max-age=31536000, includeSubDomains)
   - Test HTTP → HTTPS redirect locally
 
-- [ ] **Subtask 1.2:** Add GitHub Actions repository secrets
+- [x] **Subtask 1.2:** Add GitHub Actions repository secrets
   - Navigate to repo Settings → Secrets and variables → Actions
   - Add secrets: JWT_SECRET_KEY (≥32 chars), DATABASE_CONNECTION_STRING, REDIS_CONNECTION_STRING, CORS_ALLOWED_ORIGINS
   - Update .github/workflows/backend-ci.yml to reference secrets
 
-- [ ] **Subtask 1.3:** Deploy to staging environment
+- [x] **Subtask 1.3:** Deploy to staging environment
   - Choose staging platform (Vercel/Netlify for frontend, Railway/Render for backend)
   - Configure environment variables in staging
   - Deploy backend and frontend
   - Verify deployment health checks pass
 
-- [ ] **Subtask 1.4:** Execute staging smoke tests
+- [x] **Subtask 1.4:** Execute staging smoke tests
   - Test admin login flow
   - Test model CRUD operations
   - Test benchmark management
@@ -185,7 +185,7 @@ Many critical infrastructure items from Story 2.13 are complete (tests passing, 
   - Test public API endpoints (GET /api/models, GET /api/health)
   - Document any staging-specific issues in docs/staging-issues.md
 
-- [ ] **Subtask 1.5:** Test CORS in staging
+- [x] **Subtask 1.5:** Test CORS in staging
   - Deploy frontend to staging domain (e.g., https://staging.llmpricing.com)
   - Configure CORS_ALLOWED_ORIGINS with staging frontend URL
   - Test API calls from staging frontend
@@ -194,34 +194,34 @@ Many critical infrastructure items from Story 2.13 are complete (tests passing, 
 
 ### **Task 2: Documentation Updates** (AC: #5, #6, #7, #8, #9, #10) - HIGH
 
-- [ ] **Subtask 2.1:** Add CI/CD badges to README.md
+- [x] **Subtask 2.1:** Add CI/CD badges to README.md
   - Add GitHub Actions workflow badge:
     `[![Backend CI](https://github.com/pablitxn/llm-token-price/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/pablitxn/llm-token-price/actions/workflows/backend-ci.yml)`
   - Add code coverage badge (Codecov):
     `[![codecov](https://codecov.io/gh/pablitxn/llm-token-price/branch/main/graph/badge.svg)](https://codecov.io/gh/pablitxn/llm-token-price)`
   - Add build status badges for frontend
 
-- [ ] **Subtask 2.2:** Document environment variables in README.md
+- [x] **Subtask 2.2:** Document environment variables in README.md
   - Create "## Environment Variables" section
   - List all required variables with descriptions
   - Show development vs production examples
   - Reference .env.example file
   - Add security warning: "Never commit .env file to repository"
 
-- [ ] **Subtask 2.3:** Update Swagger/OpenAPI with rate limit docs
+- [x] **Subtask 2.3:** Update Swagger/OpenAPI with rate limit docs
   - Add rate limit annotations to admin endpoints
   - Document 429 response format
   - Add example Retry-After header value
   - Update Swashbuckle configuration if needed
 
-- [ ] **Subtask 2.4:** Create ADR-011: Authentication Approach
+- [x] **Subtask 2.4:** Create ADR-011: Authentication Approach
   - Add ADR-011 section to `docs/architecture-decisions.md`
   - Document JWT + HttpOnly cookies rationale
   - Define token structure and claims
   - Document security considerations (CSRF, XSS, token storage)
   - Include code examples (token generation, validation)
 
-- [ ] **Subtask 2.5:** Create CONTRIBUTING.md
+- [x] **Subtask 2.5:** Create CONTRIBUTING.md
   - Document development workflow (git flow, branching strategy)
   - Document commit conventions (Conventional Commits)
   - Document story workflow (BMM workflow)
@@ -229,7 +229,7 @@ Many critical infrastructure items from Story 2.13 are complete (tests passing, 
   - Document code review process (approval requirements, CI checks)
   - Add pull request template in `.github/pull_request_template.md`
 
-- [ ] **Subtask 2.6:** Create LICENSE file
+- [x] **Subtask 2.6:** Create LICENSE file
   - Consult with Pablo on license choice (MIT, Apache 2.0, or proprietary)
   - Add LICENSE file to repository root
   - Update README.md with license badge
@@ -237,20 +237,20 @@ Many critical infrastructure items from Story 2.13 are complete (tests passing, 
 
 ### **Task 3: UX Improvements** (AC: #11, #12, #13) - MEDIUM
 
-- [ ] **Subtask 3.1:** Add CSV import all-or-nothing message
+- [x] **Subtask 3.1:** Add CSV import all-or-nothing message
   - Update apps/web/src/components/admin/CSVImport.tsx
   - Add alert box before file upload: "⚠️ All rows must be valid - import is all-or-nothing"
   - Style with TailwindCSS (yellow alert)
   - Link to CSV template download
 
-- [ ] **Subtask 3.2:** Add "Report Issue" button to ErrorAlert
+- [x] **Subtask 3.2:** Add "Report Issue" button to ErrorAlert
   - Update apps/web/src/components/ui/ErrorAlert.tsx
   - Add "Report Issue" button with GitHub icon
   - Generate GitHub Issues URL with pre-filled template
   - Include error message, timestamp, user agent in URL params
   - Open in new tab
 
-- [ ] **Subtask 3.3:** Implement 5-minute cache for dashboard metrics
+- [x] **Subtask 3.3:** Implement 5-minute cache for dashboard metrics
   - Update DashboardMetricsService to use Redis cache
   - Cache key: `cache:dashboard:metrics`
   - TTL: 5 minutes (300 seconds)
@@ -259,13 +259,13 @@ Many critical infrastructure items from Story 2.13 are complete (tests passing, 
 
 ### **Task 4: Process Improvements** (AC: #14, #15, #16) - LOW
 
-- [ ] **Subtask 4.1:** Automate story-context in story-ready workflow
+- [x] **Subtask 4.1:** Automate story-context in story-ready workflow
   - Update bmad/bmm/workflows/4-implementation/story-ready/instructions.md
   - Add step: "Automatically invoke story-context workflow after approval"
   - Test with sample story (verify context XML auto-generates)
   - Document workflow change in bmm-workflow-status.md
 
-- [ ] **Subtask 4.2:** Create ATDD checklist template
+- [x] **Subtask 4.2:** Create ATDD checklist template
   - Create `docs/templates/atdd-checklist-template.md`
   - Include sections: Story Context, RED (Failing Tests), GREEN (Passing Tests), REFACTOR
   - Add placeholders for AC mapping
