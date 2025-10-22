@@ -1,6 +1,6 @@
 # Story 3.1b: Consolidated Technical Debt Resolution (Epics 1-2)
 
-Status: Draft
+Status: Ready
 
 ## Story
 
@@ -393,7 +393,7 @@ This story focuses on **production readiness, documentation, and polish** rather
 
 ### Context Reference
 
-<!-- Path(s) to story context XML will be added here by context workflow -->
+- [Story Context XML](story-context-3.1b.xml) - Generated 2025-10-21
 
 ### Agent Model Used
 
