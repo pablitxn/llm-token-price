@@ -2,14 +2,14 @@
 
 **Project:** llm-token-price
 **Created:** 2025-10-16
-**Last Updated:** 2025-10-21 (Story 3.2 Created - Fetch and Display Models in Basic Table)
+**Last Updated:** 2025-10-21 (Story 3.2 Marked Ready - Context Auto-Generated)
 
 ---
 
 ## Current Status
 
 **Current Phase:** 4-Implementation → Epic 1 Complete (11/11), Epic 2 Complete (13/13), Epic 3 In Progress (2/15)
-**Current Workflow:** create-story (Story 3.2) - Complete
+**Current Workflow:** story-ready (Story 3.2) - Complete
 **Current Story:** Story 3.1b - Consolidated Technical Debt Resolution (Status: Ready, Context: Generated)
 **Overall Progress:** 100% (Epic 1: 37 points) + 96% (Epic 2: 48/~50 points - Stories 2.1-2.9, 2.12, 2.13 Complete)
 
@@ -191,9 +191,9 @@
 - **Story ID:** 3.2
 - **Story Title:** Fetch and Display Models in Basic Table
 - **Story File:** `docs/stories/story-3.2.md`
-- **Story Status:** Draft (needs review via story-ready)
-- **Context File:** Not yet generated (run story-ready workflow)
-- **Action:** SM should review story and run `story-ready` workflow to approve
+- **Story Status:** Ready
+- **Context File:** `docs/stories/story-context-3.2.xml` (auto-generated)
+- **Action:** DEV should run `dev-story` workflow to implement this story
 
 **Also in Progress:**
 
@@ -274,6 +274,7 @@ LLM Pricing Calculator - A comprehensive web application for comparing LLM model
 
 ## Decisions Log
 
+- **2025-10-21**: **Story 3.2 Marked Ready for Development**. SM (Bob) executed story-ready workflow to approve Story 3.2 (Fetch and Display Models in Basic Table). Story file status updated: Draft → Ready. Story Context XML will be auto-generated via automated workflow integration (Story 3.1b AC #14). Story 3.2 now ready for DEV agent implementation with comprehensive context guidance. File: docs/stories/story-3.2.md, Context: docs/stories/story-context-3.2.xml. This demonstrates the improved story-ready workflow with automated context generation, eliminating manual steps that caused context XMLs to be forgotten during Epic 1.
 - **2025-10-21**: **Story 3.2 Created (Fetch and Display Models in Basic Table)**. SM (Bob) drafted Story 3.2 with 6 acceptance criteria and 7 tasks covering TanStack Query integration, basic HTML table component, loading/error states, and end-to-end testing. Story establishes canonical frontend patterns: TanStack Query for server state (5min stale time), basic table component architecture, and error handling patterns. File: docs/stories/story-3.2.md. Status: Draft (needs review via story-ready workflow). Next: SM should review story completeness and run story-ready workflow to approve and generate context XML.
 - **2025-10-21**: **Workflow Automation Implemented (Story 3.1b AC #14)**. DEV agent (Amelia) updated story-ready workflow to automatically invoke story-context workflow after approval. Changes: Added new step 5 to instructions.md that loads workflow.xml and executes story-context with non_interactive mode, captures context file path, and continues even if context generation fails. Updated step 6 (formerly step 5) to display auto-generated context file path and automation note. This eliminates manual step that was causing context XML to be forgotten (Epic 1 retrospective finding). Workflow change documented in bmm-workflow-status.md Decision Log. Implementation completes Story 3.1b Subtask 4.1 (Process Improvements - LOW priority).
 - **2025-10-21**: **Story 3.1b Context Generated**. SM (Bob) executed story-context workflow for Story 3.1b (Consolidated Technical Debt Resolution). Context file created at docs/stories/story-context-3.1b.xml with comprehensive implementation guidance: 7 documentation artifacts (Story 2.13, Epic 1/2 retrospectives, admin panel guide, deployment checklist, ADRs, README), 7 code artifacts (CI/CD workflow, Program.cs, CSVImport component, ErrorAlert component, DashboardMetricsService, story-ready workflow, .env.example), dependencies (backend, frontend, devops tools), constraints (architectural, documentation, deployment, code quality, process), 5 interfaces (GitHub Actions, environment variables, badges, ADR format, staging deployment), testing standards (manual testing for CRITICAL tasks, documentation review, component tests for MEDIUM tasks, process verification for LOW tasks), 9 test ideas mapped to acceptance criteria. Story 3.1b ready for DEV agent implementation.
