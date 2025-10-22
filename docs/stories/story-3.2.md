@@ -216,7 +216,8 @@ export const fetchModels = async (): Promise<ModelDto[]> => {
 
 ### Context Reference
 
-<!-- Path to story context XML will be added here by context workflow -->
+- **Context File:** `docs/stories/story-context-3.2.xml` (Generated: 2025-10-21)
+- **Comprehensive implementation guidance:** Documentation artifacts, code artifacts from Epic 1/2, dependencies, constraints, interfaces, testing standards
 
 ### Agent Model Used
 
