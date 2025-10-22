@@ -13,6 +13,9 @@ namespace LlmTokenPrice.API.Controllers.Admin;
 /// All endpoints require JWT authentication via [Authorize] attribute.
 /// Audit logs are immutable (append-only) and provide complete traceability for compliance.
 /// Story 2.13 Task 14: Implement comprehensive audit logging.
+///
+/// **Rate Limiting:** This endpoint is rate-limited to 100 requests per minute per IP address.
+/// If the limit is exceeded, the API returns HTTP 429 (Too Many Requests) with a Retry-After header.
 /// </remarks>
 [ApiController]
 [Route("api/admin/audit-log")]

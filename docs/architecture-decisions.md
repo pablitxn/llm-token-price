@@ -517,4 +517,194 @@ Adopt latest stable major versions across the stack:
 
 ---
 
+## ADR-011: JWT + HttpOnly Cookies Authentication Implementation
+
+**Status:** Accepted | **Date:** 2025-10-21 | **Related Stories:** 2.1, 2.13, 3.1b
+
+**Context:**
+- ADR-008 established JWT as the authentication mechanism for MVP
+- Story 2.1 implemented basic admin authentication
+- Story 2.13 hardened security with rate limiting and audit logging
+- Story 3.1b requires comprehensive documentation of implementation details
+- Need to address security concerns: XSS, CSRF, token storage, CORS configuration
+
+**Decision:**
+Implement JWT authentication using HttpOnly cookies with strict security controls:
+
+**Token Structure:**
+```json
+{
+  "sub": "admin_user_id",           // Subject: unique user identifier
+  "role": "Admin",                  // Authorization claim
+  "iat": 1729526400,                // Issued At timestamp (Unix epoch)
+  "exp": 1729612800,                // Expiration timestamp (24 hours from iat)
+  "iss": "llm-token-price-api",     // Issuer identifier
+  "aud": "llm-token-price-web"      // Audience identifier
+}
+```
+
+**Token Lifetime:**
+- **Access Token:** 24 hours (86400 seconds)
+- **No Refresh Tokens** for MVP (acceptable for 1-3 admin users, manual re-login)
+- **Sliding Expiration:** Not implemented for MVP (consider post-MVP if session timeout complaints)
+
+**Security Architecture:**
+
+1. **Storage:** HttpOnly Cookies (not LocalStorage/SessionStorage)
+   - Cookie name: `admin_token`
+   - HttpOnly flag: `true` (prevents JavaScript access → XSS mitigation)
+   - Secure flag: `true` (HTTPS-only, enforced in production)
+   - SameSite: `Strict` (prevents CSRF attacks)
+   - Path: `/api` (limits cookie scope to API endpoints)
+
+2. **CSRF Protection:**
+   - SameSite=Strict cookie policy (primary defense)
+   - No CSRF tokens needed for MVP (SameSite=Strict sufficient for same-origin admin panel)
+   - Future consideration: Add CSRF tokens if cross-origin admin access required
+
+3. **XSS Protection:**
+   - HttpOnly cookies (token not accessible via JavaScript)
+   - Input sanitization service for all admin text inputs (Story 2.13 Task 17)
+   - Content-Security-Policy headers (no inline scripts allowed)
+   - Server-side HTML encoding for any rendered user content
+
+4. **CORS Configuration:**
+   - Environment-based allowed origins: `CORS_ALLOWED_ORIGINS` env var
+   - Credentials: `true` (required for HttpOnly cookies)
+   - Allowed headers: `*` (flexible for development)
+   - Allowed methods: `*` (flexible for RESTful operations)
+   - Production origins whitelist: `https://app.llmpricing.com, https://www.llmpricing.com`
+
+**Implementation:**
+
+**Login Flow:**
+```csharp
+// POST /api/admin/auth/login
+[HttpPost("login")]
+public async Task<IActionResult> Login([FromBody] LoginRequest request)
+{
+    var user = await _authService.ValidateCredentialsAsync(request.Username, request.Password);
+    if (user == null) return Unauthorized();
+
+    var token = _authService.GenerateJwtToken(user);
+
+    // Set HttpOnly cookie
+    Response.Cookies.Append("admin_token", token, new CookieOptions
+    {
+        HttpOnly = true,
+        Secure = true,              // HTTPS only in production
+        SameSite = SameSiteMode.Strict,
+        Expires = DateTimeOffset.UtcNow.AddHours(24),
+        Path = "/api"
+    });
+
+    return Ok(new { message = "Login successful" });
+}
+```
+
+**Token Validation:**
+```csharp
+// Program.cs
+services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = "llm-token-price-api",
+            ValidAudience = "llm-token-price-web",
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
+            ClockSkew = TimeSpan.Zero  // No tolerance for expired tokens
+        };
+
+        // Read token from cookie (not Authorization header)
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                context.Token = context.Request.Cookies["admin_token"];
+                return Task.CompletedTask;
+            }
+        };
+    });
+```
+
+**Environment Variables:**
+```bash
+# Required in production
+JWT_SECRET_KEY=<base64-encoded-string-minimum-32-characters>  # Generate with: openssl rand -base64 48
+CORS_ALLOWED_ORIGINS=https://app.llmpricing.com,https://www.llmpricing.com
+
+# JWT Configuration (appsettings.json fallback)
+Jwt__SecretKey=<secret-key>         # Environment variable takes precedence
+Jwt__Issuer=llm-token-price-api
+Jwt__Audience=llm-token-price-web
+```
+
+**Consequences:**
+
+**Positive:**
+- ✅ Secure token storage (HttpOnly prevents XSS token theft)
+- ✅ CSRF protection via SameSite=Strict (no additional CSRF tokens needed)
+- ✅ Simple client-side code (no manual Authorization header management)
+- ✅ Automatic token transmission (browser sends cookie on every request)
+- ✅ Environment-based CORS (flexible for staging/production)
+- ✅ Stateless authentication (no server-side session storage, scales horizontally)
+- ✅ Standard JWT claims (interoperable with monitoring tools like Application Insights)
+
+**Negative:**
+- ❌ No refresh tokens (users must re-login after 24 hours)
+  - **Mitigation:** Acceptable for 1-3 admin users, low-frequency usage
+- ❌ Cookie-based auth complicates mobile/desktop clients
+  - **Mitigation:** Future mobile apps can use Authorization header + refresh tokens (separate auth flow)
+- ❌ CORS credentials:true increases attack surface
+  - **Mitigation:** Strict origin whitelist, SameSite=Strict, HTTPS enforcement
+- ❌ Manual user management (no password reset, MFA)
+  - **Mitigation:** Acceptable for MVP (1-3 admins), defer to post-MVP if needed
+
+**Risks:**
+- **JWT Secret Leak:** If `JWT_SECRET_KEY` compromised, all tokens can be forged
+  - **Mitigation:** Rotate secret immediately, invalidates all existing tokens (forced re-login)
+  - **Prevention:** Store secret in secure vault (Azure Key Vault, AWS Secrets Manager), never commit to repo
+- **Expired Token UX:** No auto-refresh means users logged out mid-work
+  - **Mitigation:** 24-hour expiry chosen to balance security and convenience
+  - **Monitoring:** Track re-login frequency, implement refresh tokens if complaints arise
+- **Cookie Deletion:** Users clearing cookies lose auth
+  - **Mitigation:** Standard behavior, same as any cookie-based auth
+
+**Testing Strategy:**
+- Unit tests: Token generation, expiry validation, claims extraction
+- Integration tests: Login endpoint, cookie setting, CORS headers
+- E2E tests: Login flow, authenticated requests, logout, expired token handling
+- Security tests: XSS prevention (script injection), CSRF attempts, invalid tokens
+
+**Monitoring:**
+- Audit log all authentication events (login, logout, failed attempts)
+- Alert on: >5 failed login attempts per IP (brute force), JWT validation errors spike
+- Dashboard: Daily active admin users, avg session duration, re-login frequency
+
+**Future Enhancements (Post-MVP):**
+1. **Refresh Tokens:** If 24-hour expiry too short, implement refresh token flow
+2. **MFA:** If regulatory compliance required, add TOTP/SMS second factor
+3. **OAuth/OIDC:** If public user accounts added, integrate Auth0/Firebase Auth
+4. **Session Management:** Add admin user sessions table for forced logout capability
+5. **Password Policies:** Complexity requirements, rotation policies, breach detection
+
+**References:**
+- [OWASP JWT Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_for_Java_Cheat_Sheet.html)
+- [Microsoft JWT Security Best Practices](https://learn.microsoft.com/en-us/azure/active-directory/develop/access-tokens)
+- [SameSite Cookie Explained](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite)
+- Story 2.13 Task 7: Rate Limiting Implementation
+- Story 2.13 Task 14: Audit Logging Implementation
+- Story 2.13 Task 17: XSS Protection via Input Sanitization
+
+**Related ADRs:**
+- ADR-008: JWT for Admin Auth (MVP) - high-level decision
+- ADR-005: Multi-Layer Caching - does not cache authenticated responses
+
+---
+
 _All architectural decisions traceable to specific requirements (FRs/NFRs) and validated via cohesion check (95% readiness)_
