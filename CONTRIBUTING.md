@@ -164,6 +164,165 @@ refactor(api): extract health check logic into separate service
 - **Wrap body at 72 characters**
 - **Explain what and why, not how** (the code shows "how")
 
+## Story Workflow (BMM Method)
+
+This project uses the **BMad Method (BMM)** for story-driven development. Understanding this workflow is crucial for contributors working on feature stories.
+
+### Story Lifecycle
+
+1. **`create-story`** (Scrum Master) - Draft story from backlog
+2. **`story-ready`** (Scrum Master) - Approve story for development
+3. **`story-context`** (Scrum Master) - Generate context XML with implementation guidance
+4. **`dev-story`** (Developer) - Implement story with tasks and tests
+5. **`story-approved`** (Developer) - Mark story complete after Definition of Done
+
+### Story Status Values
+
+- **Draft**: Story created but not yet reviewed
+- **Ready**: Story approved and ready for development (has Story Context XML)
+- **In Progress**: Developer is actively working on story
+- **Ready for Review**: Implementation complete, awaiting code review
+- **Done**: Code reviewed, tests passing, merged to main
+
+### Story File Structure
+
+Each story follows this markdown structure located in `docs/stories/`:
+
+```markdown
+# Story N.N: Story Title
+
+Status: Ready
+
+## Story
+As a [user type],
+I want [feature],
+so that [benefit].
+
+## Acceptance Criteria
+1. ✅ Criteria 1 (checked when complete)
+2. Criteria 2
+
+## Tasks / Subtasks
+- [ ] Task 1: High-level task description
+  - [ ] Subtask 1.1: Specific implementation step
+  - [ ] Subtask 1.2: Another specific step
+- [ ] Task 2: Another high-level task
+
+## Dev Notes
+(Implementation guidance, architecture notes, edge cases)
+
+## Dev Agent Record
+### Context Reference
+- Story Context XML file path
+
+### Completion Notes
+(Post-implementation summary)
+
+### File List
+- File paths modified/created
+```
+
+### Contributing to a Story
+
+**Finding Stories to Work On:**
+
+1. Check `docs/bmm-workflow-status.md` for stories in **"IN PROGRESS"** section
+2. Each story has:
+   - **Story file**: `docs/stories/story-N.N.md` (requirements and tasks)
+   - **Context file**: `docs/stories/story-context-N.N.xml` (implementation guidance)
+
+**Implementation Workflow:**
+
+1. **Read story file** to understand requirements and acceptance criteria
+2. **Read story context XML** for implementation guidance (artifacts, interfaces, constraints)
+3. **Check off subtasks** as you complete them:
+   - Change `- [ ]` to `- [x]` in story markdown
+4. **Write tests** for each acceptance criterion (TDD encouraged)
+5. **Implement tasks** following hexagonal architecture patterns
+6. **Update Dev Agent Record** with:
+   - Completion notes (what was implemented, any challenges)
+   - File list (all files created/modified)
+7. **Mark story status "Ready for Review"** when all tasks complete and tests pass
+
+**Example Workflow:**
+
+```bash
+# 1. Check which story is in progress
+cat docs/bmm-workflow-status.md | grep -A 5 "IN PROGRESS"
+# Output: Story 3.1 - Create Public Homepage with Basic Layout
+
+# 2. Read story file
+cat docs/stories/story-3.1.md
+
+# 3. Read context XML for implementation guidance
+cat docs/stories/story-context-3.1.xml
+
+# 4. Create feature branch
+git checkout -b feature/epic-3-homepage
+
+# 5. Implement tasks, check off subtasks as you go
+
+# 6. Write tests for acceptance criteria
+
+# 7. Update story file:
+# - Check off completed tasks: [x]
+# - Add completion notes to Dev Agent Record
+# - List modified files in File List section
+# - Change Status to "Ready for Review"
+
+# 8. Commit and push
+git add docs/stories/story-3.1.md apps/web/src/pages/HomePage.tsx
+git commit -m "feat(epic-3): implement homepage layout and navigation"
+git push origin feature/epic-3-homepage
+
+# 9. Open Pull Request referencing story
+```
+
+### Test-Driven Development (ATDD)
+
+For stories with complex acceptance criteria, we use **Acceptance Test-Driven Development (ATDD)**:
+
+1. **Create ATDD checklist** from template: `docs/templates/atdd-checklist-template.md`
+2. **Map each acceptance criterion** to test cases (unit, integration, E2E)
+3. **Write failing tests first** (RED phase)
+4. **Implement feature** to make tests pass (GREEN phase)
+5. **Refactor** while keeping tests green (REFACTOR phase)
+6. **Document test coverage** in story Dev Agent Record
+
+Example ATDD checklist for AC "User can filter models by provider":
+
+```markdown
+## RED (Failing Tests)
+- [ ] Unit test: `filterModels_byProvider_returnsOnlyMatchingModels()`
+- [ ] Component test: `ProviderFilter_selectOpenAI_displaysOnlyOpenAIModels()`
+- [ ] E2E test: `user_selectsProviderFilter_seesFilteredResults()`
+
+## GREEN (Passing Tests)
+- [ ] Implement filter logic in `useModelFilter` hook
+- [ ] Add provider filter UI component
+- [ ] Wire up state management
+
+## REFACTOR
+- [ ] Extract filter logic to reusable utility
+- [ ] Optimize re-renders with useMemo
+- [ ] Add JSDoc documentation
+```
+
+### Story Completion Checklist
+
+Before marking a story "Ready for Review":
+
+- [ ] All acceptance criteria met
+- [ ] All tasks/subtasks checked off `[x]`
+- [ ] Tests written and passing (≥70% coverage)
+- [ ] No regressions (all existing tests pass)
+- [ ] Code follows hexagonal architecture (Domain → Application → Infrastructure)
+- [ ] Dev Agent Record updated:
+  - [ ] Completion notes added
+  - [ ] File list complete
+- [ ] Story Status changed to "Ready for Review"
+- [ ] Pull request opened referencing story ID
+
 ## Pull Request Process
 
 ### Before Opening a PR
