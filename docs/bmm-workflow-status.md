@@ -9,8 +9,8 @@
 ## Current Status
 
 **Current Phase:** 4-Implementation → Epic 1 Complete (11/11), Epic 2 Complete (13/13), Epic 3 In Progress (8/15)
-**Current Workflow:** story-approved (Story 3.5) - Complete
-**Current Story:** Story 3.5 - Add Provider Filter (Status: Done ✅)
+**Current Workflow:** create-story (Story 3.7) - Complete
+**Current Story:** Story 3.7 - Add Price Range Filter (Status: Draft)
 **Overall Progress:** 100% (Epic 1: 37 points) + 96% (Epic 2: 48/~50 points) + Epic 3: Stories 3.2, 3.3, 3.4, 3.5 Complete (21 points)
 
 **✅ EPIC 2 TECHNICAL DEBT RESOLVED - EPIC 3 UNBLOCKED!**
@@ -123,7 +123,11 @@ go to the file docs/backlog.md
 
 ### TODO (Needs Drafting)
 
-(Empty - No stories pending drafting at this time)
+- **Story ID:** 3.7
+- **Story Title:** Add Price Range Filter
+- **Story File:** `docs/stories/story-3.7.md`
+- **Story Status:** Draft (needs review via story-ready)
+- **Action:** SM should run `story-ready` workflow to approve for development
 
 ### IN PROGRESS (Approved for Development)
 
@@ -191,6 +195,8 @@ LLM Pricing Calculator - A comprehensive web application for comparing LLM model
 
 ## Decisions Log
 
+- **2025-10-24**: Story 3.7 (Add Price Range Filter) created and drafted by SM agent. This story introduces dual-range slider filtering for model prices based on average cost per 1M tokens (input + output / 2). Extends Zustand filterStore with priceRange state (min/max). Establishes priceCalculations.ts utility for Epic 4 (cost calculator) and Epic 6 (QAPS) reuse. Recommended library: rc-slider for accessible, customizable range controls. Implements performance optimization via local state during drag, committing to Zustand on slider release (debouncing). Default range calculated from actual model data, excluding free ($0) models. Status: Draft (needs review via story-ready workflow).
+
 - **2025-10-24**: Story 3.5 (Add Provider Filter) approved and marked done by DEV agent. Implemented FilterSidebar, ProviderFilter, and Zustand filterStore (first global state in Epic 3). Real-time filtering with TanStack Table's getFilteredRowModel composing with sorting (Story 3.4). All 6 acceptance criteria met, 33/33 tests passing (100% pass rate), TypeScript 0 errors, <100ms filter performance, WCAG 2.1 AA compliance. Zustand pattern established for Stories 3.6-3.7 (filters) and 3.11 (comparison basket). Story moved IN PROGRESS → DONE. Epic 3 progress: 8/15 stories complete (21 points).
 
 - **2025-10-24**: Story 3.4 (Implement Column Sorting) approved and marked done by DEV agent. Column sorting implemented using TanStack Table's getSortedRowModel with session persistence via sessionStorage. Sort indicators added with Lucide React icons (ChevronUp, ChevronDown, ChevronsUpDown). Supports alphanumeric sorting (name, provider) and numeric sorting (prices). Story moved to DONE. Epic 3 progress: 6/15 stories complete (18 points).
@@ -207,18 +213,18 @@ LLM Pricing Calculator - A comprehensive web application for comparing LLM model
 
 ## What to do next
 
-**What to do next:** 🎯 **Story 3.5 Complete - Continue Epic 3 Development**
+**What to do next:** 🎯 **Story 3.7 Drafted - Ready for Review and Approval**
 
-**Story 3.5 Status:** ✅ **DONE** (All acceptance criteria met, 33/33 tests passing)
+**Story 3.7 Status:** ✅ **DRAFT COMPLETE** (Comprehensive spec with 9 tasks, 53 subtasks)
 
 **Recommended Next Actions:**
 
-**Option 1: Create Story 3.6 - Add Capabilities Filter (Recommended)**
-- **Story:** Extend filtering with capability checkboxes (function calling, vision, etc.)
-- **Status:** Needs drafting
-- **Prerequisites:** Story 3.5 complete ✅ (Zustand pattern established)
-- **Command:** Load SM agent → Run `create-story` workflow for Story 3.6
-- **Benefits:** Reuses Zustand filterStore pattern from Story 3.5
+**Option 1: Review and Approve Story 3.7 - Add Price Range Filter (Recommended)**
+- **Story:** Dual-range slider for filtering models by average price (input + output) / 2
+- **Status:** Draft (needs review via story-ready)
+- **Prerequisites:** Stories 3.5, 3.6 complete ✅ (Zustand filterStore, FilterSidebar established)
+- **Command:** Load SM agent → Run `story-ready` workflow for Story 3.7
+- **Benefits:** Completes filter suite (provider, capabilities, price), enables budget-based model discovery
 
 **Option 2: Implement Story 3.1b (Technical Debt Consolidation)**
 - **Story:** Consolidated Technical Debt Resolution (Epics 1-2)

@@ -1,12 +1,16 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import type { ModelDto } from '@/types/models'
 import { formatPrice } from '@/utils/formatPrice'
+import type { CapabilityType } from '@/store/filterStore'
 
 /**
  * Column definitions for the Models table using TanStack Table
  *
  * Story 3.3: Integrate TanStack Table for Advanced Features
  * Implements AC #3 (Column definitions created for all model fields displayed in Story 3.2)
+ *
+ * Story 3.6: Add Capabilities Filters (extended)
+ * Adds capabilities column with AND logic filter function
  *
  * Uses createColumnHelper for type-safe column definitions.
  * Columns mirror the basic HTML table from Story 3.2: name, provider, input price, output price
@@ -87,5 +91,36 @@ export const modelColumns = [
         </div>
       )
     },
+  }),
+
+  // Capabilities column - invisible column used only for filtering (Story 3.6)
+  // This column doesn't render in the table but provides AND logic filtering
+  columnHelper.accessor('capabilities', {
+    id: 'capabilities',
+    // Hidden column - not displayed in table header
+    header: () => null,
+    // Hidden column - not displayed in table cells
+    cell: () => null,
+    // Filter function for capabilities (Story 3.6: AND logic)
+    // CRITICAL: Different from provider filter OR logic
+    // Empty filterValue array = show all models
+    // Non-empty filterValue = show only models with ALL selected capabilities
+    filterFn: (row, columnId, filterValue: CapabilityType[]) => {
+      const capabilities = row.getValue(columnId) as ModelDto['capabilities']
+
+      // If no capabilities selected, show all models
+      if (filterValue.length === 0) return true
+
+      // If model has no capabilities data, exclude it
+      if (!capabilities) return false
+
+      // AND logic: model must have ALL selected capabilities
+      // Every selected capability must be true in the model's capabilities
+      return filterValue.every((cap) => capabilities[cap] === true)
+    },
+    // Column is not sortable (it's hidden)
+    enableSorting: false,
+    // Column doesn't appear in column visibility menu
+    enableHiding: false,
   }),
 ]

@@ -1,5 +1,6 @@
 import { useFilterStore } from '@/store/filterStore'
 import ProviderFilter from './ProviderFilter'
+import CapabilitiesFilter from './CapabilitiesFilter'
 
 /**
  * FilterSidebar component - Main filter container positioned left of ModelTable
@@ -8,15 +9,18 @@ import ProviderFilter from './ProviderFilter'
  * Implements AC #1 (Filter sidebar created on left side of table)
  * and AC #6 (Filter state shows count of active filters)
  *
+ * Story 3.6: Add Capabilities Filters (extended)
+ * Implements AC #1 (Capabilities filter section added to sidebar)
+ *
  * Features:
- * - Displays filter count badge when filters are active
+ * - Displays filter count badge when filters are active (providers + capabilities)
  * - "Clear Filters" button to reset all selections
- * - Contains ProviderFilter section (AC #2)
+ * - Contains ProviderFilter section (Story 3.5)
+ * - Contains CapabilitiesFilter section (Story 3.6)
  * - Responsive design (visible on desktop, collapsible on mobile)
  * - Accessible with semantic HTML and ARIA attributes
  *
- * Future enhancements (Stories 3.6-3.7):
- * - CapabilityFilter component
+ * Future enhancements (Story 3.7):
  * - PriceRangeFilter component
  */
 export default function FilterSidebar() {
@@ -61,11 +65,16 @@ export default function FilterSidebar() {
 
       {/* Filter Sections */}
       <div className="space-y-6">
-        {/* Provider Filter Section (AC #2) */}
+        {/* Provider Filter Section (Story 3.5) */}
         <ProviderFilter />
 
+        {/* Divider between filter sections */}
+        <div className="border-t border-gray-200" />
+
+        {/* Capabilities Filter Section (Story 3.6) */}
+        <CapabilitiesFilter />
+
         {/* Future filter sections will be added here:
-         * Story 3.6: <CapabilityFilter />
          * Story 3.7: <PriceRangeFilter />
          */}
       </div>
