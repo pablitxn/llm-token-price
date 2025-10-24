@@ -1,0 +1,364 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>3.5</storyId>
+    <title>Add Provider Filter</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-24</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-3.5.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user</asA>
+    <iWant>to filter models by provider</iWant>
+    <soThat>I can focus on specific vendors (OpenAI, Anthropic, Google, etc.)</soThat>
+    <tasks>
+      - Task 1: Create FilterSidebar component structure (AC #1)
+        - Subtask 1.1: Create apps/web/src/components/filters/FilterSidebar.tsx component file
+        - Subtask 1.2: Add basic layout with TailwindCSS (sidebar container, heading, filter sections)
+        - Subtask 1.3: Position sidebar on left side of table using CSS Grid or Flexbox layout
+        - Subtask 1.4: Make sidebar responsive (collapsible on mobile, visible on desktop)
+        - Subtask 1.5: Import and integrate FilterSidebar into HomePage component
+
+      - Task 2: Create Zustand filter store for client state (AC #3, #4)
+        - Subtask 2.1: Create apps/web/src/store/filterStore.ts file
+        - Subtask 2.2: Define FilterState interface with selectedProviders array
+        - Subtask 2.3: Initialize Zustand store with create() function
+        - Subtask 2.4: Add toggleProvider action (add/remove provider from array)
+        - Subtask 2.5: Add clearFilters action (reset to empty array)
+        - Subtask 2.6: Add getActiveFilterCount selector
+
+      - Task 3: Create ProviderFilter component (AC #2, #4)
+        - Subtask 3.1: Create apps/web/src/components/filters/ProviderFilter.tsx file
+        - Subtask 3.2: Extract unique providers from model data (useModels hook)
+        - Subtask 3.3: Render checkbox list with provider names (alphabetically sorted)
+        - Subtask 3.4: Connect checkboxes to Zustand filterStore.toggleProvider action
+        - Subtask 3.5: Display checkmark icon or checked state visually
+        - Subtask 3.6: Add accessible labels and ARIA attributes for screen readers
+
+      - Task 4: Implement real-time table filtering (AC #3)
+        - Subtask 4.1: Import getFilteredRowModel from @tanstack/react-table in ModelTable.tsx
+        - Subtask 4.2: Add getFilteredRowModel to useReactTable configuration
+        - Subtask 4.3: Read selectedProviders from Zustand filterStore in ModelTable
+        - Subtask 4.4: Add columnFilters state to TanStack Table
+        - Subtask 4.5: Update columnFilters when selectedProviders changes (useEffect hook)
+        - Subtask 4.6: Define provider column filter function (checks if model.provider in selectedProviders)
+        - Subtask 4.7: Verify filtered rows update in &lt;100ms (performance target)
+
+      - Task 5: Add "Clear Filters" button (AC #5)
+        - Subtask 5.1: Add "Clear Filters" button to FilterSidebar component
+        - Subtask 5.2: Connect button onClick to filterStore.clearFilters action
+        - Subtask 5.3: Style button with TailwindCSS (secondary button style)
+        - Subtask 5.4: Disable button when no filters active (conditional rendering)
+        - Subtask 5.5: Add hover and focus states for accessibility
+
+      - Task 6: Display active filter count (AC #6)
+        - Subtask 6.1: Add filter count badge to FilterSidebar heading
+        - Subtask 6.2: Use filterStore.getActiveFilterCount selector
+        - Subtask 6.3: Display count as badge (e.g., "Filters (2)")
+        - Subtask 6.4: Hide badge when count is 0
+        - Subtask 6.5: Style badge with TailwindCSS (pill style, primary color)
+
+      - Task 7: Test filtering functionality (AC #1-6)
+        - Subtask 7.1: Test selecting single provider (verify table filters correctly)
+        - Subtask 7.2: Test selecting multiple providers (verify OR logic - shows all selected)
+        - Subtask 7.3: Test unselecting provider (verify table updates immediately)
+        - Subtask 7.4: Test "Clear Filters" button (verify all selections reset)
+        - Subtask 7.5: Verify filter count badge updates correctly
+        - Subtask 7.6: Test with sorting enabled (Story 3.4 - verify filters + sorting work together)
+        - Subtask 7.7: Test edge cases (all providers selected, no providers selected, single model per provider)
+        - Subtask 7.8: Verify performance &lt;100ms for filter operations with 50+ models
+
+      - Task 8: Manual testing and verification (AC All)
+        - Subtask 8.1: Test in Chrome DevTools responsive mode (desktop, tablet, mobile)
+        - Subtask 8.2: Verify sidebar collapses/expands on mobile (if implemented)
+        - Subtask 8.3: Verify no console errors or warnings
+        - Subtask 8.4: Verify no TypeScript errors (pnpm run type-check)
+        - Subtask 8.5: Test accessibility - keyboard navigation and screen reader support
+        - Subtask 8.6: Verify visual design matches TailwindCSS theme (consistent with Story 3.3-3.4)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    1. Filter sidebar created on left side of table
+    2. Provider filter section displays list of all providers with checkboxes
+    3. Checking/unchecking provider filters table in real-time
+    4. Multiple providers selectable (OR logic)
+    5. "Clear Filters" button resets all selections
+    6. Filter state shows count of active filters
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic 3 - Story 3.5 Definition</title>
+        <section>Lines 549-564</section>
+        <snippet>Story 3.5 defines provider filtering as a key feature for users to focus on specific vendors (OpenAI, Anthropic, Google, etc.). Acceptance criteria establish filter sidebar, provider checkboxes with OR logic, real-time filtering, clear filters button, and active filter count display. Prerequisites: Story 3.4 (sorting must be complete).</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification - Filter Sidebar Component</title>
+        <section>Lines 340-384</section>
+        <snippet>Component architecture defines FilterSidebar as main filter container positioned left of ModelTable. Components organized by domain (components/filters/) with ProviderFilter, CapabilityFilter (Story 3.6), PriceRangeFilter (Story 3.7) as filter section children. FilterSidebar uses Zustand filterStore for client-side state management.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification - Zustand State Management</title>
+        <section>Lines 189-200</section>
+        <snippet>Zustand pattern established for client-side state (filter selections, comparison basket, view preferences). FilterStore manages selectedProviders array with toggleProvider, clearFilters actions and getActiveFilterCount selector. Separate from TanStack Query (server state) and TanStack Table (table state).</snippet>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture - Performance Targets</title>
+        <section>Section 1.1</section>
+        <snippet>Performance targets: &lt;2s initial load, &lt;100ms client-side operations (filtering, sorting), &lt;1s chart rendering. Multi-layer caching strategy with TanStack Query (5min stale), Redis (1hr TTL), PostgreSQL source. Client-side filtering preferred over server round-trips for 100+ models.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-3.4.md</path>
+        <title>Story 3.4 - Column Sorting Implementation</title>
+        <section>Lines 79-108</section>
+        <snippet>TanStack Table composable row models pattern: getCoreRowModel (Story 3.3) → getSortedRowModel (Story 3.4) → getFilteredRowModel (Story 3.5). Sorting and filtering work together through TanStack Table's state composition. Story 3.4 confirms filtering can be added by extending useReactTable config without modifying sorting logic.</snippet>
+      </doc>
+      <doc>
+        <path>CLAUDE.md</path>
+        <title>Project Instructions - Frontend Architecture</title>
+        <section>Frontend State Architecture</section>
+        <snippet>State management follows three-tier pattern: Server state (TanStack Query, 5min stale), Client state (Zustand for comparison basket, filters, view preferences), Local state (useState for forms, modals, pagination). Path aliases: @/* → ./src/*, @components/* → ./src/components/*, @store/* → ./src/store/*.</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <artifact>
+        <path>apps/web/src/components/models/ModelTable.tsx</path>
+        <kind>component</kind>
+        <symbol>ModelTable</symbol>
+        <lines>1-95</lines>
+        <reason>Core table component that needs getFilteredRowModel integration. Currently has getCoreRowModel only. Must add columnFilters state and connect to Zustand filterStore for provider filtering.</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/components/models/columns.tsx</path>
+        <kind>component</kind>
+        <symbol>modelColumns</symbol>
+        <lines>1-85</lines>
+        <reason>Column definitions include provider column (line 39-43) which needs filter function configuration. Provider column accessor provides data for filtering logic.</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/hooks/useModels.ts</path>
+        <kind>hook</kind>
+        <symbol>useModels</symbol>
+        <lines>1-28</lines>
+        <reason>TanStack Query hook providing model data. ProviderFilter component will use this to extract unique providers from data.data array for checkbox list.</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/pages/HomePage.tsx</path>
+        <kind>page</kind>
+        <symbol>HomePage</symbol>
+        <lines>1-100</lines>
+        <reason>Main page container that must integrate FilterSidebar component. Layout needs CSS Grid or Flexbox to position sidebar on left side of ModelTable.</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/utils/formatPrice.ts</path>
+        <kind>utility</kind>
+        <symbol>formatPrice</symbol>
+        <lines>1-25</lines>
+        <reason>Existing utility for price formatting. Pattern reference for creating similar utilities if needed for filter display.</reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <node>
+        <package name="zustand" version="^5.0.8" installed="true">Client-side state management for filter selections</package>
+        <package name="@tanstack/react-table" version="^8.21.3" installed="true">Table library with filtering support via getFilteredRowModel</package>
+        <package name="@tanstack/react-query" version="^5.90.5" installed="true">Server state management for models data</package>
+        <package name="lucide-react" version="^0.546.0" installed="true">Icons for checkboxes, filter badges, clear button</package>
+        <package name="react" version="^19.1.1" installed="true">Core React library</package>
+        <package name="tailwindcss" version="^4.1.14" installed="true">Styling for FilterSidebar, checkboxes, badges</package>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>
+      <type>architecture</type>
+      <description>Hexagonal Architecture - Filtering is presentation layer concern (React components + Zustand). No backend changes required. All filtering happens client-side with TanStack Table.</description>
+    </constraint>
+    <constraint>
+      <type>performance</type>
+      <description>Filtering must complete in &lt;100ms for 50+ models (PRD NFR-002). TanStack Table getFilteredRowModel uses memoization for optimal performance. Target: &lt;50ms actual filter time measured in Chrome DevTools Performance panel.</description>
+    </constraint>
+    <constraint>
+      <type>typescript</type>
+      <description>Zero `any` types allowed (strict mode enforced). Use TanStack Table's ColumnFiltersState type, Zustand's typed create function, and TypeScript interfaces for FilterState.</description>
+    </constraint>
+    <constraint>
+      <type>state-management</type>
+      <description>Three-tier state architecture: Server state (TanStack Query - useModels hook), Client state (Zustand - filterStore), Table state (TanStack Table - columnFilters). Do NOT mix concerns - filter selections belong in Zustand, not TanStack Table state.</description>
+    </constraint>
+    <constraint>
+      <type>component-organization</type>
+      <description>Components organized by domain, not type. Create components/filters/ directory (NOT components/sidebars/). Filter components follow pattern: FilterSidebar (container), ProviderFilter (filter section), future CapabilityFilter (Story 3.6).</description>
+    </constraint>
+    <constraint>
+      <type>accessibility</type>
+      <description>WCAG 2.1 Level AA compliance required. All checkboxes must have accessible labels, ARIA attributes (aria-checked, role="checkbox"), keyboard navigation (Space/Enter toggles), and screen reader announcements for filter changes.</description>
+    </constraint>
+    <constraint>
+      <type>responsive-design</type>
+      <description>Mobile-first responsive design. FilterSidebar must be collapsible on mobile (optional for Story 3.5, can be always-visible), full sidebar on desktop. Use TailwindCSS breakpoints (sm:640px, md:768px, lg:1024px, xl:1280px).</description>
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>FilterState (Zustand Store)</name>
+      <kind>TypeScript Interface</kind>
+      <signature>
+interface FilterState {
+  selectedProviders: string[];
+  toggleProvider: (provider: string) => void;
+  clearFilters: () => void;
+  getActiveFilterCount: () => number;
+}
+
+export const useFilterStore = create&lt;FilterState&gt;((set, get) => ({
+  selectedProviders: [],
+  toggleProvider: (provider) => set((state) => ({
+    selectedProviders: state.selectedProviders.includes(provider)
+      ? state.selectedProviders.filter(p => p !== provider)
+      : [...state.selectedProviders, provider]
+  })),
+  clearFilters: () => set({ selectedProviders: [] }),
+  getActiveFilterCount: () => get().selectedProviders.length
+}));
+      </signature>
+      <path>apps/web/src/store/filterStore.ts (NEW)</path>
+    </interface>
+
+    <interface>
+      <name>TanStack Table Filter Configuration</name>
+      <kind>TanStack Table API</kind>
+      <signature>
+// In ModelTable.tsx
+import { getFilteredRowModel, type ColumnFiltersState } from '@tanstack/react-table'
+
+const [columnFilters, setColumnFilters] = useState&lt;ColumnFiltersState&gt;([])
+
+const table = useReactTable({
+  data: models,
+  columns: modelColumns,
+  getCoreRowModel: getCoreRowModel(),
+  getSortedRowModel: getSortedRowModel(),     // Story 3.4
+  getFilteredRowModel: getFilteredRowModel(), // Story 3.5
+  state: {
+    sorting,
+    columnFilters
+  },
+  onColumnFiltersChange: setColumnFilters
+})
+
+// Filter function for provider column (in columns.tsx)
+columnHelper.accessor('provider', {
+  id: 'provider',
+  filterFn: (row, columnId, filterValue: string[]) => {
+    const provider = row.getValue(columnId);
+    return filterValue.length === 0 || filterValue.includes(provider);
+  }
+})
+      </signature>
+      <path>apps/web/src/components/models/ModelTable.tsx</path>
+    </interface>
+
+    <interface>
+      <name>FilterSidebar Component Props</name>
+      <kind>React Component Interface</kind>
+      <signature>
+interface FilterSidebarProps {
+  // No props needed - reads from Zustand store directly
+  // Future: could accept providers[] if pre-filtering data
+}
+
+export default function FilterSidebar({}: FilterSidebarProps) {
+  const { selectedProviders, clearFilters, getActiveFilterCount } = useFilterStore()
+  const filterCount = getActiveFilterCount()
+
+  return (
+    &lt;aside className="w-64 bg-white border-r border-gray-200 p-4"&gt;
+      &lt;div className="flex items-center justify-between mb-4"&gt;
+        &lt;h2 className="text-lg font-semibold text-gray-900"&gt;
+          Filters {filterCount > 0 && &lt;span className="..."&gt;({filterCount})&lt;/span&gt;}
+        &lt;/h2&gt;
+        &lt;button onClick={clearFilters} disabled={filterCount === 0}&gt;Clear&lt;/button&gt;
+      &lt;/div&gt;
+      &lt;ProviderFilter /&gt;
+    &lt;/aside&gt;
+  )
+}
+      </signature>
+      <path>apps/web/src/components/filters/FilterSidebar.tsx (NEW)</path>
+    </interface>
+
+    <interface>
+      <name>ProviderFilter Component</name>
+      <kind>React Component</kind>
+      <signature>
+export default function ProviderFilter() {
+  const { data } = useModels()
+  const { selectedProviders, toggleProvider } = useFilterStore()
+
+  // Extract unique providers from model data
+  const providers = useMemo(() => {
+    if (!data?.data) return []
+    const unique = [...new Set(data.data.map(m => m.provider))]
+    return unique.sort() // Alphabetical order
+  }, [data])
+
+  return (
+    &lt;div className="space-y-2"&gt;
+      &lt;h3 className="text-sm font-medium text-gray-700"&gt;Provider&lt;/h3&gt;
+      {providers.map(provider => (
+        &lt;label key={provider} className="flex items-center gap-2"&gt;
+          &lt;input
+            type="checkbox"
+            checked={selectedProviders.includes(provider)}
+            onChange={() => toggleProvider(provider)}
+            aria-label={`Filter by ${provider}`}
+          /&gt;
+          &lt;span&gt;{provider}&lt;/span&gt;
+        &lt;/label&gt;
+      ))}
+    &lt;/div&gt;
+  )
+}
+      </signature>
+      <path>apps/web/src/components/filters/ProviderFilter.tsx (NEW)</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Epic 3 testing strategy defers automated tests to epic completion. Manual testing required for Story 3.5 approval includes: functional testing (single/multiple provider selection, OR logic, clear filters), visual testing (sidebar layout, checkboxes, badge), integration testing (filtering + sorting composition from Story 3.4), performance testing (&lt;100ms filter time with 50+ models via Chrome DevTools), accessibility testing (keyboard navigation, screen reader support, ARIA attributes). Future automated tests (post-Epic 3): component tests for FilterSidebar and ProviderFilter rendering (Vitest + Testing Library), Zustand store unit tests (toggleProvider, clearFilters logic), E2E tests for filter interaction flow (Playwright).
+    </standards>
+
+    <locations>
+      - apps/web/src/components/filters/__tests__/FilterSidebar.test.tsx (future)
+      - apps/web/src/components/filters/__tests__/ProviderFilter.test.tsx (future)
+      - apps/web/src/store/__tests__/filterStore.test.ts (future)
+      - apps/web/e2e/filtering.spec.ts (future E2E tests)
+    </locations>
+
+    <ideas>
+      <test ac="1">Filter sidebar displays on left side of table - Visual test: Verify FilterSidebar renders in HomePage layout, positioned left of ModelTable using CSS Grid/Flexbox</test>
+      <test ac="2">Provider filter section displays list of all providers with checkboxes - Component test: Verify ProviderFilter extracts unique providers from useModels data, renders checkboxes alphabetically sorted, displays provider names correctly</test>
+      <test ac="3">Checking/unchecking provider filters table in real-time - Integration test: Select provider checkbox → verify table.getFilteredRowModel() returns only matching models, verify re-render happens in &lt;100ms, uncheck → verify full table restored</test>
+      <test ac="4">Multiple providers selectable (OR logic) - Logic test: Select OpenAI + Anthropic → verify table shows models from BOTH providers (union, not intersection), verify filterFn checks `filterValue.includes(provider)`</test>
+      <test ac="5">"Clear Filters" button resets all selections - Action test: Select multiple providers → click Clear Filters → verify filterStore.selectedProviders === [], verify all checkboxes unchecked, verify table shows all models</test>
+      <test ac="6">Filter state shows count of active filters - State test: Verify getActiveFilterCount() returns selectedProviders.length, verify badge displays count, verify badge hidden when count === 0</test>
+      <test ac="ALL">Performance test: Apply filter with 50+ models → measure time in Chrome DevTools Performance panel → verify &lt;100ms (target: &lt;50ms)</test>
+      <test ac="ALL">Accessibility test: Tab key navigation through checkboxes, Space/Enter toggles checkbox, screen reader announces "Filter by [Provider]" labels, verify ARIA attributes present</test>
+      <test ac="ALL">Edge case tests: All providers selected (table shows all models), no providers selected (table shows all models - same as clear), single model per provider (verify correct filtering)</test>
+      <test ac="3,4">Integration with Story 3.4 sorting: Apply filter → apply sort → verify sorted subset, apply sort → apply filter → verify filtered subset maintains sort order</test>
+    </ideas>
+  </tests>
+</story-context>

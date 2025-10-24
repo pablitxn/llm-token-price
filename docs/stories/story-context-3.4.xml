@@ -1,0 +1,167 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>3.4</storyId>
+    <title>Implement Column Sorting</title>
+    <status>Draft</status>
+    <generatedAt>2025-10-24</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-3.4.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user</asA>
+    <iWant>to sort models by any column</iWant>
+    <soThat>I can find cheapest models or highest-scoring models quickly</soThat>
+    <tasks>
+- Task 1: Add sorting configuration to TanStack Table (AC: #1, #3, #4, #5)
+- Task 2: Make column headers clickable and interactive (AC: #1, #2)
+- Task 3: Add sort direction indicators (AC: #2)
+- Task 4: Configure column-specific sorting behavior (AC: #3)
+- Task 5: Implement session persistence for sort state (AC: #6)
+- Task 6: Test sorting functionality (AC: #1-6)
+- Task 7: Manual testing and verification (AC: All)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. Clickable column headers enable sorting
+2. Sort indicator (up/down arrow) shows sort direction
+3. Sorting works for: name (alphabetical), provider (alphabetical), input price (numeric), output price (numeric), benchmark scores (numeric)
+4. Default sort: alphabetical by name
+5. Click toggles ascending/descending
+6. Sort state persists during session
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic 3 Story 3.4 Definition</title>
+        <section>Story 3.4: Implement Column Sorting</section>
+        <snippet>Acceptance criteria: Clickable column headers enable sorting, sort indicators show direction, sorting works for name/provider/prices/benchmarks, default sort by name, toggle asc/desc, session persistence.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>Frontend Components - TanStack Table Architecture</section>
+        <snippet>TanStack Table v8.11.0 provides headless table logic with composable row models (Core → Sorted → Filtered). getSortedRowModel enables client-side sorting with built-in alphanumeric and numeric sorting functions.</snippet>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture Document</title>
+        <section>Technology Stack</section>
+        <snippet>TanStack Table v8.11.0 - Headless table logic, virtualization, sorting/filtering, column visibility. Performance target: <100ms client-side operations. Lucide React v0.300.0 for icons (ChevronUp, ChevronDown).</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-3.3.md</path>
+        <title>Story 3.3 - TanStack Table Integration</title>
+        <section>Completion Notes</section>
+        <snippet>Foundation established for Story 3.4 sorting. useReactTable hook configured with getCoreRowModel. Column definitions in columns.tsx use createColumnHelper. Next: add getSortedRowModel and sorting configuration.</snippet>
+      </doc>
+      <doc>
+        <path>CLAUDE.md</path>
+        <title>Project Instructions</title>
+        <section>Frontend Architecture</section>
+        <snippet>State management: TanStack Query for server state (5min stale), Zustand for client state. Path aliases: @/* → ./src/*, @components/* → ./src/components/*. TypeScript strict mode: zero any types.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>apps/web/src/components/models/ModelTable.tsx</path>
+        <kind>component</kind>
+        <symbol>ModelTable</symbol>
+        <lines>1-94</lines>
+        <reason>Core table component using TanStack Table useReactTable hook. Currently configured with getCoreRowModel only. Story 3.4 adds getSortedRowModel and sorting state configuration here.</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/components/models/columns.tsx</path>
+        <kind>configuration</kind>
+        <symbol>modelColumns</symbol>
+        <lines>1-84</lines>
+        <reason>Column definitions using createColumnHelper. Story 3.4 adds sortingFn property to each column (alphanumeric for name/provider, basic for prices).</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/utils/formatPrice.ts</path>
+        <kind>utility</kind>
+        <symbol>formatPrice</symbol>
+        <lines>N/A</lines>
+        <reason>Currency formatting utility used in price columns. Referenced to ensure sorting doesn't break formatted display.</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/types/models.ts</path>
+        <kind>type</kind>
+        <symbol>ModelDto</symbol>
+        <lines>N/A</lines>
+        <reason>TypeScript interface for model data. Ensures type safety when accessing sortable fields (name, provider, inputPricePer1M, outputPricePer1M).</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <frontend>
+        <package name="@tanstack/react-table" version="^8.21.3">
+          Core table library - provides useReactTable, getSortedRowModel, sorting types
+        </package>
+        <package name="lucide-react" version="^0.546.0">
+          Icon library - provides ChevronUp, ChevronDown, ChevronsUpDown for sort indicators
+        </package>
+        <package name="react" version="^19.1.1">
+          React framework with hooks (useState for sorting state)
+        </package>
+      </frontend>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="architecture">Hexagonal Architecture: Sorting is presentation layer concern only - no backend changes required</constraint>
+    <constraint type="performance">Client-side sorting must complete in &lt;100ms for 50+ models (PRD NFR-002)</constraint>
+    <constraint type="typescript">TypeScript strict mode enforced - use TanStack Table's SortingState type, zero any types</constraint>
+    <constraint type="persistence">Use browser sessionStorage for sort state persistence (survives refresh, cleared on browser close)</constraint>
+    <constraint type="pattern">Follow TanStack Table composable row model pattern: getCoreRowModel → getSortedRowModel → getFilteredRowModel (Story 3.5-3.7)</constraint>
+    <constraint type="ui">Maintain TailwindCSS styling from Story 3.3 - no visual regressions</constraint>
+    <constraint type="icons">Use Lucide React icons (ChevronUp, ChevronDown, ChevronsUpDown) - already installed in Story 3.1</constraint>
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>TanStack Table Sorting API</name>
+      <kind>React Hook Configuration</kind>
+      <signature>useReactTable({ getSortedRowModel: getSortedRowModel(), initialState: { sorting: [{ id: 'name', desc: false }] }, onSortingChange: setSorting })</signature>
+      <path>node_modules/@tanstack/react-table</path>
+    </interface>
+    <interface>
+      <name>Column Sorting Configuration</name>
+      <kind>Column Definition Property</kind>
+      <signature>columnHelper.accessor('name', { sortingFn: 'alphanumeric', enableSorting: true })</signature>
+      <path>apps/web/src/components/models/columns.tsx</path>
+    </interface>
+    <interface>
+      <name>Header Sorting Handler</name>
+      <kind>React Event Handler</kind>
+      <signature>header.column.getToggleSortingHandler() returns onClick: () =&gt; void</signature>
+      <path>apps/web/src/components/models/ModelTable.tsx</path>
+    </interface>
+    <interface>
+      <name>Browser sessionStorage API</name>
+      <kind>Web API</kind>
+      <signature>sessionStorage.setItem(key: string, value: string), sessionStorage.getItem(key: string) returns string | null</signature>
+      <path>Browser built-in</path>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>Manual testing required for Story 3.4 per Epic 1/2 retrospective. Vitest + Testing Library available for future automated tests. Test coverage deferred to epic completion. Performance testing via Chrome DevTools Performance panel.</standards>
+    <locations>
+      <location>apps/web/src/components/models/__tests__/</location>
+      <location>Chrome DevTools → Performance panel (for &lt;100ms sort validation)</location>
+      <location>Chrome DevTools → Application → Storage → Session Storage (for persistence verification)</location>
+    </locations>
+    <ideas>
+      <test ac="1,2">Verify clicking column header toggles sort direction and updates arrow indicator (asc → desc → asc)</test>
+      <test ac="3">Test each sortable column (name, provider, input price, output price) with various data types and null values</test>
+      <test ac="4">Confirm default sort by name (ascending) on initial page load without saved session state</test>
+      <test ac="5">Click same header 3 times: unsorted → asc → desc → asc, verify arrow icons change correctly</test>
+      <test ac="6">Sort by a column, refresh page, verify sessionStorage restored sort state correctly</test>
+      <test ac="all">Edge cases: empty table, single row, all values identical, null/undefined values in sortable columns</test>
+      <test ac="performance">Measure sort operation time with 50+ models - must be &lt;100ms (Chrome DevTools Performance panel)</test>
+      <test ac="accessibility">Keyboard navigation: Focus header with Tab, trigger sort with Space/Enter keys</test>
+    </ideas>
+  </tests>
+</story-context>
