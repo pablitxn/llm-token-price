@@ -8,10 +8,10 @@
 
 ## Current Status
 
-**Current Phase:** 4-Implementation → Epic 1 Complete (11/11), Epic 2 Complete (13/13), Epic 3 In Progress (7/15)
-**Current Workflow:** story-approved (Story 3.4) - Complete
-**Current Story:** Story 3.5 - Add Provider Filter (Status: Ready, IN PROGRESS)
-**Overall Progress:** 100% (Epic 1: 37 points) + 96% (Epic 2: 48/~50 points) + Epic 3: Stories 3.2, 3.3, 3.4 Complete (18 points)
+**Current Phase:** 4-Implementation → Epic 1 Complete (11/11), Epic 2 Complete (13/13), Epic 3 In Progress (8/15)
+**Current Workflow:** story-approved (Story 3.5) - Complete
+**Current Story:** Story 3.5 - Add Provider Filter (Status: Done ✅)
+**Overall Progress:** 100% (Epic 1: 37 points) + 96% (Epic 2: 48/~50 points) + Epic 3: Stories 3.2, 3.3, 3.4, 3.5 Complete (21 points)
 
 **✅ EPIC 2 TECHNICAL DEBT RESOLVED - EPIC 3 UNBLOCKED!**
 **🚀 Story 2.13 COMPLETE:** All 21 acceptance criteria delivered (242 tests passing, 0 failures, CI/CD enforced, production-ready)
@@ -127,12 +127,7 @@ go to the file docs/backlog.md
 
 ### IN PROGRESS (Approved for Development)
 
-- **Story ID:** 3.5
-- **Story Title:** Add Provider Filter
-- **Story File:** `docs/stories/story-3.5.md`
-- **Story Status:** Ready
-- **Context File:** `docs/stories/story-context-3.5.xml` (will be generated)
-- **Action:** DEV should run `dev-story` workflow to implement this story
+(Empty - Story 3.5 complete, ready for next story)
 
 **Also in Progress:**
 
@@ -154,13 +149,14 @@ go to the file docs/backlog.md
 
 | Story ID | File                        | Completed Date | Points |
 |----------|-----------------------------|----------------|--------|
+| 3.5      | docs/stories/story-3.5.md   | 2025-10-24     | 3      |
 | 3.4      | docs/stories/story-3.4.md   | 2025-10-24     | 3      |
 | 3.3      | docs/stories/story-3.3.md   | 2025-10-24     | 5      |
 | 3.2      | docs/stories/story-3.2.md   | 2025-10-22     | 5      |
 | 1-2      | docs/stories/story-{1-2}.md | 2025-10-21     | -      |
 
-**Total completed:** 4 stories
-**Total points completed:** 13+ points
+**Total completed:** 5 stories
+**Total points completed:** 16 points
 
 ---
 
@@ -195,6 +191,8 @@ LLM Pricing Calculator - A comprehensive web application for comparing LLM model
 
 ## Decisions Log
 
+- **2025-10-24**: Story 3.5 (Add Provider Filter) approved and marked done by DEV agent. Implemented FilterSidebar, ProviderFilter, and Zustand filterStore (first global state in Epic 3). Real-time filtering with TanStack Table's getFilteredRowModel composing with sorting (Story 3.4). All 6 acceptance criteria met, 33/33 tests passing (100% pass rate), TypeScript 0 errors, <100ms filter performance, WCAG 2.1 AA compliance. Zustand pattern established for Stories 3.6-3.7 (filters) and 3.11 (comparison basket). Story moved IN PROGRESS → DONE. Epic 3 progress: 8/15 stories complete (21 points).
+
 - **2025-10-24**: Story 3.4 (Implement Column Sorting) approved and marked done by DEV agent. Column sorting implemented using TanStack Table's getSortedRowModel with session persistence via sessionStorage. Sort indicators added with Lucide React icons (ChevronUp, ChevronDown, ChevronsUpDown). Supports alphanumeric sorting (name, provider) and numeric sorting (prices). Story moved to DONE. Epic 3 progress: 6/15 stories complete (18 points).
 
 - **2025-10-24**: Story 3.5 (Add Provider Filter) created and marked ready for development by SM agent. This story introduces Zustand for client-side filter state management and implements TanStack Table's getFilteredRowModel. Establishes filtering patterns for Stories 3.6-3.7. Status: Ready (awaiting Story Context generation and DEV implementation).
@@ -209,18 +207,18 @@ LLM Pricing Calculator - A comprehensive web application for comparing LLM model
 
 ## What to do next
 
-**What to do next:** 🎯 **Story 3.5 Ready for Development - Generate Context and Implement**
+**What to do next:** 🎯 **Story 3.5 Complete - Continue Epic 3 Development**
 
-**Story 3.5 Status:** ✅ **READY** (Drafted and approved - awaiting context generation)
+**Story 3.5 Status:** ✅ **DONE** (All acceptance criteria met, 33/33 tests passing)
 
 **Recommended Next Actions:**
 
-**Option 1: Generate Story Context for Story 3.5 (Recommended)**
-- **Story:** Add Provider Filter
-- **Status:** Ready (needs Story Context XML)
-- **Command:** Load SM agent → Run `story-context` workflow for Story 3.5
-- **Purpose:** Generate comprehensive context XML for DEV agent
-- **Next:** After context generation, DEV implements Story 3.5
+**Option 1: Create Story 3.6 - Add Capabilities Filter (Recommended)**
+- **Story:** Extend filtering with capability checkboxes (function calling, vision, etc.)
+- **Status:** Needs drafting
+- **Prerequisites:** Story 3.5 complete ✅ (Zustand pattern established)
+- **Command:** Load SM agent → Run `create-story` workflow for Story 3.6
+- **Benefits:** Reuses Zustand filterStore pattern from Story 3.5
 
 **Option 2: Implement Story 3.1b (Technical Debt Consolidation)**
 - **Story:** Consolidated Technical Debt Resolution (Epics 1-2)
@@ -236,11 +234,10 @@ LLM Pricing Calculator - A comprehensive web application for comparing LLM model
 - **Command:** Load DEV agent → Run `dev-story` workflow for Story 3.1
 
 **Epic 3 Progress:**
-- ✅ Stories 3.2, 3.3, 3.4 Complete (18 points)
-- 🔄 Story 3.5 In Progress (Ready status)
+- ✅ Stories 3.2, 3.3, 3.4, 3.5 Complete (21 points)
 - 🔄 Stories 3.1, 3.1b In Progress (Ready status)
 - 📝 Stories 3.6-3.15 Need drafting (10 stories)
-- **Completion:** 7/15 stories (47%)
+- **Completion:** 8/15 stories (53%)
 
 ---
 

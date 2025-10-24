@@ -1,5 +1,6 @@
 import { useModels } from '../hooks/useModels'
 import ModelTable from '@/components/models/ModelTable'
+import FilterSidebar from '@/components/filters/FilterSidebar'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { ErrorAlert } from '@/components/ui/ErrorAlert'
@@ -10,6 +11,7 @@ import { Database } from 'lucide-react'
  * HomePage component - Public homepage with model table listing
  * Story 3.1: Create Public Homepage with Basic Layout
  * Story 3.2: Fetch and Display Models in Basic Table
+ * Story 3.5: Add Provider Filter
  *
  * Acceptance Criteria implemented:
  * Story 3.1:
@@ -26,6 +28,9 @@ import { Database } from 'lucide-react'
  * - AC #4: Loading spinner shown while fetching data
  * - AC #5: Error message displayed if API fails
  * - AC #6: Table displays 10+ models with sample data
+ *
+ * Story 3.5:
+ * - AC #1: Filter sidebar created on left side of table
  */
 export default function HomePage() {
   const { data, isLoading, error, refetch } = useModels()
@@ -79,7 +84,7 @@ export default function HomePage() {
             />
           )}
 
-          {/* Success State - Models Table */}
+          {/* Success State - Models Table with Filter Sidebar */}
           {!isLoading && !error && data && data.data.length > 0 && (
             <div>
               {/* Results Count */}
@@ -88,8 +93,16 @@ export default function HomePage() {
                 {new Date(data.meta.timestamp).toLocaleString()}
               </div>
 
-              {/* Models Table (AC #2, #6: Basic HTML table with 4 columns) */}
-              <ModelTable models={data.data} />
+              {/* Filter Sidebar + Models Table Layout (Story 3.5: AC #1) */}
+              <div className="flex gap-6">
+                {/* Filter Sidebar - Left side */}
+                <FilterSidebar />
+
+                {/* Models Table - Right side */}
+                <div className="flex-1">
+                  <ModelTable models={data.data} />
+                </div>
+              </div>
             </div>
           )}
         </div>
