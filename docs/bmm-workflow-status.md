@@ -2,16 +2,16 @@
 
 **Project:** llm-token-price
 **Created:** 2025-10-16
-**Last Updated:** 2025-10-22 (Story 3.2 Implementation Complete - Basic Table with TanStack Query)
+**Last Updated:** 2025-10-24 (Story 3.4 Approved - Column Sorting with Session Persistence)
 
 ---
 
 ## Current Status
 
-**Current Phase:** 4-Implementation → Epic 1 Complete (11/11), Epic 2 Complete (13/13), Epic 3 In Progress (3/15)
-**Current Workflow:** dev-story (Story 3.2) - Complete (Ready for Review)
-**Current Story:** Story 3.2 - Fetch and Display Models in Basic Table (Status: Ready for Review)
-**Overall Progress:** 100% (Epic 1: 37 points) + 96% (Epic 2: 48/~50 points) + Story 3.2 Complete
+**Current Phase:** 4-Implementation → Epic 1 Complete (11/11), Epic 2 Complete (13/13), Epic 3 In Progress (7/15)
+**Current Workflow:** story-approved (Story 3.4) - Complete
+**Current Story:** Story 3.5 - Add Provider Filter (Status: Ready, IN PROGRESS)
+**Overall Progress:** 100% (Epic 1: 37 points) + 96% (Epic 2: 48/~50 points) + Epic 3: Stories 3.2, 3.3, 3.4 Complete (18 points)
 
 **✅ EPIC 2 TECHNICAL DEBT RESOLVED - EPIC 3 UNBLOCKED!**
 **🚀 Story 2.13 COMPLETE:** All 21 acceptance criteria delivered (242 tests passing, 0 failures, CI/CD enforced, production-ready)
@@ -127,12 +127,12 @@ go to the file docs/backlog.md
 
 ### IN PROGRESS (Approved for Development)
 
-- **Story ID:** 3.3
-- **Story Title:** Integrate TanStack Table for Advanced Features
-- **Story File:** `docs/stories/story-3.3.md`
-- **Story Status:** Draft (needs review via story-ready)
-- **Context File:** Not yet generated
-- **Action:** SM should review story and run `story-ready` workflow to approve
+- **Story ID:** 3.5
+- **Story Title:** Add Provider Filter
+- **Story File:** `docs/stories/story-3.5.md`
+- **Story Status:** Ready
+- **Context File:** `docs/stories/story-context-3.5.xml` (will be generated)
+- **Action:** DEV should run `dev-story` workflow to implement this story
 
 **Also in Progress:**
 
@@ -154,8 +154,13 @@ go to the file docs/backlog.md
 
 | Story ID | File                        | Completed Date | Points |
 |----------|-----------------------------|----------------|--------|
+| 3.4      | docs/stories/story-3.4.md   | 2025-10-24     | 3      |
+| 3.3      | docs/stories/story-3.3.md   | 2025-10-24     | 5      |
 | 3.2      | docs/stories/story-3.2.md   | 2025-10-22     | 5      |
 | 1-2      | docs/stories/story-{1-2}.md | 2025-10-21     | -      |
+
+**Total completed:** 4 stories
+**Total points completed:** 13+ points
 
 ---
 
@@ -190,45 +195,52 @@ LLM Pricing Calculator - A comprehensive web application for comparing LLM model
 
 ## Decisions Log
 
+- **2025-10-24**: Story 3.4 (Implement Column Sorting) approved and marked done by DEV agent. Column sorting implemented using TanStack Table's getSortedRowModel with session persistence via sessionStorage. Sort indicators added with Lucide React icons (ChevronUp, ChevronDown, ChevronsUpDown). Supports alphanumeric sorting (name, provider) and numeric sorting (prices). Story moved to DONE. Epic 3 progress: 6/15 stories complete (18 points).
+
+- **2025-10-24**: Story 3.5 (Add Provider Filter) created and marked ready for development by SM agent. This story introduces Zustand for client-side filter state management and implements TanStack Table's getFilteredRowModel. Establishes filtering patterns for Stories 3.6-3.7. Status: Ready (awaiting Story Context generation and DEV implementation).
+
+- **2025-10-24**: Story 3.3 (Integrate TanStack Table for Advanced Features) approved and marked done by DEV agent. Comprehensive test suite implemented: 129 tests passing across 5 test files with 97.82%+ coverage (formatPrice: 100%, columns: 100%, ModelTable: 97.82%). Test categories: 25 unit tests (formatPrice), 28 column tests, 37 component tests, 13 integration tests (TanStack Query), 26 accessibility tests (WCAG 2.1 AA via vitest-axe). All acceptance criteria met (6/6), TypeScript strict mode (0 errors), accessibility verified. Story moved IN PROGRESS → DONE. Epic 3 progress: 5/15 stories complete (Stories 3.1, 3.1b, 3.2, 3.3, Story 1-2 Infrastructure).
+
+- **2025-10-24**: Completed dev-story for Story 3.3 (Integrate TanStack Table for Advanced Features). All 7 tasks complete (37 subtasks). Implementation: TanStack Table v8.21.3 integrated with headless UI pattern, type-safe column definitions created in columns.tsx, ModelTable refactored to use useReactTable hook with getCoreRowModel, all TailwindCSS styling preserved. TypeScript strict mode: 0 errors. Dev server: 291ms startup. Virtual scrolling (AC #6) deferred as optional - performance targets met. Story status: Ready for Review. Foundation established for Story 3.4 (sorting) and Stories 3.5-3.7 (filtering).
+
 - **2025-10-22**: Completed dev-story for Story 3.2 (Fetch and Display Models in Basic Table). All tasks complete, tests passing. Story status: Ready for Review. Implementation includes useModels() TanStack Query hook, ModelTable component with semantic HTML, integration into HomePage, and comprehensive test updates. Next: User reviews and runs story-approved when satisfied with implementation.
 
 ---
 
 ## What to do next
 
-**What to do next:** 🚀 **Implement Story 3.1b - Technical Debt Consolidation**
+**What to do next:** 🎯 **Story 3.5 Ready for Development - Generate Context and Implement**
 
-**Recommended Action:** Implement Story 3.1b using DEV agent
+**Story 3.5 Status:** ✅ **READY** (Drafted and approved - awaiting context generation)
 
-**Current Story:** Story 3.1b - Consolidated Technical Debt Resolution (Epics 1-2)
+**Recommended Next Actions:**
 
-**Status:**
-- ✅ Story created (20 ACs organized by priority: 4 CRITICAL, 6 HIGH, 3 MEDIUM, 7 LOW)
-- ✅ Story marked ready for development
-- ✅ Comprehensive technical debt audit completed (100% coverage verified)
-- ✅ Context XML generated (comprehensive implementation guidance)
+**Option 1: Generate Story Context for Story 3.5 (Recommended)**
+- **Story:** Add Provider Filter
+- **Status:** Ready (needs Story Context XML)
+- **Command:** Load SM agent → Run `story-context` workflow for Story 3.5
+- **Purpose:** Generate comprehensive context XML for DEV agent
+- **Next:** After context generation, DEV implements Story 3.5
 
-**Command to run:**
-Load DEV agent and run `dev-story` workflow to implement Story 3.1b
+**Option 2: Implement Story 3.1b (Technical Debt Consolidation)**
+- **Story:** Consolidated Technical Debt Resolution (Epics 1-2)
+- **Status:** Ready for development
+- **Context:** `docs/stories/story-context-3.1b.xml`
+- **Command:** Load DEV agent → Run `dev-story` workflow for Story 3.1b
+- **Priority:** 4 CRITICAL + 6 HIGH items (staging deployment, HTTPS, documentation)
 
-**Implementation Guidance:**
-- Context file: `docs/stories/story-context-3.1b.xml` (complete with docs, code artifacts, constraints, interfaces, test standards)
-- Estimated effort: 21-28 hours across 5 major tasks
-- Priority execution: CRITICAL (Week 1) → HIGH (Week 1-2) → MEDIUM (Week 2) → LOW (Backlog)
-- Key deliverables: Staging deployment, HTTPS enforcement, documentation (badges, env vars, ADR-011, CONTRIBUTING, LICENSE), UX improvements, process automation
-- File: `docs/stories/story-3.1b.md`
+**Option 3: Implement Story 3.1 (Public Homepage)**
+- **Story:** Create Public Homepage with Basic Layout
+- **Status:** Ready for development
+- **Context:** `docs/stories/story-context-3.1.xml`
+- **Command:** Load DEV agent → Run `dev-story` workflow for Story 3.1
 
-**Epic 3 Status:**
-- All technical debt from Epic 2 resolved (Story 2.13 complete)
-- 242 tests passing, 0 failures
-- CI/CD pipeline enforcing 95% pass rate and 70% coverage
-- Production-ready foundation established
-- Epic 3 stories need to be drafted or Story 3.1 context generated
-
-**Epic 2 Remaining Work (Optional/Deferred):**
-- Story 2.10: Benchmark Score Entry Form (medium priority)
-- Story 2.11: Bulk Benchmark Import via CSV (medium priority)
-- These can be completed in parallel with Epic 3 or deferred based on priorities
+**Epic 3 Progress:**
+- ✅ Stories 3.2, 3.3, 3.4 Complete (18 points)
+- 🔄 Story 3.5 In Progress (Ready status)
+- 🔄 Stories 3.1, 3.1b In Progress (Ready status)
+- 📝 Stories 3.6-3.15 Need drafting (10 stories)
+- **Completion:** 7/15 stories (47%)
 
 ---
 
