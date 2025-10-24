@@ -51,19 +51,35 @@ export default function ModelTable({ models }: ModelTableProps) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
 
-  // Read selected providers from Zustand filter store
+  // Read selected filters from Zustand filter store
   const selectedProviders = useFilterStore((state) => state.selectedProviders)
+  const selectedCapabilities = useFilterStore((state) => state.selectedCapabilities)
 
-  // Update columnFilters when selectedProviders changes
-  // This triggers TanStack Table to re-filter the rows in real-time (AC #3)
+  // Update columnFilters when selectedProviders or selectedCapabilities changes
+  // This triggers TanStack Table to re-filter the rows in real-time
+  // Story 3.5: Provider filter (OR logic)
+  // Story 3.6: Capabilities filter (AND logic)
   useEffect(() => {
-    setColumnFilters([
-      {
+    const filters: ColumnFiltersState = []
+
+    // Add provider filter if any providers selected (Story 3.5)
+    if (selectedProviders.length > 0) {
+      filters.push({
         id: 'provider',
         value: selectedProviders,
-      },
-    ])
-  }, [selectedProviders])
+      })
+    }
+
+    // Add capabilities filter if any capabilities selected (Story 3.6)
+    if (selectedCapabilities.length > 0) {
+      filters.push({
+        id: 'capabilities',
+        value: selectedCapabilities,
+      })
+    }
+
+    setColumnFilters(filters)
+  }, [selectedProviders, selectedCapabilities])
 
   // Initialize TanStack Table with data and column definitions
   // Composable row models: Core → Sorted (Story 3.4) → Filtered (Story 3.5)
