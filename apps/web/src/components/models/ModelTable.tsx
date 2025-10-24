@@ -1,11 +1,17 @@
+import { useState, useEffect } from 'react'
 import {
   useReactTable,
   getCoreRowModel,
+  getSortedRowModel,
+  getFilteredRowModel,
   flexRender,
   type ColumnDef,
+  type SortingState,
+  type ColumnFiltersState,
 } from '@tanstack/react-table'
 import type { ModelDto } from '@/types/models'
 import { modelColumns } from './columns'
+import { useFilterStore } from '@/store/filterStore'
 
 /**
  * Props for the ModelTable component
@@ -21,6 +27,13 @@ interface ModelTableProps {
  * Implements AC #2 (Models data rendered using TanStack Table component, replacing the basic HTML table from Story 3.2)
  * and AC #4 (Table maintains the same visual appearance and functionality as Story 3.2)
  *
+ * Story 3.4: Add Column Sorting
+ * Implements sorting functionality with getSortedRowModel
+ *
+ * Story 3.5: Add Provider Filter
+ * Implements AC #3 (Checking/unchecking provider filters table in real-time)
+ * with getFilteredRowModel and columnFilters state
+ *
  * Features:
  * - TanStack Table headless UI pattern (logic without imposed UI structure)
  * - Semantic HTML markup (table, thead, tbody, tr, th, td)
@@ -28,17 +41,44 @@ interface ModelTableProps {
  * - TailwindCSS styling for readability (borders, padding, alternating rows)
  * - Responsive design
  * - Accessibility attributes
- * - Enables future features: sorting (Story 3.4), filtering (Stories 3.5-3.7)
+ * - Composable row models: getCoreRowModel → getSortedRowModel → getFilteredRowModel
  *
  * @param props - Component props
  * @param props.models - Array of model data to display
  */
 export default function ModelTable({ models }: ModelTableProps) {
+  // Table state: sorting and filtering
+  const [sorting, setSorting] = useState<SortingState>([])
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
+
+  // Read selected providers from Zustand filter store
+  const selectedProviders = useFilterStore((state) => state.selectedProviders)
+
+  // Update columnFilters when selectedProviders changes
+  // This triggers TanStack Table to re-filter the rows in real-time (AC #3)
+  useEffect(() => {
+    setColumnFilters([
+      {
+        id: 'provider',
+        value: selectedProviders,
+      },
+    ])
+  }, [selectedProviders])
+
   // Initialize TanStack Table with data and column definitions
+  // Composable row models: Core → Sorted (Story 3.4) → Filtered (Story 3.5)
   const table = useReactTable({
     data: models,
     columns: modelColumns as ColumnDef<ModelDto>[],
     getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(), // Story 3.4
+    getFilteredRowModel: getFilteredRowModel(), // Story 3.5
+    state: {
+      sorting,
+      columnFilters,
+    },
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
   })
 
   return (
