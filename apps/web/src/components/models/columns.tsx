@@ -40,6 +40,13 @@ export const modelColumns = [
     id: 'provider',
     header: () => 'Provider',
     cell: (info) => <div className="text-sm text-gray-900">{info.getValue()}</div>,
+    // Filter function for provider column (Story 3.5: OR logic)
+    // Empty filterValue array = show all models
+    // Non-empty filterValue = show only models from selected providers
+    filterFn: (row, columnId, filterValue: string[]) => {
+      const provider = row.getValue(columnId) as string
+      return filterValue.length === 0 || filterValue.includes(provider)
+    },
   }),
 
   columnHelper.accessor('inputPricePer1M', {

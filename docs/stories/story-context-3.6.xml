@@ -1,0 +1,497 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>3.6</storyId>
+    <title>Add Capabilities Filters</title>
+    <status>Draft</status>
+    <generatedAt>2025-10-24</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-3.6.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user</asA>
+    <iWant>to filter models by capabilities</iWant>
+    <soThat>I can find models supporting specific features (function calling, vision, etc.)</soThat>
+    <tasks>
+      - Task 1: Extend Zustand filter store for capabilities (AC #3, #4)
+        - Subtask 1.1: Update apps/web/src/store/filterStore.ts with selectedCapabilities array
+        - Subtask 1.2: Define CapabilityType enum matching backend ModelCapabilities fields
+        - Subtask 1.3: Add toggleCapability action (add/remove capability from array)
+        - Subtask 1.4: Update clearFilters action to reset capabilities array
+        - Subtask 1.5: Update getActiveFilterCount to include capabilities count
+        - Subtask 1.6: Export capability display names mapping for UI labels
+
+      - Task 2: Create CapabilitiesFilter component (AC #2, #6)
+        - Subtask 2.1: Create apps/web/src/components/filters/CapabilitiesFilter.tsx file
+        - Subtask 2.2: Define capability list with display names and descriptions
+        - Subtask 2.3: Render checkbox list for each capability (alphabetically sorted)
+        - Subtask 2.4: Connect checkboxes to Zustand filterStore.toggleCapability action
+        - Subtask 2.5: Add tooltip component showing capability description on hover
+        - Subtask 2.6: Style tooltips with TailwindCSS (dark background, white text, positioned above)
+        - Subtask 2.7: Add accessible ARIA labels and tooltip IDs for screen readers
+
+      - Task 3: Integrate CapabilitiesFilter into FilterSidebar (AC #1)
+        - Subtask 3.1: Import CapabilitiesFilter component in FilterSidebar.tsx
+        - Subtask 3.2: Add "Capabilities" section heading with divider
+        - Subtask 3.3: Position below ProviderFilter section (Story 3.5)
+        - Subtask 3.4: Add collapsible/expandable section (optional enhancement)
+        - Subtask 3.5: Maintain consistent spacing and styling with provider filter
+
+      - Task 4: Implement AND logic for capability filtering (AC #3, #4)
+        - Subtask 4.1: Add capabilities column filter function in ModelTable.tsx
+        - Subtask 4.2: Read selectedCapabilities from Zustand filterStore
+        - Subtask 4.3: Implement AND logic - model must have ALL selected capabilities
+        - Subtask 4.4: Handle capability field variations (supports_function_calling vs function_calling)
+        - Subtask 4.5: Update columnFilters when selectedCapabilities changes (useEffect)
+        - Subtask 4.6: Combine with provider filter logic (both filters active simultaneously)
+        - Subtask 4.7: Verify AND logic works correctly (select 2+ capabilities → only models with all)
+
+      - Task 5: Add tooltip implementation (AC #6)
+        - Subtask 5.1: Create reusable Tooltip component in apps/web/src/components/ui/Tooltip.tsx
+        - Subtask 5.2: Implement hover state detection with onMouseEnter/onMouseLeave
+        - Subtask 5.3: Position tooltip dynamically (above checkbox, centered)
+        - Subtask 5.4: Add tooltip descriptions for each capability
+        - Subtask 5.5: Add info icon (ⓘ) next to each capability label
+        - Subtask 5.6: Implement tooltip animations (fade in/out with transition)
+
+      - Task 6: Update API types to include capabilities (AC #3)
+        - Subtask 6.1: Verify ModelDto in apps/web/src/types/model.ts includes capabilities fields
+        - Subtask 6.2: Add TypeScript interface for ModelCapabilities if missing
+        - Subtask 6.3: Ensure useModels hook returns capability data
+        - Subtask 6.4: Verify backend GET /api/models includes ModelCapabilities in response
+        - Subtask 6.5: Add null/undefined handling for models without capability data
+
+      - Task 7: Test capabilities filtering functionality (AC #1-6)
+        - Subtask 7.1: Test selecting single capability (verify table filters correctly)
+        - Subtask 7.2: Test selecting multiple capabilities (verify AND logic - only models with all)
+        - Subtask 7.3: Test unselecting capability (verify table updates immediately)
+        - Subtask 7.4: Test combined with provider filter (Story 3.5 - both filters active)
+        - Subtask 7.5: Verify "Clear Filters" clears both provider and capability selections
+        - Subtask 7.6: Test tooltip displays on hover for each capability
+        - Subtask 7.7: Verify filter count badge includes capability filters
+        - Subtask 7.8: Test edge cases (all capabilities selected, no matching models, null capabilities)
+        - Subtask 7.9: Verify performance &lt;100ms for filter operations with 50+ models
+
+      - Task 8: Manual testing and verification (AC All)
+        - Subtask 8.1: Test in Chrome DevTools responsive mode (desktop, tablet, mobile)
+        - Subtask 8.2: Verify tooltips readable on mobile (touch interaction)
+        - Subtask 8.3: Verify no console errors or warnings
+        - Subtask 8.4: Verify no TypeScript errors (pnpm run type-check)
+        - Subtask 8.5: Test accessibility - keyboard navigation, screen reader tooltip announcements
+        - Subtask 8.6: Verify visual consistency with ProviderFilter (Story 3.5)
+        - Subtask 8.7: Test AND vs OR logic difference (Story 3.5 OR, Story 3.6 AND)
+        - Subtask 8.8: Verify filters persist during sorting (Story 3.4)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    1. Capabilities filter section added to sidebar
+    2. Checkboxes for each capability: function calling, vision support, audio support, streaming, JSON mode
+    3. Checking capability filters to only models with that capability
+    4. Multiple capabilities use AND logic (must have all selected)
+    5. Filters update table immediately
+    6. Tooltip explains what each capability means
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic 3 - Story 3.6 Definition</title>
+        <section>Lines 567-582</section>
+        <snippet>Story 3.6 defines capabilities filtering as key feature for users to find models with specific features (function calling, vision, audio, streaming, JSON mode). Acceptance criteria establish capabilities section in sidebar, checkboxes for each capability with AND logic (must have all selected), real-time filtering, and explanatory tooltips. Prerequisites: Story 3.5 (provider filter must be complete).</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification - Filter Sidebar Component</title>
+        <section>Lines 340-384</section>
+        <snippet>Component architecture defines FilterSidebar as main container with multiple filter sections. CapabilitiesFilter (Story 3.6) positioned below ProviderFilter (Story 3.5). Filter sections use consistent checkbox styling, collapsible headers, and Zustand filterStore integration. All filter sections compose in single FilterSidebar container.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification - Zustand State Management</title>
+        <section>Lines 189-200</section>
+        <snippet>Zustand filterStore manages all filter selections (providers, capabilities, price range). Story 3.6 extends filterStore with selectedCapabilities array and toggleCapability action. Single store for all filter types maintains single source of truth and simplifies state synchronization across filter sections.</snippet>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture - ModelCapabilities Schema</title>
+        <section>Section 2.3</section>
+        <snippet>ModelCapabilities table schema: context_window, max_output_tokens, supports_function_calling, supports_vision, supports_audio_input, supports_audio_output, supports_streaming, supports_json_mode. One-to-one relationship with Models table (model_id foreign key). Boolean fields for binary capabilities, integer fields for numeric capabilities.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-3.5.md</path>
+        <title>Story 3.5 - Provider Filter Implementation</title>
+        <section>Lines 79-147</section>
+        <snippet>Story 3.5 establishes Zustand filterStore pattern with selectedProviders array, toggleProvider action, clearFilters action, and getActiveFilterCount selector. Provider filter uses OR logic (show models from ANY selected provider). Story 3.6 extends this pattern with capabilities using AND logic (show models with ALL selected capabilities).</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-1.4.md</path>
+        <title>Story 1.4 - Core Data Models</title>
+        <section>Lines 94-108</section>
+        <snippet>ModelCapabilities table created in Story 1.4 with fields: id, model_id, context_window, max_output_tokens, supports_function_calling, supports_vision, supports_audio_input, supports_audio_output, supports_streaming, supports_json_mode. Entity relationship: one-to-one Models to ModelCapabilities (foreign key model_id).</snippet>
+      </doc>
+      <doc>
+        <path>CLAUDE.md</path>
+        <title>Project Instructions - Frontend Architecture</title>
+        <section>Frontend State Architecture</section>
+        <snippet>State management follows three-tier pattern: Server state (TanStack Query, 5min stale), Client state (Zustand for comparison basket, filters, view preferences), Local state (useState for forms, modals, pagination). Path aliases: @/* → ./src/*, @components/* → ./src/components/*, @store/* → ./src/store/*.</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <artifact>
+        <path>apps/web/src/store/filterStore.ts</path>
+        <kind>store</kind>
+        <symbol>useFilterStore</symbol>
+        <lines>1-40</lines>
+        <reason>Zustand store created in Story 3.5. Must extend with selectedCapabilities array, toggleCapability action, and update clearFilters and getActiveFilterCount to include capabilities. Critical for AND logic implementation.</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/components/filters/FilterSidebar.tsx</path>
+        <kind>component</kind>
+        <symbol>FilterSidebar</symbol>
+        <lines>1-50</lines>
+        <reason>Main filter container created in Story 3.5. Must integrate CapabilitiesFilter component below ProviderFilter section. Layout positioning and consistent styling critical for UX.</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/components/models/ModelTable.tsx</path>
+        <kind>component</kind>
+        <symbol>ModelTable</symbol>
+        <lines>1-120</lines>
+        <reason>Core table component with getFilteredRowModel from Story 3.5. Must add capabilities filter function with AND logic. Filter function reads selectedCapabilities from filterStore and checks model.capabilities object.</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/components/models/columns.tsx</path>
+        <kind>component</kind>
+        <symbol>modelColumns</symbol>
+        <lines>1-85</lines>
+        <reason>Column definitions may need capabilities column configuration if filtering on specific column. Alternative: filter on entire row.original.capabilities object (preferred for Story 3.6).</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/hooks/useModels.ts</path>
+        <kind>hook</kind>
+        <symbol>useModels</symbol>
+        <lines>1-28</lines>
+        <reason>TanStack Query hook providing model data. Must verify capabilities data included in API response. If missing, may need to update backend GET /api/models endpoint or create new useModelCapabilities hook.</reason>
+      </artifact>
+      <artifact>
+        <path>apps/web/src/types/model.ts</path>
+        <kind>types</kind>
+        <symbol>ModelDto</symbol>
+        <lines>1-40</lines>
+        <reason>TypeScript types for model data. Must include ModelCapabilities interface with all boolean capability fields (supports_function_calling, supports_vision, etc.) matching backend schema from Story 1.4.</reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <node>
+        <package name="zustand" version="^5.0.8" installed="true">Client-side state management for capability filter selections</package>
+        <package name="@tanstack/react-table" version="^8.21.3" installed="true">Table library with filtering support via getFilteredRowModel</package>
+        <package name="@tanstack/react-query" version="^5.90.5" installed="true">Server state management for models data with capabilities</package>
+        <package name="lucide-react" version="^0.546.0" installed="true">Icons for info tooltips, checkboxes, capability badges</package>
+        <package name="react" version="^19.1.1" installed="true">Core React library for components and hooks</package>
+        <package name="tailwindcss" version="^4.1.14" installed="true">Styling for CapabilitiesFilter, tooltips, checkboxes</package>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>
+      <type>architecture</type>
+      <description>Hexagonal Architecture - Capabilities filtering is presentation layer concern (React components + Zustand). No backend changes required. All filtering happens client-side with TanStack Table. Backend GET /api/models must already return capabilities data from Story 1.10.</description>
+    </constraint>
+    <constraint>
+      <type>performance</type>
+      <description>Combined filtering (provider + capabilities) must complete in &lt;100ms for 50+ models (PRD NFR-002). AND logic requires every() check across capabilities which is O(n*m) where n=models, m=selected capabilities. Target: &lt;50ms actual combined filter time measured in Chrome DevTools Performance panel.</description>
+    </constraint>
+    <constraint>
+      <type>typescript</type>
+      <description>Zero `any` types allowed (strict mode enforced). Use TypeScript literal union for CapabilityType ('supports_function_calling' | 'supports_vision' | ...). Use TanStack Table's FilterFn type for filter functions. Zustand store must be fully typed with FilterState interface.</description>
+    </constraint>
+    <constraint>
+      <type>filter-logic</type>
+      <description>Story 3.6 uses AND logic (different from Story 3.5 OR logic). Multiple capability selections mean model must have ALL selected capabilities. Rationale: users want models supporting "vision AND function calling" (intersection) not "vision OR function calling" (union). Verify with filterValue.every(cap => capabilities[cap] === true).</description>
+    </constraint>
+    <constraint>
+      <type>state-management</type>
+      <description>Extend existing filterStore from Story 3.5 - do NOT create new store. Single Zustand store maintains all filter state (selectedProviders, selectedCapabilities, future selectedPriceRange). Update clearFilters to reset both provider and capability selections. Update getActiveFilterCount to sum both arrays.</description>
+    </constraint>
+    <constraint>
+      <type>component-organization</type>
+      <description>Components organized by domain: components/filters/ contains FilterSidebar, ProviderFilter (Story 3.5), CapabilitiesFilter (Story 3.6), PriceRangeFilter (Story 3.7). Reusable Tooltip component in components/ui/ for cross-cutting UI concerns.</description>
+    </constraint>
+    <constraint>
+      <type>accessibility</type>
+      <description>WCAG 2.1 Level AA compliance required. Tooltips must be keyboard accessible (show on focus, not just hover). Info icons must have aria-label="More information about [capability]". Checkboxes must have accessible labels and ARIA attributes. Screen reader must announce capability descriptions from tooltips.</description>
+    </constraint>
+    <constraint>
+      <type>null-safety</type>
+      <description>Models may have capabilities: null if not seeded. Filter function must handle gracefully: if (!capabilities) return false excludes models without capability data. Do NOT crash on null.supports_function_calling access. TypeScript types should mark capabilities as ModelCapabilities | null.</description>
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>FilterState (Extended Zustand Store)</name>
+      <kind>TypeScript Interface</kind>
+      <signature>
+type CapabilityType =
+  | 'supports_function_calling'
+  | 'supports_vision'
+  | 'supports_audio_input'
+  | 'supports_streaming'
+  | 'supports_json_mode';
+
+interface FilterState {
+  selectedProviders: string[];              // Story 3.5
+  selectedCapabilities: CapabilityType[];   // Story 3.6 - NEW
+  toggleProvider: (provider: string) => void;
+  toggleCapability: (capability: CapabilityType) => void; // NEW
+  clearFilters: () => void;
+  getActiveFilterCount: () => number;
+}
+
+export const useFilterStore = create&lt;FilterState&gt;((set, get) => ({
+  selectedProviders: [],
+  selectedCapabilities: [],  // NEW
+  toggleProvider: (provider) => set((state) => ({
+    selectedProviders: state.selectedProviders.includes(provider)
+      ? state.selectedProviders.filter(p => p !== provider)
+      : [...state.selectedProviders, provider]
+  })),
+  toggleCapability: (capability) => set((state) => ({  // NEW
+    selectedCapabilities: state.selectedCapabilities.includes(capability)
+      ? state.selectedCapabilities.filter(c => c !== capability)
+      : [...state.selectedCapabilities, capability]
+  })),
+  clearFilters: () => set({
+    selectedProviders: [],
+    selectedCapabilities: []  // Updated to clear both
+  }),
+  getActiveFilterCount: () => {
+    const { selectedProviders, selectedCapabilities } = get();
+    return selectedProviders.length + selectedCapabilities.length; // Updated
+  }
+}));
+      </signature>
+      <path>apps/web/src/store/filterStore.ts (MODIFIED from Story 3.5)</path>
+    </interface>
+
+    <interface>
+      <name>Capabilities Filter Function (AND Logic)</name>
+      <kind>TanStack Table FilterFn</kind>
+      <signature>
+// In ModelTable.tsx
+import type { FilterFn } from '@tanstack/react-table'
+
+const capabilitiesFilterFn: FilterFn&lt;ModelDto&gt; = (row, columnId, filterValue: CapabilityType[]) => {
+  const capabilities = row.original.capabilities;
+
+  // Models without capabilities data are excluded
+  if (!capabilities) return false;
+
+  // Empty filter = show all models (no capabilities selected)
+  if (filterValue.length === 0) return true;
+
+  // AND logic: model must have ALL selected capabilities
+  return filterValue.every(cap => capabilities[cap] === true);
+};
+
+// Usage in useReactTable configuration
+const table = useReactTable({
+  data: models,
+  columns: modelColumns,
+  getCoreRowModel: getCoreRowModel(),
+  getSortedRowModel: getSortedRowModel(),     // Story 3.4
+  getFilteredRowModel: getFilteredRowModel(), // Story 3.5
+  state: {
+    sorting,
+    columnFilters // Contains both provider and capabilities filters
+  },
+  filterFns: {
+    capabilities: capabilitiesFilterFn  // Custom filter function
+  }
+});
+
+// Connect Zustand to TanStack Table
+const selectedCapabilities = useFilterStore(state => state.selectedCapabilities);
+
+useEffect(() => {
+  setColumnFilters(prev => [
+    ...prev.filter(f => f.id !== 'capabilities'),
+    { id: 'capabilities', value: selectedCapabilities }
+  ]);
+}, [selectedCapabilities]);
+      </signature>
+      <path>apps/web/src/components/models/ModelTable.tsx</path>
+    </interface>
+
+    <interface>
+      <name>CapabilitiesFilter Component</name>
+      <kind>React Component</kind>
+      <signature>
+const CAPABILITIES = [
+  {
+    key: 'supports_function_calling' as const,
+    label: 'Function Calling',
+    description: 'Model can call external functions/tools during generation',
+    icon: '🔧'
+  },
+  {
+    key: 'supports_vision' as const,
+    label: 'Vision Support',
+    description: 'Model can process and analyze images',
+    icon: '👁️'
+  },
+  {
+    key: 'supports_audio_input' as const,
+    label: 'Audio Support',
+    description: 'Model supports audio input or output',
+    icon: '🎤'
+  },
+  {
+    key: 'supports_streaming' as const,
+    label: 'Streaming',
+    description: 'Model supports streaming responses for real-time output',
+    icon: '⚡'
+  },
+  {
+    key: 'supports_json_mode' as const,
+    label: 'JSON Mode',
+    description: 'Model can output structured JSON responses',
+    icon: '{ }'
+  }
+] as const;
+
+export default function CapabilitiesFilter() {
+  const { selectedCapabilities, toggleCapability } = useFilterStore();
+
+  return (
+    &lt;div className="space-y-2 mt-6"&gt;
+      &lt;h3 className="text-sm font-medium text-gray-700"&gt;Capabilities&lt;/h3&gt;
+      {CAPABILITIES.map(capability => (
+        &lt;label key={capability.key} className="flex items-center gap-2 cursor-pointer"&gt;
+          &lt;input
+            type="checkbox"
+            checked={selectedCapabilities.includes(capability.key)}
+            onChange={() => toggleCapability(capability.key)}
+            aria-describedby={`tooltip-${capability.key}`}
+          /&gt;
+          &lt;span&gt;{capability.label}&lt;/span&gt;
+          &lt;Tooltip content={capability.description}&gt;
+            &lt;span className="text-gray-400 text-xs" aria-label={`More information about ${capability.label}`}&gt;ⓘ&lt;/span&gt;
+          &lt;/Tooltip&gt;
+        &lt;/label&gt;
+      ))}
+    &lt;/div&gt;
+  );
+}
+      </signature>
+      <path>apps/web/src/components/filters/CapabilitiesFilter.tsx (NEW)</path>
+    </interface>
+
+    <interface>
+      <name>Tooltip Component (Reusable)</name>
+      <kind>React Component</kind>
+      <signature>
+import { useState } from 'react';
+
+interface TooltipProps {
+  content: string;
+  children: React.ReactNode;
+}
+
+export function Tooltip({ content, children }: TooltipProps) {
+  const [isVisible, setIsVisible] = useState(false);
+
+  return (
+    &lt;div className="relative inline-block"&gt;
+      &lt;div
+        onMouseEnter={() => setIsVisible(true)}
+        onMouseLeave={() => setIsVisible(false)}
+        onFocus={() => setIsVisible(true)}
+        onBlur={() => setIsVisible(false)}
+        tabIndex={0}
+      &gt;
+        {children}
+      &lt;/div&gt;
+      {isVisible && (
+        &lt;div
+          role="tooltip"
+          className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded shadow-lg whitespace-nowrap z-50 transition-opacity"
+        &gt;
+          {content}
+          &lt;div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-900" /&gt;
+        &lt;/div&gt;
+      )}
+    &lt;/div&gt;
+  );
+}
+      </signature>
+      <path>apps/web/src/components/ui/Tooltip.tsx (NEW)</path>
+    </interface>
+
+    <interface>
+      <name>ModelCapabilities Interface</name>
+      <kind>TypeScript Interface</kind>
+      <signature>
+// In apps/web/src/types/model.ts
+interface ModelCapabilities {
+  context_window: number;
+  max_output_tokens: number;
+  supports_function_calling: boolean;
+  supports_vision: boolean;
+  supports_audio_input: boolean;
+  supports_audio_output: boolean;
+  supports_streaming: boolean;
+  supports_json_mode: boolean;
+}
+
+interface ModelDto {
+  id: string;
+  name: string;
+  provider: string;
+  version: string;
+  release_date: string;
+  status: string;
+  input_price_per_1m: number;
+  output_price_per_1m: number;
+  currency: string;
+  capabilities: ModelCapabilities | null;  // Nullable for models without capability data
+  // ... other fields
+}
+      </signature>
+      <path>apps/web/src/types/model.ts (VERIFY/UPDATE)</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Epic 3 testing strategy defers automated tests to epic completion. Manual testing required for Story 3.6 approval includes: functional testing (single/multiple capability selection with AND logic, combined with provider filter from Story 3.5), visual testing (capabilities section positioning, tooltip display and positioning), integration testing (filtering + sorting composition, combined provider + capability filters), performance testing (&lt;100ms combined filter time with 50+ models via Chrome DevTools), accessibility testing (keyboard navigation, tooltip keyboard access, screen reader tooltip announcements, ARIA attributes). Future automated tests (post-Epic 3): component tests for CapabilitiesFilter and Tooltip rendering (Vitest + Testing Library), Zustand store unit tests (toggleCapability AND logic, getActiveFilterCount with both arrays), E2E tests for combined filter interaction flow (Playwright).
+    </standards>
+
+    <locations>
+      - apps/web/src/components/filters/__tests__/CapabilitiesFilter.test.tsx (future)
+      - apps/web/src/components/ui/__tests__/Tooltip.test.tsx (future)
+      - apps/web/src/store/__tests__/filterStore.test.ts (update from Story 3.5)
+      - apps/web/e2e/filtering.spec.ts (future E2E tests for combined filters)
+    </locations>
+
+    <ideas>
+      <test ac="1">Capabilities section added to sidebar - Visual test: Verify CapabilitiesFilter renders in FilterSidebar below ProviderFilter, positioned with consistent spacing and styling</test>
+      <test ac="2">Checkboxes for each capability - Component test: Verify all 5 capabilities render (function calling, vision, audio, streaming, JSON mode), checkboxes alphabetically sorted by label, CAPABILITIES constant provides display names and descriptions</test>
+      <test ac="3">Checking capability filters models - Integration test: Select "Vision" → verify table shows only models with capabilities.supports_vision === true, verify models with null capabilities excluded, uncheck → verify table restored</test>
+      <test ac="4">Multiple capabilities use AND logic - Logic test: Select "Vision" + "Function Calling" → verify table shows ONLY models with BOTH capabilities true (intersection, not union), verify filterFn uses every() not some(), compare with Story 3.5 OR logic for providers</test>
+      <test ac="5">Filters update table immediately - Performance test: Toggle capability checkbox → measure time to table re-render → verify &lt;100ms, verify TanStack Table getFilteredRowModel memoization prevents unnecessary recalculations</test>
+      <test ac="6">Tooltip explains each capability - UX test: Hover over info icon → verify tooltip displays with capability description, verify tooltip positioned above icon (not below or clipped), verify tooltip readable on mobile (touch shows tooltip), verify tooltip dismisses on mouse leave</test>
+      <test ac="ALL">Combined filters test: Select provider (Story 3.5) + capability (Story 3.6) → verify both filters active simultaneously (provider OR logic, capabilities AND logic), verify table shows models matching BOTH filter criteria</test>
+      <test ac="ALL">Clear filters test: Select multiple providers + capabilities → click "Clear Filters" (Story 3.5 button) → verify both selectedProviders and selectedCapabilities arrays reset to [], verify all checkboxes unchecked, verify table shows all models</test>
+      <test ac="ALL">Filter count test: Select 2 providers + 3 capabilities → verify getActiveFilterCount returns 5, verify FilterSidebar badge displays "Filters (5)"</test>
+      <test ac="ALL">Edge case tests: Select all 5 capabilities → verify very few/zero models match (AND logic restrictive), select capability with no matching models → verify empty state message, test with model.capabilities === null → verify excluded from results</test>
+      <test ac="ALL">Accessibility test: Tab to capability checkboxes, Space toggles checkbox, Tab to info icon, Enter/Space shows tooltip, screen reader announces capability labels and descriptions, verify ARIA attributes (aria-describedby, role="tooltip")</test>
+      <test ac="3,4,5">Integration with Story 3.4 sorting: Apply capability filter → apply sort → verify sorted filtered subset, apply sort → apply capability filter → verify filtered subset maintains sort order</test>
+    </ideas>
+  </tests>
+</story-context>
