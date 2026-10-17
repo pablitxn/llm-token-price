@@ -125,7 +125,7 @@ public class ModelsCacheTests : IClassFixture<TestWebApplicationFactory>
     public async Task GetModels_AfterAdminMutation_Should_Invalidate_Cache()
     {
         // GIVEN: Login as admin
-        var loginRequest = new { username = "admin", password = "" };
+        var loginRequest = new { username = _factory.AdminUsername, password = _factory.AdminPassword };
         await _client.PostAsJsonAsync("/api/admin/auth/login", loginRequest);
 
         // GIVEN: First request to cache models

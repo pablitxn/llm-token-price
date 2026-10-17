@@ -72,7 +72,7 @@ services:
     image: timescale/timescaledb:2.13.0-pg16
     environment:
       POSTGRES_USER: llmpricing
-      POSTGRES_PASSWORD: 
+      POSTGRES_PASSWORD:
       POSTGRES_DB: llmpricing_dev
     ports:
       - "5432:5432"

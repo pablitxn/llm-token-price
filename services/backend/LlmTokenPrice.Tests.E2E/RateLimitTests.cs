@@ -28,7 +28,7 @@ public class RateLimitTests : IClassFixture<TestWebApplicationFactory>
     public async Task AdminEndpoint_ExceedingRateLimit_Should_Return429()
     {
         // GIVEN: Admin user is authenticated
-        var loginRequest = new { username = "admin", password = "" };
+        var loginRequest = new { username = _factory.AdminUsername, password = _factory.AdminPassword };
         await _client.PostAsJsonAsync("/api/admin/auth/login", loginRequest);
 
         // WHEN: Sending 105 requests to admin endpoint (rate limit is 100/minute)
@@ -65,7 +65,7 @@ public class RateLimitTests : IClassFixture<TestWebApplicationFactory>
     public async Task RateLimitExceeded_Should_IncludeRetryAfterHeader()
     {
         // GIVEN: Admin user is authenticated
-        var loginRequest = new { username = "admin", password = "" };
+        var loginRequest = new { username = _factory.AdminUsername, password = _factory.AdminPassword };
         await _client.PostAsJsonAsync("/api/admin/auth/login", loginRequest);
 
         // WHEN: Exceeding rate limit by sending 101 requests
@@ -120,7 +120,7 @@ public class RateLimitTests : IClassFixture<TestWebApplicationFactory>
     public async Task RateLimitExceeded_Should_ReturnJsonErrorResponse()
     {
         // GIVEN: Admin user is authenticated
-        var loginRequest = new { username = "admin", password = "" };
+        var loginRequest = new { username = _factory.AdminUsername, password = _factory.AdminPassword };
         await _client.PostAsJsonAsync("/api/admin/auth/login", loginRequest);
 
         // WHEN: Exceeding rate limit

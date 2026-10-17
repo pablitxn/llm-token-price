@@ -18,14 +18,14 @@ public static class AuthHelper
     /// <remarks>
     /// After calling this method, all subsequent requests with the same HttpClient
     /// will be authenticated as the admin user.
-    /// Test credentials: username=admin, password= (configured in test database seed)
+    /// Test credentials: username=admin, password=fixture-generated (owned by the in-process factory)
     /// </remarks>
-    public static async Task<string> LoginAsAdminAsync(HttpClient client)
+    private static async Task<string> LoginAsAdminAsync(HttpClient client, TestWebApplicationFactory factory)
     {
         var loginRequest = new
         {
-            username = "admin",
-            password = "" // Test credentials from database seed
+            username = factory.AdminUsername,
+            password = factory.AdminPassword // Ephemeral fixture credentials
         };
 
         var response = await client.PostAsJsonAsync("/api/admin/auth/login", loginRequest);
@@ -68,7 +68,7 @@ public static class AuthHelper
 
         if (autoAuthenticate)
         {
-            await LoginAsAdminAsync(client);
+            await LoginAsAdminAsync(client, factory);
         }
 
         return client;

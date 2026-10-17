@@ -1,3 +1,5 @@
+> Archived project: provide fresh private credentials before any reuse. See [security and configuration guidance](SECURITY-ARCHIVE.md).
+
 # LLM Token Price Comparison Platform
 
 [![Backend CI](https://github.com/pablitxn/llm-token-price/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/pablitxn/llm-token-price/actions/workflows/backend-ci.yml)
@@ -342,7 +344,7 @@ Use secure secret management services:
 openssl rand -base64 32
 
 # Example output (use this as your JWT_SECRET_KEY):
-# 
+#
 ```
 
 ### Environment-Specific Configuration

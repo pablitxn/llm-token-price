@@ -16,10 +16,11 @@ namespace LlmTokenPrice.Tests.E2E;
 /// Story 2.13 Task 1: Fix E2E test failures by configuring test authentication
 /// This approach avoids the complexity of generating valid JWT tokens in tests.
 /// </remarks>
-public class TestWebApplicationFactory : WebApplicationFactory<LlmTokenPrice.API.Program>
+public class TestWebApplicationFactory : CredentialWebApplicationFactory
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        base.ConfigureWebHost(builder);
         builder.ConfigureTestServices(services =>
         {
             // Replace JWT authentication with test authentication scheme

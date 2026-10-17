@@ -10,12 +10,14 @@ namespace LlmTokenPrice.Infrastructure.Tests.Integration;
 /// Integration tests for AdminAuthController
 /// Tests login and logout endpoints with real HTTP requests
 /// </summary>
-public class AdminAuthControllerTests : IClassFixture<WebApplicationFactory<LlmTokenPrice.API.Program>>
+public class AdminAuthControllerTests : IClassFixture<CredentialWebApplicationFactory>
 {
     private readonly HttpClient _client;
+    private readonly CredentialWebApplicationFactory _factory;
 
-    public AdminAuthControllerTests(WebApplicationFactory<LlmTokenPrice.API.Program> factory)
+    public AdminAuthControllerTests(CredentialWebApplicationFactory factory)
     {
+        _factory = factory;
         _client = factory.CreateClient(new WebApplicationFactoryClientOptions
         {
             AllowAutoRedirect = false // We want to test redirects manually
@@ -26,7 +28,7 @@ public class AdminAuthControllerTests : IClassFixture<WebApplicationFactory<LlmT
     public async Task Login_ShouldReturn200_AndSetCookie_WhenCredentialsAreValid()
     {
         // Arrange
-        var loginDto = new LoginDto("admin", "");
+        var loginDto = new LoginDto(_factory.AdminUsername, _factory.AdminPassword);
 
         // Act
         var response = await _client.PostAsJsonAsync("/api/admin/auth/login", loginDto);
@@ -51,7 +53,7 @@ public class AdminAuthControllerTests : IClassFixture<WebApplicationFactory<LlmT
     public async Task Login_ShouldReturn401_WhenCredentialsAreInvalid()
     {
         // Arrange
-        var loginDto = new LoginDto("admin", "wrongpassword");
+        var loginDto = new LoginDto(_factory.AdminUsername, "wrongpassword");
 
         // Act
         var response = await _client.PostAsJsonAsync("/api/admin/auth/login", loginDto);
@@ -85,7 +87,7 @@ public class AdminAuthControllerTests : IClassFixture<WebApplicationFactory<LlmT
     public async Task Login_ShouldReturn400_WhenPasswordIsEmpty()
     {
         // Arrange
-        var loginDto = new LoginDto("admin", "");
+        var loginDto = new LoginDto(_factory.AdminUsername, "");
 
         // Act
         var response = await _client.PostAsJsonAsync("/api/admin/auth/login", loginDto);
@@ -102,7 +104,7 @@ public class AdminAuthControllerTests : IClassFixture<WebApplicationFactory<LlmT
     public async Task Logout_ShouldReturn200_AndClearCookie()
     {
         // Arrange - First login to get a cookie
-        var loginDto = new LoginDto("admin", "");
+        var loginDto = new LoginDto(_factory.AdminUsername, _factory.AdminPassword);
         await _client.PostAsJsonAsync("/api/admin/auth/login", loginDto);
 
         // Act - Logout
@@ -120,7 +122,7 @@ public class AdminAuthControllerTests : IClassFixture<WebApplicationFactory<LlmT
     public async Task Login_MultipleTimes_ShouldReplaceOldToken()
     {
         // Arrange
-        var loginDto = new LoginDto("admin", "");
+        var loginDto = new LoginDto(_factory.AdminUsername, _factory.AdminPassword);
 
         // Act - Login twice
         var response1 = await _client.PostAsJsonAsync("/api/admin/auth/login", loginDto);

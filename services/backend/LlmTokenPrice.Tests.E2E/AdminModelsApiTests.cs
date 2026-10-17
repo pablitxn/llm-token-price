@@ -713,8 +713,8 @@ public class AdminModelsApiTests : IClassFixture<TestWebApplicationFactory>
     {
         var loginRequest = new
         {
-            username = "admin",
-            password = "" // Test credentials
+            username = _factory.AdminUsername,
+            password = _factory.AdminPassword // Test credentials
         };
 
         var response = await _client.PostAsJsonAsync("/api/admin/auth/login", loginRequest);
